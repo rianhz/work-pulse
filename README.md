@@ -80,14 +80,14 @@ Create `.env.local` files in both `api` and `web` directories with necessary con
 
 **api/.env**
 ```
-PORT=5000
+PORT=4000
 MONGODB_URI=your_mongodb_connection_string
 JWT_SECRET=your_jwt_secret
 ```
 
 **web/.env.local**
 ```
-NEXT_PUBLIC_API_URL=http://localhost:5000
+NEXT_PUBLIC_API_URL=http://localhost:4000
 ```
 
 ### Running the Application
@@ -97,7 +97,7 @@ NEXT_PUBLIC_API_URL=http://localhost:5000
 cd api
 npm run dev
 ```
-The API will be available at `http://localhost:5000`
+The API will be available at `http://localhost:4000`
 
 **Start the frontend (in a new terminal):**
 ```bash
