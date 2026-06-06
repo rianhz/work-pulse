@@ -6,5 +6,6 @@ export const getProfile = async (userId: string): Promise<IUser> => {
     if (!user) {
         throw new Error('User not found');
     }
-    return user;
+    const { passwordHash: _, ...userWithoutPassword } = user;
+    return userWithoutPassword;
 };
