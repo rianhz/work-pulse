@@ -5,11 +5,12 @@ export interface IUser {
     fullName: string;
     role: string;
     status: string;
+    avatar: string;
     createdAt: Date;
     updatedAt: Date;
     refreshToken: {
-        token: string;
-        expiresIn: number;
-        createdAt: Date;
-    } | null;
+        token: string | null;
+        expiresIn: number | null;
+        createdAt: Date | null;
+    };
 }

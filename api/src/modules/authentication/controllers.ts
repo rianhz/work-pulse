@@ -47,7 +47,7 @@ export const logoutController = async (
 
     try {
 
-        const userId = (req as any).user.id;
+        const userId = (req as any).user.userId;
 
         await logoutService(userId);
 

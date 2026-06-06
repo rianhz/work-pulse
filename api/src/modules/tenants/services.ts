@@ -1,11 +1,10 @@
-import { UserModel } from './schemas';
-import { IUser } from './interfaces';
+import { TenantModel } from './schemas';
+import { ITenant } from './interfaces';
 
-export const getProfile = async (userId: string): Promise<IUser> => {
-    const user = await UserModel.findById(userId).lean();
-    if (!user) {
-        throw new Error('User not found');
+export const getTenant = async (tenantId: string): Promise<ITenant> => {
+    const tenant = await TenantModel.findById(tenantId).lean();
+    if (!tenant) {
+        throw new Error('Tenant not found');
     }
-    const { passwordHash: _, ...userWithoutPassword } = user;
-    return userWithoutPassword;
+    return tenant;
 };

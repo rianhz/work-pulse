@@ -33,6 +33,12 @@ const userSchema = new mongoose.Schema<IUser>(
       default: "employee",
     },
 
+    avatar: {
+      type: String,
+      required: false,
+      default: "",
+    },
+
     status: {
       type: String,
       enum: [
@@ -42,6 +48,24 @@ const userSchema = new mongoose.Schema<IUser>(
       ],
       default: "active",
     },
+
+    refreshToken: {
+      token: {
+        type: String,
+        required: false,
+        default: null,
+      },
+      expiresIn: {
+        type: Number,
+        required: false,
+        default: null,
+      },
+      createdAt: {
+        type: Date,
+        required: false,
+        default: null,
+      },
+    },
   },
   {
     timestamps: true,
@@ -49,7 +73,6 @@ const userSchema = new mongoose.Schema<IUser>(
 );
 
 userSchema.index({
-  tenantId: 1,
   email: 1,
 });
 

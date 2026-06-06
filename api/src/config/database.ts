@@ -2,7 +2,6 @@ import mongoose from 'mongoose';
 
 export const connectDatabase = async (): Promise<void> => {
   try {
-    console.log(process.env.MONGO_URI);
     const mongoUri = process.env.MONGO_URI || 'mongodb://localhost:2017/work-pulse-cluseter';
     await mongoose.connect(mongoUri);
     console.log('🚀 MongoDB connected successfully');

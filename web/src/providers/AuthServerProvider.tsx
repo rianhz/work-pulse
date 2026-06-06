@@ -1,19 +1,20 @@
-import { cookies } from "next/headers";
+
 import { getMe } from "@/features/users/api";
+import AuthProvider from "./AuthProvider";
+import { cookies } from "next/headers";
 
 export default async function AuthServerProvider({
     children,
 }: {
     children: React.ReactNode;
 }) {
-
     let user = null;
 
     try {
-
-    const cookieStore = await cookies();
-
-        user = await getMe({ Cookie: cookieStore.toString() });
+        const cookieStore = await cookies();
+        user = await getMe({
+            Cookie: cookieStore.toString(),
+        });
 
 
     } catch (error) {
@@ -23,7 +24,9 @@ export default async function AuthServerProvider({
 
     return (
         <>
-            {children}
+            <AuthProvider initialUser={user}>
+                {children}
+            </AuthProvider>
         </>
     );
 }

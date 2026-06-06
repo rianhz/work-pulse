@@ -48,7 +48,7 @@ const loginService = async (payload: ILoginPayload): Promise<{ accessToken: stri
     const { email, password } = payload;
     const user = await UserModel.findOne({ email: email.toLowerCase() }).lean();
     if (!user) {
-        throw new Error('Invalid credentials');
+        throw new Error('User not found');
     }
 
     const identity = await IdentityModel.findOne({

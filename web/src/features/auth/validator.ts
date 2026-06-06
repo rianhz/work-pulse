@@ -11,13 +11,21 @@ export const loginSchema = z.object({
     .min(6, "Password must be at least 6 characters"),
 });
 
-export type LoginFormValues = z.infer<typeof loginSchema>;
-
 export const registerSchema = z
   .object({
-    name: z
+    companyName: z
       .string()
-      .min(2, "Name must be at least 2 characters"),
+      .min(2, "Company name must be at least 2 characters"),
+
+    slug: z
+      .string()
+      .min(2, "Slug must be at least 2 characters")
+      .transform((val) => val.toLowerCase().trim().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-'))
+      .pipe(z.string().regex(/^[a-z0-9-]+$/, "Invalid slug format")),
+
+    fullName: z
+      .string()
+      .min(2, "Full name must be at least 2 characters"),
 
     email: z
       .string()
@@ -30,12 +38,11 @@ export const registerSchema = z
 
     confirmPassword: z
       .string()
-      .min(6, "Confirm password is required"),
-  })
-
-  .refine(data => data.password === data.confirmPassword, {
+      .min(6, "Confirm password is required"),  
+  }).refine(data => data.password === data.confirmPassword, {
     message: "Passwords do not match",
     path: ["confirmPassword"],
   });
 
+export type LoginFormValues = z.infer<typeof loginSchema>;
 export type RegisterFormValues = z.infer<typeof registerSchema>;

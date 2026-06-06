@@ -31,9 +31,4 @@ const tenantSchema = new mongoose.Schema(
   }
 );
 
-tenantSchema.index(
-  { slug: 1 },
-  { unique: true }
-);
-
 export const TenantModel = mongoose.model<ITenant>("Tenant", tenantSchema);
