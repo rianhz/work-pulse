@@ -1,0 +1,110 @@
+{
+  "type": "doc",
+  "content": [
+    {
+      "type": "heading",
+      "attrs": {
+        "textAlign": null,
+        "level": 1
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Description"
+        }
+      ]
+    },
+    {
+      "type": "bulletList",
+      "content": [
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "attrs": {
+                "textAlign": "left"
+              },
+              "content": [
+                {
+                  "type": "text",
+                  "marks": [
+                    {
+                      "type": "bold"
+                    }
+                  ],
+                  "text": "Superscript"
+                },
+                {
+                  "type": "text",
+                  "text": " (x"
+                },
+                {
+                  "type": "text",
+                  "marks": [
+                    {
+                      "type": "superscript"
+                    }
+                  ],
+                  "text": "2"
+                },
+                {
+                  "type": "text",
+                  "text": ") and "
+                },
+                {
+                  "type": "text",
+                  "marks": [
+                    {
+                      "type": "bold"
+                    }
+                  ],
+                  "text": "Subscript"
+                },
+                {
+                  "type": "text",
+                  "text": " (H"
+                },
+                {
+                  "type": "text",
+                  "marks": [
+                    {
+                      "type": "subscript"
+                    }
+                  ],
+                  "text": "2"
+                },
+                {
+                  "type": "text",
+                  "text": "O) for precision."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "attrs": {
+                "textAlign": "left"
+              },
+              "content": [
+                {
+                  "type": "text",
+                  "marks": [
+                    {
+                      "type": "bold"
+                    }
+                  ],
+                  "text": "Typographic conversion"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

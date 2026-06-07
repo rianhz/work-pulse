@@ -1,6 +1,10 @@
 @import "tailwindcss";
 @import "tw-animate-css";
-@import "shadcn/tailwind.css";
+@import "shadcn/tailwind.css";;
+
+/* @import "../styles/_variables.scss"; */
+@import "../styles/_keyframe-animations.scss";
+
 
 @custom-variant dark (&:is(.dark *));
 
@@ -129,4 +133,39 @@
   html {
     @apply font-sans;
   }
+}
+
+.running-event {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+}
+
+.live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #22c55e;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+.fc .fc-scrollgrid-section-header.fc-scrollgrid-section-sticky > *{
+  top: -24px;
+}
+
+.fc-direction-ltr .fc-timegrid-col-events{
+  margin: 0;
 }
