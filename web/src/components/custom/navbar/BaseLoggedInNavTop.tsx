@@ -11,7 +11,7 @@ export default function BaseLoggedInNavTop() {
   const { toggleSidebar } = useSidebar();
 
   return (
-    <nav className="sticky top-0 right-0 w-full border-b border-sidebar-border">
+    <nav className="sticky top-0 right-0 w-full border-b border-sidebar-border z-50">
       <header className="flex py-2 items-center justify-between px-6">
         
         <div className="flex items-center gap-4">

@@ -7,6 +7,7 @@ import { IResponse } from "@/global";
 import { setUser } from "@/store/reducers/userSlice";
 import { getMe } from "../users/api";
 import { useDispatch } from "react-redux";
+import { logout as logoutAction } from "@/store/reducers/userSlice";
 
 
 export const useLogin = () => {
@@ -46,11 +47,13 @@ export const useRegister = () => {
 
 export const useLogout = () => {
   const router = useRouter();
+  const dispatch = useDispatch();
   return useMutation({
     mutationFn: logout,
 
     onSuccess: () => {
       toast.success("Logged out successfully");
+      dispatch(logoutAction());
       router.push("/login");
     },
 
