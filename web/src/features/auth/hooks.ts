@@ -2,15 +2,24 @@ import { useMutation } from "@tanstack/react-query";
 import { login, logout, register } from "@/features/auth/api";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { ILoginPayload, IRegisterPayload } from "./auth";
+import { IResponse } from "@/global";
+import { setUser } from "@/store/reducers/userSlice";
+import { getMe } from "../users/api";
+import { useDispatch } from "react-redux";
 
 
 export const useLogin = () => {
   const router = useRouter();
+  const dispatch = useDispatch();
   return useMutation({
-    mutationFn: login,
+    mutationFn: (payload: ILoginPayload) => login(payload),
 
     onSuccess: async () => {
-      console.log("login success");
+      const user = await getMe();
+      dispatch(setUser(user));
+      router.push("/dashboard");
+
     },
 
     onError: error => {
@@ -22,10 +31,10 @@ export const useLogin = () => {
 export const useRegister = () => {
   const router = useRouter();
   return useMutation({
-    mutationFn: register,
+    mutationFn: (payload: IRegisterPayload) => register(payload),
 
-    onSuccess: () => {
-      toast.success("Account created successfully");
+    onSuccess: (data: IResponse<void>) => {
+      toast.success(data.message);
       router.push("/login");
     },
 
@@ -41,7 +50,7 @@ export const useLogout = () => {
     mutationFn: logout,
 
     onSuccess: () => {
-      console.log("logout success");
+      toast.success("Logged out successfully");
       router.push("/login");
     },
 

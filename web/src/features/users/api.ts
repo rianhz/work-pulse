@@ -1,8 +1,11 @@
-import { AxiosError } from "axios";
+import { AxiosError, RawAxiosRequestHeaders } from "axios";
+import { IGetMeResponse } from "./users";
+import { api } from "@/lib/axios";
 
-export const getMe = async ({ Cookie }: { Cookie: string }) => {
+export const getMe = async (headers?: RawAxiosRequestHeaders) => {
   try {
-    console.log("getMe");
+    const response = await api.get<IGetMeResponse>("/users/me", { headers });
+    return response.data.data;
   } catch (error) {
     if (error instanceof AxiosError) {
       throw new Error(error.response?.data.message || error.response?.data.error || 'Failed to get profile');

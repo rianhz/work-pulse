@@ -1,8 +1,10 @@
 import { Router } from 'express';
-import { getMeController } from './controllers';
+import { changePasswordController, getMeController } from './controllers';
+import { protectRoute } from '../../middleware/auth-middleware';
 
 const router = Router();
 
-router.get('/me', getMeController);
+router.get('/me', protectRoute, getMeController);
+router.patch('/change-password', protectRoute, changePasswordController);
 
 export const usersRoutes = router;

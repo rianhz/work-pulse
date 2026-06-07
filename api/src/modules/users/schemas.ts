@@ -1,18 +1,79 @@
-import { Schema, model } from 'mongoose';
-import { IUser } from './interfaces';
 
-export const UserSchema = new Schema<IUser>({
-  email: { type: String, required: true, unique: true, lowercase: true, trim: true },
-  passwordHash: { type: String, required: true },
-  googleId: { type: String, required: false, default: null },
-  name: { type: String, required: false, default: null },
-  avatar: { type: String, required: false, default: null },
-  assetIntegrations: { type: [String], default: [] },
-  refreshToken: {
-    token: { type: String, required: false, default: null },
-    expiresIn: { type: Number, required: false, default: null },
-    createdAt: { type: Date, required: false, default: null },
+import mongoose from "mongoose";
+import { IUser } from "./interfaces";
+
+const userSchema = new mongoose.Schema<IUser>(
+  {
+    tenantId: {
+      type: String,
+      required: true,
+    },
+
+    email: {
+      type: String,
+      required: true,
+      lowercase: true,
+      trim: true,
+    },
+
+    fullName: {
+      type: String,
+      required: true,
+    },
+
+    role: {
+      type: String,
+      enum: [
+        "owner",
+        "admin",
+        "manager",
+        "team-leader",
+        "employee",
+      ],
+      default: "employee",
+    },
+
+    avatar: {
+      type: String,
+      required: false,
+      default: "",
+    },
+
+    status: {
+      type: String,
+      enum: [
+        "active",
+        "pending",
+        "disabled",
+      ],
+      default: "active",
+    },
+
+    refreshToken: {
+      token: {
+        type: String,
+        required: false,
+        default: null,
+      },
+      expiresIn: {
+        type: Number,
+        required: false,
+        default: null,
+      },
+      createdAt: {
+        type: Date,
+        required: false,
+        default: null,
+      },
+    },
   },
-}, { timestamps: true });
+  {
+    timestamps: true,
+  }
+);
 
-export const UserModel = model<IUser>('User', UserSchema);
+userSchema.index({
+  email: 1,
+});
+
+export const UserModel = mongoose.model<IUser>("User", userSchema);

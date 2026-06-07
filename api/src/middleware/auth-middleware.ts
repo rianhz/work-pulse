@@ -1,6 +1,5 @@
 import { Request, Response, NextFunction } from "express";
 import jwt, { JwtPayload } from "jsonwebtoken";
-import { UserModel } from "../modules/users/schemas";
 import { generateAccessToken, generateRefreshToken } from "../helpers/auth-helper";
 import bcrypt from "bcryptjs";
 import { 
@@ -11,6 +10,7 @@ import {
   REFRESH_TOKEN_EXPIRES_IN, 
   REFRESH_TOKEN_SECRET 
 } from "../utils/constant";
+import { UserModel } from "../modules/users/schemas";
 
 export const protectRoute = async (
     req: Request,
@@ -60,7 +60,8 @@ export const protectRoute = async (
             REFRESH_TOKEN_SECRET
         ) as JwtPayload;
 
-        const userId = decodedRefresh.id || decodedRefresh._id || (typeof decodedRefresh === "string" ? decodedRefresh : null);
+        const userId = decodedRefresh.userId.toString();
+        const tenantId = decodedRefresh.tenantId.toString();
 
         if (!userId) {
             console.error("Payload Extraction Failed. No clear user identification found.");
@@ -80,15 +81,22 @@ export const protectRoute = async (
             return;
         }
 
+
         const isRefreshTokenMatch = await bcrypt.compare(
             refreshToken,
             user.refreshToken.token
         );
 
+        console.log("isRefreshTokenMatch", isRefreshTokenMatch);
+
 
         if (!isRefreshTokenMatch) {
             await UserModel.findByIdAndUpdate(userId, {
-                $unset: { refreshToken: null },
+                $set: { refreshToken: {
+                    token: null,
+                    expiresIn: null,
+                    createdAt: null,
+                } },
             });
 
             res.clearCookie("accessToken", ACCESS_COOKIE_OPTIONS);
@@ -102,13 +110,13 @@ export const protectRoute = async (
         }
 
         const newAccessToken = generateAccessToken(
-            userId.toString(),
+            { userId: userId.toString(), tenantId: tenantId },
             ACCESS_TOKEN_EXPIRES_IN
         );
 
         const newRefreshToken = generateRefreshToken(
-            userId.toString(),
-            REFRESH_TOKEN_EXPIRES_IN,
+            { userId: userId.toString(), tenantId: tenantId },
+            REFRESH_TOKEN_EXPIRES_IN
         );
 
         const hashedRefreshToken = await bcrypt.hash(newRefreshToken, 10);
@@ -126,8 +134,7 @@ export const protectRoute = async (
         res.cookie("accessToken", newAccessToken, ACCESS_COOKIE_OPTIONS);
         res.cookie("refreshToken", newRefreshToken, REFRESH_COOKIE_OPTIONS);
 
-        (req as any).user = { id: userId.toString() };
-
+        (req as any).user = { userId: userId.toString(), tenantId: tenantId };
         console.log("Tokens cycled successfully mid-flight! Forwarding request details.");
         next();
     } catch (error) {

@@ -1,14 +1,22 @@
+import { IResponse } from "@/global";
+
 export interface IUser {
-  id: string;
-  name: string;
-  avatar: string;
+  _id: string;
+  tenantId: string;
   email: string;
+  fullName: string;
   role: string;
-  department: string;
-  position: string;
-  teamId: string;
-  phone: string;
-  country: string;
-  createdAt: string;
-  updatedAt: string;
+  status: string;
+  avatar: string;
+  createdAt: Date;
+  updatedAt: Date;
+  refreshToken: {
+    token: string;
+    expiresIn: number;
+    createdAt: Date;
+  } | null;
+}
+
+export interface IGetMeResponse extends IResponse {
+  data: IUser;
 }

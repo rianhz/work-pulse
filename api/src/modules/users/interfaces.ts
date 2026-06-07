@@ -1,21 +1,16 @@
-export enum IntegrationType {
-    CANVA = 'canva',
-    GOOGLE = 'google-drive',
-}
-
 export interface IUser {
     _id: string;
+    tenantId: string;
     email: string;
-    passwordHash?: string;
-    googleId?: string;    
-    name?: string;
-    avatar?: string;
+    fullName: string;
+    role: string;
+    status: string;
+    avatar: string;
     createdAt: Date;
     updatedAt: Date;
-    assetIntegrations: Array<IntegrationType>;
     refreshToken: {
-        token: string;
-        expiresIn: number;
-        createdAt: Date;
-    } | null;
+        token: string | null;
+        expiresIn: number | null;
+        createdAt: Date | null;
+    };
 }
