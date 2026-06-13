@@ -20,11 +20,19 @@ const tenantSchema = new mongoose.Schema(
       type: String,
       default: "trial",
     },
+    description: {
+      type: String,
+      required: false,
+    },
 
     status: {
       type: String,
       default: "active",
     },
+    projects: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Project",
+    }],
   },
   {
     timestamps: true,

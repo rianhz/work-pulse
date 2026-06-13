@@ -1,8 +1,9 @@
 import mongoose from 'mongoose';
+import { Env } from './env-config';
 
 export const connectDatabase = async (): Promise<void> => {
   try {
-    const mongoUri = process.env.MONGO_URI || 'mongodb://localhost:2017/work-pulse-cluseter';
+    const mongoUri = Env.MONGO_URI;
     await mongoose.connect(mongoUri);
     console.log('🚀 MongoDB connected successfully');
   } catch (error) {

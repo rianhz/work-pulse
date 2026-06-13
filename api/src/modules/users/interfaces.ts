@@ -6,8 +6,7 @@ export interface IUser {
     role: string;
     status: string;
     avatar: string;
-    createdAt: Date;
-    updatedAt: Date;
+    projects: string[];
     refreshToken: {
         token: string | null;
         expiresIn: number | null;

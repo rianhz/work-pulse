@@ -1,8 +1,10 @@
+import { IProject } from "../projects/interfaces";
 export interface ITenant {
     _id: string;
     name: string;
     slug: string;
     description: string;
-    createdAt: Date;
-    updatedAt: Date;
+    plan: string;
+    status: string;
+    projects: IProject[];
 }

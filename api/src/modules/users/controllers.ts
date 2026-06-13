@@ -1,28 +1,36 @@
 import { Request, Response } from 'express';
-import { changePasswordService, getMeService } from './services';
+import { addProjectToUserService, changePasswordService, getMeService, removeProjectFromUserService } from './services';
+import { HTTPSTATUS } from '../../utils/http-config';
+import { asyncHandler } from '../../middleware/async-handler';
+import { BadRequestException } from '../../utils/app-error';
 
-export const getMeController = async (req: Request, res: Response) => {
-    try {
-        const { userId } = (req as any).user;
-      
-        const me = await getMeService(userId);
-        res.status(200).json({ success: true, data: me });
-    } catch (error: any) {
-        res.status(400).json({ success: false, message: error.message });
-    }
-};
+export const getMeController = asyncHandler(async (req: Request, res: Response) => {
+    const { userId } = (req as any).user;
+    const me = await getMeService(userId);
+    res.status(HTTPSTATUS.OK).json({ success: true, data: me });
+});
 
-export const changePasswordController = async (req: Request, res: Response) => {
-    try {
-        const { userId } = (req as any).user;
-        const { currentPassword, newPassword } = req.body;
-        if (!currentPassword || !newPassword) {
-            res.status(400).json({ success: false, message: 'Current password and new password are required' });
-            return;
-        }
-        await changePasswordService({ userId, currentPassword, newPassword });
-        res.status(200).json({ success: true, message: 'Password changed successfully' });
-    } catch (error: any) {
-        res.status(400).json({ success: false, message: error.message });
+
+export const changePasswordController = asyncHandler(async (req: Request, res: Response) => {
+    const { userId } = (req as any).user;
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) {
+        throw new BadRequestException('Current password and new password are required');
     }
-};
+    await changePasswordService({ userId, currentPassword, newPassword });
+    res.status(HTTPSTATUS.OK).json({ success: true, message: 'Password changed successfully' });
+});
+
+export const addProjectToUserController = asyncHandler(async (req: Request, res: Response) => {
+    // const { userId } = (req as any).user;
+    const { projectId, userId } = req.body;
+    await addProjectToUserService(userId, projectId);
+    res.status(HTTPSTATUS.OK).json({ success: true, message: 'Project added to user successfully' });
+});
+
+export const removeProjectFromUserController = asyncHandler(async (req: Request, res: Response) => {
+    // const { userId } = (req as any).user;
+    const { projectId, userId } = req.body;
+    await removeProjectFromUserService(userId, projectId);
+    res.status(HTTPSTATUS.OK).json({ success: true, message: 'Project removed from user successfully' });
+});

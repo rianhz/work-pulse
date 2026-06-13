@@ -1,7 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import { generateAccessToken, generateRefreshToken } from "../helpers/auth-helper";
-import bcrypt from "bcryptjs";
 import { 
   ACCESS_COOKIE_OPTIONS, 
   ACCESS_TOKEN_EXPIRES_IN, 
@@ -10,7 +9,8 @@ import {
   REFRESH_TOKEN_EXPIRES_IN, 
   REFRESH_TOKEN_SECRET 
 } from "../utils/constant";
-import { UserModel } from "../modules/users/schemas";
+import { UserModel } from "../modules/users/schema";
+import { compareValue, hashValue } from "../utils/bcrypt";
 
 export const protectRoute = async (
     req: Request,
@@ -82,7 +82,7 @@ export const protectRoute = async (
         }
 
 
-        const isRefreshTokenMatch = await bcrypt.compare(
+        const isRefreshTokenMatch = await compareValue(
             refreshToken,
             user.refreshToken.token
         );
@@ -119,7 +119,7 @@ export const protectRoute = async (
             REFRESH_TOKEN_EXPIRES_IN
         );
 
-        const hashedRefreshToken = await bcrypt.hash(newRefreshToken, 10);
+        const hashedRefreshToken = await hashValue(newRefreshToken, 10);
 
         await UserModel.findByIdAndUpdate(userId, {
             $set: {
