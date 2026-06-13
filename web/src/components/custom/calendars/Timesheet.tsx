@@ -4,20 +4,34 @@ import FullCalendar from "@fullcalendar/react";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from "@fullcalendar/interaction";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import TimesheetDialog from "../popup/TimesheetPopup";
 import { Button } from "@/components/ui/button";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import moment from "moment";
 import { ITimeSheet } from "@/features/timesheet/timesheet";
 import { Label } from "@/components/ui/label";
+import { useGetTimesheets, useUpdateTimesheet } from "@/features/timesheet/hooks";
+import { Spinner } from "@/components/ui/spinner";
+import { toast } from "sonner";
 
 
 export default function TimesheetCalendar() {
   const [open, setOpen] = useState(false);
+  const [updatingEventId, setUpdatingEventId] = useState<string | null>(null);
 
-  const [selectedEvent, setSelectedEvent] = useState<ITimeSheet>({
-    id: "",
+  const { mutate: updateTimesheet, isPending: isUpdating } = useUpdateTimesheet(); 
+
+  const { data: timesheets = [], isLoading } = useGetTimesheets();
+  const mappedTimesheets = useMemo(() => {
+    return timesheets.map((timeSheet: ITimeSheet) => ({
+      ...timeSheet,
+      id: timeSheet._id,
+    }));
+  }, [timesheets]);
+
+  const [timeSheetData, setTimeSheetData] = useState<ITimeSheet>({
+    _id: "",
     title: "",
     start: "",
     end: "",
@@ -58,8 +72,8 @@ export default function TimesheetCalendar() {
   }, [])
 
   const handleEventClicked = (info: any) => {
-    setSelectedEvent({
-      id: info.event.id,
+    setTimeSheetData({
+      _id: info.event.id,
       title: info.event.title,
       start: info.event.start,
       end: info.event.end,
@@ -71,8 +85,8 @@ export default function TimesheetCalendar() {
   };
 
   const handleDateClicked = (info: any) => {
-    setSelectedEvent({
-      id: "",
+    setTimeSheetData({
+      _id: "",
       title: "",
       start: info.date,
       end: moment(info.date).add(30, 'minutes').toISOString(),
@@ -82,36 +96,32 @@ export default function TimesheetCalendar() {
     });
     setOpen(true);
   };
-  const events = [
-    {
-      id: "1",
-      title: "Fix Authentication Module",
-      start: "2026-06-07T11:30:00",
-      end: "2026-06-07T13:00:00",
-      description: "Fix Authentication Module",
-      project: {
-        id: "1",
-        name: "WorkPulse Development",
+
+  const handleEventDrop = (info: any) => {
+    const { event } = info;
+    setUpdatingEventId(event.id);
+
+    updateTimesheet({
+      id: event.id,
+      timesheet: {
+        ...event.extendedProps,
+        start: event.start,
+        end: event.end,
       },
-      payAs: "debt",
-    },
-    {
-      id: "2",
-      title: "Team Meeting",
-      start: "2026-06-07T13:00:00",
-      end: "2026-06-07T17:00:00",
-      description: "Team Meeting",
-      project: {
-        id: "2",
-        name: "Internal Development",
+    }, {
+      onSettled: () => {
+        setUpdatingEventId(null);
       },
-      payAs: "overtime",
-    },
-  ];
+      onError: () => {
+        info.revert()
+        toast.error("Failed to update timesheet");
+      },
+    });
+  };
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between py-4 px-0 border-b">
+    <div className="flex flex-col">
+      <div className="flex items-center justify-between pb-4 px-0 border-b">
         <div className="flex items-center gap-2">
           <Button 
             variant="outline"
@@ -165,63 +175,78 @@ export default function TimesheetCalendar() {
           </div>
         </div>
       </div>
-      <FullCalendar
-        ref={calendarRef}
-        plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-        initialView={activeView}
-        headerToolbar={false}
-        height="auto"
-        events={events}
-        eventContent={(arg) => {
-          const start = arg.event.start;
-          const end = arg.event.end;
-          const now = new Date();
-          
-          const isRunning = start && end && now >= start && now <= end;
+      <div className="relative">
+        <FullCalendar
+          ref={calendarRef}
+          plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+          initialView={activeView}
+          headerToolbar={false}
+          height="auto"
+          events={mappedTimesheets}
+          nowIndicator={true}
+          editable={!isUpdating}
+          eventClassNames={(arg) => {
+            const isThisEventUpdating = updatingEventId === arg.event.id;
+            return isThisEventUpdating ? "pointer-events-none opacity-60 select-none" : "";
+          }}
+          eventContent={(arg) => {
+            const start = arg.event.start;
+            const end = arg.event.end;
+            const now = new Date();
+            
+            const isRunning = start && end && now >= start && now <= end;
 
-          return (
-            <div
-              className={
-                isRunning
-                  ? "running-event"
-                  : ""
-              }
-              >
-              {isRunning && (
-                <span className="live-dot" />
-              )}
+            return (
+              <div
+                className={
+                  isRunning
+                    ? "running-event"
+                    : ""
+                }
+                >
+                {isRunning && (
+                  <span className="live-dot" />
+                )}
 
-              <span>
-                {arg.event.title}
-              </span>
-            </div>
-          );
-        }}
-        dateClick={(info) => {
-          handleDateClicked(info);
-        }}
-        eventClick={(info) => {
-          handleEventClicked(info);
-        }}
-        editable={true}
-        eventDurationEditable={true}
-        allDaySlot={false}
-        slotLabelFormat={{
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: false
-        }}
-
-        eventTimeFormat={{
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: false
-        }}
-      />
+                <span className="flex items-center gap-2">
+                  {arg.event.title} {isUpdating && arg.event.id === updatingEventId && <Spinner className="size-4 animate-spin" /> }
+                </span>
+              </div>
+            );
+          }}
+          dateClick={(info) => {
+            if (isUpdating) return;
+            handleDateClicked(info);
+          }}
+          eventClick={(info) => {
+            if (isUpdating) return;
+            handleEventClicked(info);
+          }}
+          eventDrop={(info) => {
+            handleEventDrop(info);
+          }}
+          eventResize={(info) => {
+            handleEventDrop(info);
+          }}
+          eventDurationEditable={true}
+          allDaySlot={false}
+          slotLabelFormat={{
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+          }}
+          eventTimeFormat={{
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+          }}
+        />
+      </div>
+      
       <TimesheetDialog
         open={open}
         onOpenChange={setOpen}
-        initialData={selectedEvent}
+        timeSheetData={timeSheetData}
       />
     </div>
   );

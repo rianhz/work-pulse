@@ -15,12 +15,17 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { BaseEditor } from "@/components/tiptap/base/BaseEditor";
-import ProjectsDropdown, { IProject } from "../dropdown/ProjectsDropdown";
+import ProjectsDropdown from "../dropdown/ProjectsDropdown";
 import { ITimeSheet } from "@/features/timesheet/timesheet";
 import moment from "moment";
 import { Badge } from "@/components/ui/badge";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { useCreateTimesheet, useUpdateTimesheet } from "@/features/timesheet/hooks";
+import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
+import { Loader2 } from "lucide-react";
+import { updateTimesheet } from "@/features/timesheet/api";
 
 interface Props {
   open: boolean;
@@ -28,24 +33,19 @@ interface Props {
     open: boolean
   ) => void;
 
-  initialData?: {
-    id: string;
-    title: string;
-    payAs: string;
-    start: string;
-    end: string;
-    description: string;
-    project: IProject;
-  };
+  timeSheetData: ITimeSheet;
 }
 
 export default function TimesheetDialog({
   open,
   onOpenChange,
-  initialData,
+  timeSheetData,
 }: Props) {
+  const { mutate: createTimesheet, isPending } = useCreateTimesheet();
+  const { mutate: updateTimesheet, isPending: isUpdating } = useUpdateTimesheet();
+  const queryClient = useQueryClient();
   const [event, setEvent] = useState<ITimeSheet>({
-    id: "",
+    _id: "",
     title: "",
     start: "",
     end: "",
@@ -55,19 +55,49 @@ export default function TimesheetDialog({
   });
 
   const save = async () => {
-    console.log(event);
+    if (timeSheetData._id) {
+      console.log(timeSheetData);
+      updateTimesheet({ id: timeSheetData._id, timesheet: event }, {
+        onSuccess: () => {
+          toast.success("Timesheet updated successfully");
+          queryClient.invalidateQueries({ queryKey: ['timesheets'] });
+          onOpenChange(false);
+        },
+      });
+    } else {
+      const { _id, ...rest } = event;
+      console.log(rest);
+      createTimesheet(event, {
+        onSuccess: () => {
+          toast.success("Timesheet created successfully");
+          queryClient.invalidateQueries({ queryKey: ['timesheets'] });
+          onOpenChange(false);
+        },
+      });
+    }
+  };
 
-    onOpenChange(false);
+  const handleDescriptionChange = (content: string) => {
+    console.log(content);
+    setEvent((prev) => ({
+      ...prev,
+      description: content,
+    }));
   };
 
   useEffect(() => {
-    setEvent((prev) => ({
-      ...prev,
-      ...initialData,
-    }));
-
-    console.log(event);
-  }, [initialData]);
+  if (open) {
+    setEvent({
+      _id: timeSheetData._id || "",
+      title: timeSheetData.title || "",
+      start: timeSheetData.start || "",
+      end: timeSheetData.end || "",
+      description: timeSheetData.description || "",
+      project: timeSheetData.project || { id: "", name: "" },
+      payAs: timeSheetData.payAs || "",
+    });
+  }
+}, [timeSheetData, open]);
 
   return (
     <Dialog
@@ -152,7 +182,7 @@ export default function TimesheetDialog({
 
             <ProjectsDropdown onChangeHanlder={(project) => setEvent((prev) => ({
               ...prev,
-              project: project,
+              project: { id: project.id, name: project.name },
             }))} />
           </div>
 
@@ -180,14 +210,15 @@ export default function TimesheetDialog({
           )}
 
           <div className="h-[220px] overflow-y-auto rounded-md border border-border p-2">
-            <BaseEditor initialContent={event.description} />
+            <BaseEditor initialContent={event.description} onChange={handleDescriptionChange} />
           </div>
 
           <DialogFooter>
             <Button
               onClick={save}
+              disabled={isPending || isUpdating}
             >
-              Save
+              {isPending || isUpdating ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save"}
             </Button>
           </DialogFooter>
         </div>

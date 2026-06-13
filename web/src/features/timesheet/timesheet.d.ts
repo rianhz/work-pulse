@@ -1,5 +1,7 @@
+import { IProject } from "../projects/project";
+
 export interface ITimeSheet {
-  id: string;
+  _id: string;
   title: string;
   start: string;
   end: string;

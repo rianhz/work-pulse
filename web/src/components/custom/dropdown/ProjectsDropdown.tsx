@@ -1,41 +1,45 @@
 import { DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 import { DropdownMenu } from "@/components/ui/dropdown-menu";
-import { FolderKanban } from "lucide-react";
-import { useState } from "react";
+import { useGetProjectsByBulkIds } from "@/features/projects/hooks";
+import { IProject } from "@/features/projects/project";
+import { FolderKanban, Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useSelector } from "react-redux";
+import { RootState } from "@/store";
 
-export interface IProject {
-  id: string;
-  name: string;
-}
+export default function ProjectsDropdown({onChangeHanlder}: {onChangeHanlder: (project: { id: string; name: string; }) => void}) {
+  const userProjects = useSelector((state: RootState) => state.currentUser.user?.projects);
+  const { data: projectsOptions, mutate: getProjectsByBulkIds, isPending } = useGetProjectsByBulkIds();
 
-const dummyProjects = [
-    {
-      id: "1",
-      name:
-        "WorkPulse Development",
-    },
-    {
-      id: "2",
-      name:
-        "Internal Development",
-    },
-  ];
-
-export default function ProjectsDropdown({onChangeHanlder}: {onChangeHanlder: (project: IProject) => void}) {
-  const [projectOptions, setProjectOptions] = useState<IProject[]>(dummyProjects);
+  useEffect(() => {
+    if (userProjects) {
+      getProjectsByBulkIds(userProjects);
+    }
+  }, []);
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger>
+      <DropdownMenuTrigger disabled={isPending}>
         <FolderKanban className="cursor-pointer"/>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="min-w-80">
-        {projectOptions.map(project => (
-          <DropdownMenuItem key={project.id} onSelect={() => onChangeHanlder(project)} className="w-full truncate line-clamp-1">
+        {isPending && (
+          <DropdownMenuItem disabled>
+            <Loader2 className="animate-spin" />
+          </DropdownMenuItem>
+        )}
+        {!isPending && projectsOptions && projectsOptions.map(project => (
+          <DropdownMenuItem key={project._id} onSelect={() => onChangeHanlder({ id: project._id, name: project.name })} className="w-full truncate line-clamp-1">
             {project.name}
           </DropdownMenuItem>
         ))}
+
+        {!isPending && !projectsOptions && (
+          <DropdownMenuItem disabled>
+            No projects found
+          </DropdownMenuItem>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   )

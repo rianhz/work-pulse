@@ -176,7 +176,7 @@ const MobileToolbarContent = ({
   </>
 )
 
-export function BaseEditor({initialContent}: {initialContent?: string}) {
+export function BaseEditor({initialContent, onChange}: {initialContent?: string, onChange: (content: string) => void}) {
   const isMobile = useIsBreakpoint()
   const { height } = useWindowSize()
   const [mobileView, setMobileView] = useState<"main" | "highlighter" | "link">(
@@ -221,7 +221,10 @@ export function BaseEditor({initialContent}: {initialContent?: string}) {
         onError: (error) => console.error("Upload failed:", error),
       }),
     ],
-    content: initialContent || content,
+    onUpdate: ({ editor }) => {
+      onChange(editor.getHTML())
+      console.log("editor on update triggered")
+    },
   })
 
   const rect = useCursorVisibility({
@@ -234,6 +237,12 @@ export function BaseEditor({initialContent}: {initialContent?: string}) {
       setMobileView("main")
     }
   }, [isMobile, mobileView])
+
+  useEffect(() => {
+    if (editor && initialContent !== undefined && editor.getHTML() !== initialContent) {
+      editor.commands.setContent(initialContent || content)
+    }
+  }, [initialContent, editor])
 
   return (
     <div className="simple-editor-wrapper">

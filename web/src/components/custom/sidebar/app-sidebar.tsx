@@ -20,6 +20,7 @@ import {
   Settings,
   Home,
   Calendar,
+  MessageCircle,
 } from "lucide-react";
 
 export function AppSidebar() {
@@ -27,8 +28,9 @@ export function AppSidebar() {
 
   const items = [
     { title: "Dashboard", url: "/dashboard", icon: Home },
-    { title: "Settings", url: "/settings", icon: Settings },
+    { title: "Chats", url: "/chats", icon: MessageCircle },
     { title: "Timesheet", url: "/timesheet", icon: Calendar },
+    { title: "Settings", url: "/settings", icon: Settings },
   ];
 
   const { isMobile, open } = useSidebar();

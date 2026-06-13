@@ -1,4 +1,3 @@
-// components/ProfileDropdown.tsx
 "use client";
 
 import { useLogout } from "@/features/auth/hooks";
