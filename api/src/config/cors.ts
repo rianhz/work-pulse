@@ -1,9 +1,7 @@
-import dotenv from 'dotenv';
-dotenv.config();
-
+import { Env } from './env-config';
 
 export const corsOptions = {
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000', 
+  origin: Env.FRONTEND_URL, 
   credentials: true, 
   
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],

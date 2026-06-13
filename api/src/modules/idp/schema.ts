@@ -26,7 +26,7 @@ const identitySchema = new mongoose.Schema<IIdentity>( {
 
 identitySchema.index(
   { provider: 1, providerUserId: 1 },
-  { unique: true }
+  { unique: true, sparse: true }
 );
 
 export const IdentityModel = mongoose.model<IIdentity>("Identity", identitySchema);

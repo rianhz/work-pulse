@@ -1,11 +1,12 @@
-import bcrypt from 'bcryptjs';
 import { generateAccessToken, generateRefreshToken } from '../../helpers/auth-helper';
-import { UserModel } from '../users/schemas';
+import { UserModel } from '../users/schema';
 import { IUser } from '../users/interfaces';
 import { ACCESS_TOKEN_EXPIRES_IN, REFRESH_TOKEN_EXPIRES_IN } from '../../utils/constant';
 import { ILoginPayload, IRegisterPayload } from './interfaces';
-import { TenantModel } from '../tenants/schemas';
+import { TenantModel } from '../tenants/schema';
 import { IdentityModel } from '../idp/schema';
+import { compareValue, hashValue } from '../../utils/bcrypt';
+import { BadRequestException, NotFoundException } from '../../utils/app-error';
 
 const registerService = async (payload: IRegisterPayload): Promise<IUser> => {
     const { email, password, companyName, slug, fullName } = payload;
@@ -13,7 +14,7 @@ const registerService = async (payload: IRegisterPayload): Promise<IUser> => {
     const existingTenant = await TenantModel.findOne({ name: companyName, slug }).lean();
 
     if (existingTenant) {
-        throw new Error('Company already exists');
+        throw new BadRequestException('Tenant already exists');
     }
 
     const tenant = await TenantModel.create({ name: companyName, slug });
@@ -22,7 +23,7 @@ const registerService = async (payload: IRegisterPayload): Promise<IUser> => {
     const existingUser = await UserModel.findOne({ email }).lean();
 
     if (existingUser) {
-        throw new Error('Email is already registered');
+        throw new BadRequestException('Email is already registered');
     }
 
     const user = await UserModel.create({ 
@@ -33,7 +34,7 @@ const registerService = async (payload: IRegisterPayload): Promise<IUser> => {
         status: 'active',
     });
 
-    const passwordHash = await bcrypt.hash(password, 10);
+    const passwordHash = await hashValue(password, 10);
 
     await IdentityModel.create({
         userId: user._id.toString(),
@@ -48,7 +49,7 @@ const loginService = async (payload: ILoginPayload): Promise<{ accessToken: stri
     const { email, password } = payload;
     const user = await UserModel.findOne({ email: email.toLowerCase() }).lean();
     if (!user) {
-        throw new Error('User not found');
+        throw new NotFoundException('User not found');
     }
 
     const identity = await IdentityModel.findOne({
@@ -57,19 +58,19 @@ const loginService = async (payload: ILoginPayload): Promise<{ accessToken: stri
     });
 
     if (!identity) {
-        throw new Error("Password login not enabled");
+        throw new BadRequestException("Password login not enabled");
     }
 
-    const valid = await bcrypt.compare(password, identity.passwordHash);
+    const valid = await compareValue(password, identity.passwordHash);
 
     if (!valid) {
-        throw new Error("Invalid credentials");
+        throw new BadRequestException("Invalid credentials");
     }
 
     const accessToken = generateAccessToken({ userId: user._id.toString(), tenantId: user.tenantId }, ACCESS_TOKEN_EXPIRES_IN); 
     const refreshToken = generateRefreshToken({ userId: user._id.toString(), tenantId: user.tenantId }, REFRESH_TOKEN_EXPIRES_IN);
 
-    const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
+    const hashedRefreshToken = await hashValue(refreshToken, 10);
 
     await UserModel.findByIdAndUpdate(user._id, { 
         $set: { 
@@ -88,18 +89,5 @@ const loginService = async (payload: ILoginPayload): Promise<{ accessToken: stri
 const logoutService = async (userId: string): Promise<void> => {
     await UserModel.findByIdAndUpdate(userId, { $set: { refreshToken: null } });
 };
-
-// const meService = async (userId: string) => {
-//     const user = await UserModel.findById(userId)
-//         .select("-passwordHash -refreshToken")
-//         .lean();
-
-//     if (!user) {
-//         throw new Error("User not found");
-//     }
-
-//     return user;
-// };
-
 
 export { registerService, loginService, logoutService };

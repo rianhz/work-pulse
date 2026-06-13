@@ -15,6 +15,7 @@ export interface IUser {
     expiresIn: number;
     createdAt: Date;
   } | null;
+  projects: string[];
 }
 
 export interface IGetMeResponse extends IResponse {

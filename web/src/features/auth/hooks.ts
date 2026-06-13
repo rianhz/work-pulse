@@ -54,7 +54,7 @@ export const useLogout = () => {
     onSuccess: () => {
       toast.success("Logged out successfully");
       dispatch(logoutAction());
-      router.push("/login");
+      router.push("/signin");
     },
 
     onError: error => {

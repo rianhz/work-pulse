@@ -48,6 +48,10 @@ const userSchema = new mongoose.Schema<IUser>(
       ],
       default: "active",
     },
+    projects: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Project",
+    }],
 
     refreshToken: {
       token: {
