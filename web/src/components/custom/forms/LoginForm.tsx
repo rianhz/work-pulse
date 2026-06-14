@@ -39,7 +39,7 @@ export default function LoginForm() {
                     autoComplete="new-password"
                     {...register("email")}
                 />
-                {errors.email && <p className="text-sm text-red-500">{errors.email.message}</p>}
+                {errors.email && <p className="text-xs text-red-500">{errors.email.message}</p>}
                 </div>
                 <div className="grid gap-2">
                 <div className="flex items-center">
@@ -51,8 +51,8 @@ export default function LoginForm() {
                     Forgot your password?
                     </a>
                 </div>
-                <Input id="password" type="password" autoComplete="new-password" {...register("password")} />
-                {errors.password && <p className="text-sm text-red-500">{errors.password.message}</p>}
+                <Input id="password" type="password" placeholder="Example@123" autoComplete="new-password" {...register("password")} />
+                {errors.password && <p className="text-xs text-red-500">{errors.password.message}</p>}
                 </div>
             </div>
             <Button type="submit" className="w-full mt-4" disabled={isPending}>

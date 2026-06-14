@@ -4,8 +4,8 @@ import { asyncHandler } from '../../middleware/async-handler';
 import { HTTPSTATUS } from '../../utils/http-config';
 
 export const getTenantController = asyncHandler(async (req: Request, res: Response) => {
-    const tenantId = (req as any).user.tenantId;
-    const tenant = await getTenantService(tenantId as string);
+    const tenantId = req.params.id as string;
+    const tenant = await getTenantService(tenantId);
     res.status(HTTPSTATUS.OK).json({ success: true, data: tenant });
 });
 
