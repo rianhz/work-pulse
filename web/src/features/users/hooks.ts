@@ -46,3 +46,27 @@ export const useUpdateUser = () => {
     },
   });
 };
+
+export const useUpdateAvatar = () => {
+  return useMutation({
+    mutationFn: (payload: { avatar: string }) => updateUser({ avatar: payload.avatar }),
+    onSuccess: (data: IResponse<void>) => {
+      toast.success(data.message);
+    },
+    onError: error => {
+      toast.error((error as any)?.response?.data?.message || error?.message);
+    },
+  });
+};
+
+export const useUpdateFullName = () => {
+  return useMutation({
+    mutationFn: (payload: { fullName: string }) => updateUser({ fullName: payload.fullName }),
+    onSuccess: (data: IResponse<void>) => {
+      toast.success(data.message);
+    },
+    onError: error => {
+      toast.error((error as any)?.response?.data?.message || error?.message);
+    },
+  });
+};

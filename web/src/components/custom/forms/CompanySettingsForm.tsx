@@ -5,14 +5,13 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CompanyDescriptionFormValues, companyDescriptionSchema, CompanyNameFormValues, companyNameSchema, CompanySlugFormValues, companySlugSchema } from "@/features/tenants/validator";
 import { Button } from "@/components/ui/button";
-import { useGetTenantById, useUpdateTenant } from "@/features/tenants/hooks";
+import { useGetTenantById, useUpdateDescription, useUpdateFullName, useUpdateLogo, useUpdateSlug } from "@/features/tenants/hooks";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store";
 import { useEffect, useMemo, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CircleCheck, CircleQuestionMark } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
 import { UniversalUploader } from "../uploader/ImageUploader";
 import { InputGroup, InputGroupAddon, InputGroupInput, InputGroupTextarea } from "@/components/ui/input-group";
@@ -22,8 +21,12 @@ import BaseAvatar from "../images/BaseImage";
 
 export function CompanySettingsForm() {
   const tenantId = useSelector((state: RootState) => state.currentUser.user?.tenantId);
-  const { mutate: updateTenant, isPending: isPendingUpdateTenant } = useUpdateTenant();
-  const { data: tenant, isLoading } = useGetTenantById(tenantId);
+  
+  const { mutate: updateLogo, isPending: isPendingUpdateLogo } = useUpdateLogo();
+  const { mutate: updateFullName, isPending: isPendingUpdateFullName } = useUpdateFullName();
+  const { mutate: updateSlug, isPending: isPendingUpdateSlug } = useUpdateSlug();
+  const { mutate: updateDescription, isPending: isPendingUpdateDescription } = useUpdateDescription();
+  const { data: tenant, isLoading, refetch } = useGetTenantById(tenantId);
   const [isUploaderOpen, setIsUploaderOpen] = useState(false);
   const queryClient = useQueryClient();
 
@@ -34,19 +37,19 @@ export function CompanySettingsForm() {
     return tenant?.name.split(' ').map((name) => name[0]).join('').slice(0, 2).toUpperCase() || '';
   }, [tenant]);
 
-  const { register: registerName, handleSubmit: handleSubmitName, formState: { errors: errorsName, isDirty: isDirtyName, isSubmitting: isSubmittingName }, setValue: setValueName, reset: resetName } = useForm<CompanyNameFormValues>({
+  const { register: registerName, handleSubmit: handleSubmitName, formState: { errors: errorsName, isDirty: isDirtyName, isSubmitting: isSubmittingName }, reset: resetName } = useForm<CompanyNameFormValues>({
     resolver: zodResolver(companyNameSchema),
     defaultValues: {
       name: '',
     },
   });
-  const { register: registerSlug, handleSubmit: handleSubmitSlug, formState: { errors: errorsSlug, isDirty: isDirtySlug, isSubmitting: isSubmittingSlug }, setValue: setValueSlug, reset: resetSlug } = useForm<CompanySlugFormValues>({
+  const { register: registerSlug, handleSubmit: handleSubmitSlug, formState: { errors: errorsSlug, isDirty: isDirtySlug, isSubmitting: isSubmittingSlug }, reset: resetSlug } = useForm<CompanySlugFormValues>({
     resolver: zodResolver(companySlugSchema),
     defaultValues: {
       slug: '',
     },
   });
-  const { register: registerDescription, handleSubmit: handleSubmitDescription, formState: { errors: errorsDescription, isDirty: isDirtyDescription, isSubmitting: isSubmittingDescription }, setValue: setValueDescription, reset: resetDescription } = useForm<CompanyDescriptionFormValues>({
+  const { register: registerDescription, handleSubmit: handleSubmitDescription, formState: { errors: errorsDescription, isDirty: isDirtyDescription, isSubmitting: isSubmittingDescription }, reset: resetDescription } = useForm<CompanyDescriptionFormValues>({
     resolver: zodResolver(companyDescriptionSchema),
     defaultValues: {
       description: '',
@@ -55,19 +58,29 @@ export function CompanySettingsForm() {
 
 
   const onSubmitName = (values: CompanyNameFormValues) => {
-    updateTenant({ id: tenantId || '', payload: values },
+    updateFullName(
+      {
+        id: tenantId || '',
+        payload: values,
+      },
       {
         onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: ['tenant', tenantId] });
+          resetName(values);
+          queryClient.invalidateQueries({queryKey: ['tenant', tenantId],});
         },
       }
     );
   };
 
   const onSubmitSlug = (values: CompanySlugFormValues) => {
-    updateTenant({ id: tenantId || '', payload: values },
+    updateSlug(
+      {
+        id: tenantId || '',
+        payload: values,
+      },
       {
         onSuccess: () => {
+          resetSlug(values);
           queryClient.invalidateQueries({ queryKey: ['tenant', tenantId] });
         },
       }
@@ -75,9 +88,14 @@ export function CompanySettingsForm() {
   };
 
   const onSubmitDescription = (values: CompanyDescriptionFormValues) => {
-    updateTenant({ id: tenantId || '', payload: values },
+    updateDescription(
+      {
+        id: tenantId || '',
+        payload: values,
+      },
       {
         onSuccess: () => {
+          resetDescription(values);
           queryClient.invalidateQueries({ queryKey: ['tenant', tenantId] });
         },
       }
@@ -90,7 +108,17 @@ export function CompanySettingsForm() {
   };
 
   const handleLogoSave = () => {
-    updateTenant({ id: tenantId || '', payload: { logo: logo } });
+    updateLogo(
+      {
+        id: tenantId || '',
+        payload: { logo: logo },
+      },
+      {
+      onSuccess: () => {
+        setIsLogoDirty(false);
+        queryClient.invalidateQueries({ queryKey: ['tenant', tenantId] });
+      },
+    });
   };
 
   const handleLogoRemove = () => {
@@ -164,7 +192,7 @@ export function CompanySettingsForm() {
                         <Button type="button" variant="destructive" size='xs' className="min-w-[70px]" onClick={handleLogoRemove}>Remove</Button>
                       )}
                       {isLogoDirty && (
-                        <Button type="button" variant='default' size='xs' className="min-w-[70px]" onClick={handleLogoSave} disabled={isPendingUpdateTenant}>{isPendingUpdateTenant ? <Spinner /> : 'Save'}</Button>
+                        <Button type="button" variant='default' size='xs' className="min-w-[70px]" onClick={handleLogoSave} disabled={isPendingUpdateLogo}>{isPendingUpdateLogo ? <Spinner /> : 'Save'}</Button>
                       )}
                     </div>
 
@@ -175,14 +203,16 @@ export function CompanySettingsForm() {
                 <TableCell className="align-top">
                   <Label className="whitespace-nowrap">Name</Label>
                 </TableCell>
-                <TableCell>
+                <TableCell className="w-full">
                   <form onSubmit={handleSubmitName(onSubmitName)}>
                     <div className="flex flex-col">
                       <InputGroup>
                         <InputGroupInput type="text" id="name" placeholder="Name" {...registerName("name")} />
-                        <InputGroupAddon align="inline-end" className="min-w-16 flex items-center justify-end">
-                          {isDirtyName && <Button type="submit" variant='default' size='xs' disabled={isSubmittingName || isPendingUpdateTenant}>{isPendingUpdateTenant ? <Spinner /> : 'Save'}</Button>}
-                        </InputGroupAddon>
+                        {isDirtyName &&
+                          <InputGroupAddon align="inline-end" className="min-w-16 flex items-center justify-end">
+                            <Button type="submit" variant='default' size='xs' disabled={isSubmittingName || isPendingUpdateFullName}>{isPendingUpdateFullName ? <Spinner /> : 'Save'}</Button>
+                          </InputGroupAddon>
+                        }
                       </InputGroup>
                       {errorsName.name && isDirtyName && <p className="text-xs text-red-500">{errorsName.name.message}</p>}
                     </div>
@@ -193,14 +223,13 @@ export function CompanySettingsForm() {
                 <TableCell className="align-top">
                   <Label className="whitespace-nowrap">Slug</Label>
                 </TableCell>
-                <TableCell>
+                <TableCell className="w-full">
                   <form onSubmit={handleSubmitSlug(onSubmitSlug)}>
                     <div className="flex flex-col">
                       <InputGroup>
                         <InputGroupInput type="text" id="slug" placeholder="Slug" {...registerSlug("slug")} />
                         <InputGroupAddon align="inline-end" className="min-w-16 flex items-center justify-end">
-                          {isDirtySlug && <Button type="submit" variant='default' size='xs' disabled={isSubmittingSlug || isPendingUpdateTenant}>Save</Button>}
-                          {isSubmittingSlug && <Spinner />}
+                          {isDirtySlug && <Button type="submit" variant='default' size='xs' disabled={isSubmittingSlug || isPendingUpdateSlug}>{isPendingUpdateSlug ? <Spinner /> : 'Save'}</Button>}
                         </InputGroupAddon>
                       </InputGroup>
                       {errorsSlug.slug && isDirtySlug && <p className="text-xs text-red-500">{errorsSlug.slug.message}</p>}
@@ -212,7 +241,7 @@ export function CompanySettingsForm() {
                 <TableCell className="align-top">
                   <Label className="whitespace-nowrap">Description</Label>
                 </TableCell>
-                <TableCell>
+                <TableCell className="w-full">
                   <form onSubmit={handleSubmitDescription(onSubmitDescription)}>
                     <div className="flex flex-col gap-2 h-full justify-start align-start">
                       <InputGroup className="relative">
@@ -222,8 +251,7 @@ export function CompanySettingsForm() {
                           {...registerDescription("description")}
                         />
                         <div className="flex items-center justify-end gap-2 w-full absolute bottom-2 right-2">
-                          {isDirtyDescription && <Button type="submit" variant='default' size='xs' disabled={isSubmittingDescription || isPendingUpdateTenant}>Save</Button>}
-                          {isSubmittingDescription && <Spinner />}
+                          {isDirtyDescription && <Button type="submit" variant='default' size='xs' disabled={isSubmittingDescription || isPendingUpdateDescription}>{isPendingUpdateDescription ? <Spinner /> : 'Save'}</Button>}
                         </div>
                       </InputGroup>
                     </div>
@@ -235,7 +263,7 @@ export function CompanySettingsForm() {
                 <TableCell>
                   <Label className="whitespace-nowrap">Status</Label>
                 </TableCell>
-                <TableCell>
+                <TableCell className="w-full">
                   <Label className="capitalize">{tenant?.status} <CircleCheck className="size-4 text-green-500 bg-green-500/10" /></Label>
                 </TableCell>
               </TableRow>
@@ -243,7 +271,7 @@ export function CompanySettingsForm() {
                 <TableCell>
                   <Label className="whitespace-nowrap">Plan</Label>
                 </TableCell>
-                <TableCell className="flex items-center justify-between gap-2">
+                <TableCell className="flex items-center justify-between gap-2 w-full">
                   <div className="flex items-center gap-2">
                     <Label className="capitalize">{tenant?.plan}</Label>
                     <Tooltip>

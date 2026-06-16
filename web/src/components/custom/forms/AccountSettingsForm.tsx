@@ -19,7 +19,7 @@ import {
   updatePasswordSchema,
 } from "@/features/users/validator";
 import { Card } from "@/components/ui/card";
-import { useGetMe, useGetMeProviders, useUpdateUser } from "@/features/users/hooks";
+import { useGetMe, useGetMeProviders, useUpdateAvatar, useUpdateFullName } from "@/features/users/hooks";
 import { Skeleton } from "@/components/ui/skeleton";
 import { UniversalUploader } from "../uploader/ImageUploader";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
@@ -29,6 +29,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { useChangePassword, useLogout, useRemoveGoogle, useRemovePassword } from "@/features/auth/hooks";
 import { toast } from "sonner";
 import BaseAvatar from "../images/BaseImage";
+import { useQueryClient } from "@tanstack/react-query";
 
 export function AccountSettingsForm() {
   const { data: user, isLoading } = useGetMe();
@@ -37,7 +38,9 @@ export function AccountSettingsForm() {
   const { mutate: removeGoogleMutation, isPending: isPendingRemoveGoogle } = useRemoveGoogle();
   const { mutate: logoutMutation, isPending: isPendingLogout } = useLogout();
   const { mutate: changePasswordMutation, isPending: isPendingChangePassword } = useChangePassword();
-  const { mutate: updateUserMutation, isPending: isPendingUpdateUser } = useUpdateUser();
+  const { mutate: updateAvatarMutation, isPending: isPendingUpdateAvatar } = useUpdateAvatar();
+  const { mutate: updateFullNameMutation, isPending: isPendingUpdateFullName } = useUpdateFullName();
+  const queryClient = useQueryClient();
 
 
   const [avatar, setAvatar] = useState("");
@@ -83,7 +86,15 @@ export function AccountSettingsForm() {
   }, [user]);
 
   const onSubmitFullName = async (values: UpdateFullNameFormValues) => {
-    updateUserMutation(values);
+    updateFullNameMutation(values, {
+      onSuccess: () => {
+        resetFullName(values);
+        queryClient.invalidateQueries({ queryKey: ["me"] });
+      },
+      onError: (error) => {
+        toast.error((error as any)?.response?.data?.message || (error as Error).message || 'Failed to update full name');
+      },
+    });
   };
 
   const onSubmitPassword = async (values: UpdatePasswordFormValues) => {
@@ -139,11 +150,12 @@ export function AccountSettingsForm() {
   };
 
   const handleAvatarSave = () => {
-    updateUserMutation({
+    updateAvatarMutation({
       avatar: avatar,
     }, {
       onSuccess: () => {
         setIsAvatarDirty(false);
+        queryClient.invalidateQueries({ queryKey: ["me"] });
       },
       onError: (error) => {
         toast.error((error as any)?.response?.data?.message || (error as Error).message || 'Failed to update avatar');
@@ -289,8 +301,8 @@ export function AccountSettingsForm() {
                             <Button type="button" variant="destructive" size='xs' className="min-w-[70px]" onClick={handleAvatarRemove}>Remove</Button>
                           )}
                           {isAvatarDirty && (
-                            <Button type="button" variant="default" disabled={isPendingUpdateUser} size='xs' className="min-w-[70px]" onClick={handleAvatarSave}>
-                              {isPendingUpdateUser ? <Spinner /> : 'Save'}
+                            <Button type="button" variant="default" disabled={isPendingUpdateAvatar} size='xs' className="min-w-[70px]" onClick={handleAvatarSave}>
+                              {isPendingUpdateAvatar ? <Spinner /> : 'Save'}
                             </Button>
                           )}
                         </div>
@@ -313,8 +325,8 @@ export function AccountSettingsForm() {
                       <InputGroupInput type="text" {...registerFullName("fullName")} />
                       <InputGroupAddon align="inline-end" className="min-w-16 flex items-center justify-end">
                         <div className="flex items-center justify-end gap-2 w-full">
-                          {isDirtyFullName && <Button type="submit" variant='default' size='xs' disabled={isSubmittingFullName || isPendingUpdateUser}>
-                            {isSubmittingFullName || isPendingUpdateUser ? <Spinner /> : 'Save'}
+                          {isDirtyFullName && <Button type="submit" variant='default' size='xs' disabled={isSubmittingFullName || isPendingUpdateFullName}>
+                            {isSubmittingFullName || isPendingUpdateFullName ? <Spinner /> : 'Save'}
                           </Button>}
                         </div>
                       </InputGroupAddon>
