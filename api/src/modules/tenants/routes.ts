@@ -4,9 +4,9 @@ import { getTenantController, createTenantController, updateTenantController, de
 
 const router = Router();
 
-router.get('/', protectRoute, getTenantController);
 router.post('/', protectRoute, createTenantController);
-router.put('/', protectRoute, updateTenantController);
-router.delete('/', protectRoute, deleteTenantController);
+router.put('/:id', protectRoute, updateTenantController);
+router.get('/:id', protectRoute, getTenantController);
+router.delete('/:id', protectRoute, deleteTenantController);
 
 export const tenantsRoutes = router;

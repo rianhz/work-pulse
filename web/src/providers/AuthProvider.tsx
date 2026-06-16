@@ -1,6 +1,7 @@
 "use client";
 
 import { setUser } from "@/store/reducers/userSlice";
+import { useEffect } from "react";
 import { useDispatch } from "react-redux";
 
 
@@ -14,9 +15,11 @@ export default function AuthProvider({
 
     const dispatch = useDispatch();
 
-    if (initialUser) {
-        dispatch(setUser(initialUser));
-    }
+    useEffect(() => {
+        if (initialUser) {
+            dispatch(setUser(initialUser));
+        }
+    }, [initialUser, dispatch]);
 
     return <>{children}</>;
 }

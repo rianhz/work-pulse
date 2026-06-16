@@ -9,6 +9,7 @@ import cookieParser from "cookie-parser";
 import { errorHandler } from './middleware/error-handler';
 import { projectsRoutes } from './modules/projects/routes';
 import { timesheetRoutes } from './modules/timesheet/routes';
+import { tenantsRoutes } from './modules/tenants/routes';
 
 const app = express();
 
@@ -18,6 +19,7 @@ app.use(helmet())
 app.use(cookieParser());
 app.use('/auth', authRoutes);
 app.use('/users',protectRoute, usersRoutes);
+app.use('/tenants', protectRoute, tenantsRoutes);
 app.use('/projects', protectRoute, projectsRoutes);
 app.use('/timesheets', protectRoute, timesheetRoutes);
 

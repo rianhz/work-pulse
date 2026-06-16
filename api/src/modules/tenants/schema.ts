@@ -9,6 +9,12 @@ const tenantSchema = new mongoose.Schema(
       required: true,
     },
 
+    logo:{
+      type: String,
+      required: false,
+      default: "",
+    },
+
     slug: {
       type: String,
       required: true,
@@ -23,6 +29,7 @@ const tenantSchema = new mongoose.Schema(
     description: {
       type: String,
       required: false,
+      default: "",
     },
 
     status: {

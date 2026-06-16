@@ -1,6 +1,6 @@
 export interface IIdentity {
   userId: string;
-  provider: string;
+  provider: 'password' | 'google';
   providerUserId: string;
   passwordHash: string;
   email: string;

@@ -1,8 +1,7 @@
 import { Request, Response } from 'express';
-import { addProjectToUserService, changePasswordService, getMeService, removeProjectFromUserService } from './services';
+import { addProjectToUserService, getLoginTypesService, getMeService, removeProjectFromUserService, updateUserService } from './services';
 import { HTTPSTATUS } from '../../utils/http-config';
 import { asyncHandler } from '../../middleware/async-handler';
-import { BadRequestException } from '../../utils/app-error';
 
 export const getMeController = asyncHandler(async (req: Request, res: Response) => {
     const { userId } = (req as any).user;
@@ -10,15 +9,17 @@ export const getMeController = asyncHandler(async (req: Request, res: Response) 
     res.status(HTTPSTATUS.OK).json({ success: true, data: me });
 });
 
-
-export const changePasswordController = asyncHandler(async (req: Request, res: Response) => {
+export const getMeProvidersController = asyncHandler(async (req: Request, res: Response) => {
     const { userId } = (req as any).user;
-    const { currentPassword, newPassword } = req.body;
-    if (!currentPassword || !newPassword) {
-        throw new BadRequestException('Current password and new password are required');
-    }
-    await changePasswordService({ userId, currentPassword, newPassword });
-    res.status(HTTPSTATUS.OK).json({ success: true, message: 'Password changed successfully' });
+    const providers = await getLoginTypesService(userId);
+    res.status(HTTPSTATUS.OK).json({ success: true, data: providers });
+});
+
+export const updateUserController = asyncHandler(async (req: Request, res: Response) => {
+    const { userId } = (req as any).user;
+    const payload = req.body;
+    await updateUserService(userId, payload);
+    res.status(HTTPSTATUS.OK).json({ success: true, message: 'User updated successfully' });
 });
 
 export const addProjectToUserController = asyncHandler(async (req: Request, res: Response) => {

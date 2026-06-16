@@ -1,6 +1,6 @@
 export interface ILoginResponse extends IResponse{
-    accessToken: string;
-    refreshToken: string;
+  accessToken: string;
+  refreshToken: string;
 }
 
 export interface ILoginPayload {
@@ -14,4 +14,15 @@ export interface IRegisterPayload {
   fullName: string;
   email: string;
   password: string;
+}
+
+export interface IRegisterWithGooglePayload {
+  token: string;
+  companyName: string;
+  slug: string;
+}
+
+export interface IChangePasswordPayload {
+  currentPassword: string;
+  newPassword: string;
 }
