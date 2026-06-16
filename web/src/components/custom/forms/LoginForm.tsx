@@ -3,12 +3,15 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { LoginFormValues, loginSchema } from "@/features/auth/validator";
-import { useLogin } from "@/features/auth/hooks";
+import { useGoogleLoginMutation, useLogin } from "@/features/auth/hooks";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { useGoogleLogin } from "@react-oauth/google";
+import { FcGoogle } from "react-icons/fc";
+import { Separator } from "@/components/ui/separator";
 
 export default function LoginForm() {
   const {
@@ -19,10 +22,25 @@ export default function LoginForm() {
     resolver: zodResolver(loginSchema),
   });
 
-  const { mutate: loginMutation, isPending } = useLogin();
+  const { mutate: loginWithGoogleMutation, isPending: isPendingGoogleLogin } = useGoogleLoginMutation();
+
+  const loginWithGoogle = useGoogleLogin({
+    onSuccess: (credentialResponse) => {
+      loginWithGoogleMutation(credentialResponse.access_token);
+    },
+    onError: () => {
+      toast.error("Failed to login with Google");
+    },
+  });
+
+  const { mutate: loginMutationPassword, isPending: isPendingPassword } = useLogin();
 
   const onSubmit = async (values: LoginFormValues) => {
-    loginMutation(values);
+    loginMutationPassword(values);
+  };
+
+  const handleLoginWithGoogle = () => {
+    loginWithGoogle();
   };
 
   return (
@@ -55,9 +73,19 @@ export default function LoginForm() {
                 {errors.password && <p className="text-xs text-red-500">{errors.password.message}</p>}
                 </div>
             </div>
-            <Button type="submit" className="w-full mt-4" disabled={isPending}>
+            <div className="flex flex-col gap-2">
+              <Button type="submit" className="w-full mt-4" disabled={isPendingPassword}>
                 Login
-            </Button>
+              </Button>
+              <div className="flex items-center justify-center gap-2">
+                <Separator />
+                <span className="text-sm text-muted-foreground">Or</span>
+                <Separator />
+              </div>
+              <Button type="button" variant="secondary" className="w-full" disabled={isPendingGoogleLogin} onClick={handleLoginWithGoogle}>
+                  <FcGoogle className="h-4 w-4" /> Login with Google
+              </Button>
+            </div>
         </form>
       </CardContent>
     </Card>

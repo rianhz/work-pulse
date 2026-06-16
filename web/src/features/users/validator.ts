@@ -9,7 +9,7 @@ export const updateEmailSchema = z.object({
 });
 
 export const updatePasswordSchema = z.object({
-  oldPassword: z.string().min(1, "Old password is required"),
+  currentPassword: z.string().min(1, "Current password is required"),
   newPassword: z.string().min(1, "New password is required"),
   confirmNewPassword: z.string().min(1, "Confirm password is required"),
 }).refine(data => data.newPassword === data.confirmNewPassword, {

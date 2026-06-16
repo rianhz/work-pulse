@@ -6,34 +6,48 @@ import {
   Table,
   TableBody,
   TableCell,
-  TableFooter,
   TableRow,
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
-  UpdateEmailFormValues,
   UpdateFullNameFormValues,
   updateFullNameSchema,
   UpdatePasswordFormValues,
   updatePasswordSchema,
-  updateEmailSchema,
 } from "@/features/users/validator";
 import { Card } from "@/components/ui/card";
-import { useGetMe } from "@/features/users/hooks";
+import { useGetMe, useGetMeProviders, useUpdateUser } from "@/features/users/hooks";
 import { Skeleton } from "@/components/ui/skeleton";
 import { UniversalUploader } from "../uploader/ImageUploader";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 import { Spinner } from "@/components/ui/spinner";
+import { CircleCheck } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useChangePassword, useLogout, useRemoveGoogle, useRemovePassword } from "@/features/auth/hooks";
+import { toast } from "sonner";
+import BaseAvatar from "../images/BaseImage";
 
 export function AccountSettingsForm() {
   const { data: user, isLoading } = useGetMe();
+  const { data: providers, isLoading: isLoadingProviders } = useGetMeProviders();
+  const { mutate: removePasswordMutation, isPending: isPendingRemovePassword } = useRemovePassword();
+  const { mutate: removeGoogleMutation, isPending: isPendingRemoveGoogle } = useRemoveGoogle();
+  const { mutate: logoutMutation, isPending: isPendingLogout } = useLogout();
+  const { mutate: changePasswordMutation, isPending: isPendingChangePassword } = useChangePassword();
+  const { mutate: updateUserMutation, isPending: isPendingUpdateUser } = useUpdateUser();
+
+
   const [avatar, setAvatar] = useState("");
   const [isUploaderOpen, setIsUploaderOpen] = useState(false);
-
+  const [isAvatarDirty, setIsAvatarDirty] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isChangePasswordDialogOpen, setIsChangePasswordDialogOpen] = useState(false);
+  const [disconnectProvider, setDisconnectProvider] = useState<string | null>(null);
+  
+  
   const {
     register: registerFullName,
     handleSubmit: handleSubmitFullName,
@@ -47,24 +61,14 @@ export function AccountSettingsForm() {
   });
 
   const {
-    register: registerEmail,
-    reset: resetEmail,
-  } = useForm<UpdateEmailFormValues>({
-    resolver: zodResolver(updateEmailSchema),
-    defaultValues: {
-      email: "",
-    },
-  });
-
-  const {
     register: registerPassword,
     handleSubmit: handleSubmitPassword,
-    formState: { errors: errorsPassword, isDirty: isDirtyPassword, isSubmitting: isSubmittingPassword },
+    formState: { errors: errorsPassword, isSubmitting: isSubmittingPassword },
     reset: resetPassword,
   } = useForm<UpdatePasswordFormValues>({
     resolver: zodResolver(updatePasswordSchema),
     defaultValues: {
-      oldPassword: "",
+      currentPassword: "",
       newPassword: "",
       confirmNewPassword: "",
     },
@@ -78,21 +82,78 @@ export function AccountSettingsForm() {
       .toUpperCase() ?? "";
   }, [user]);
 
+  const onSubmitFullName = async (values: UpdateFullNameFormValues) => {
+    updateUserMutation(values);
+  };
+
+  const onSubmitPassword = async (values: UpdatePasswordFormValues) => {
+    changePasswordMutation({
+      currentPassword: values.currentPassword,
+      newPassword: values.newPassword,
+    },{
+      onSuccess: () => {
+        setIsChangePasswordDialogOpen(false);
+      },
+    });
+  };
+
+  const handleDisconnectClicked = (provider: string) => {
+    setDisconnectProvider(provider);
+    setIsDialogOpen(true);
+  };
+
+  const handleDisconnectConfirmed = async () => {
+    console.log(disconnectProvider);
+    try {
+      if (disconnectProvider === 'google') {
+        removeGoogleMutation();
+        logoutMutation();
+      } else if (disconnectProvider === 'password') {
+        removePasswordMutation();
+        logoutMutation();
+      }
+    } catch (error) {
+      toast.error((error as any)?.response?.data?.message || (error as Error).message || 'Failed to disconnect provider');
+    } finally {
+      setIsDialogOpen(false);
+    }
+  };
+
+  const handleChangePasswordClicked = () => {
+    setIsChangePasswordDialogOpen(true);
+  };
+
+  const handleCloseChangePasswordDialog = () => {
+    setIsChangePasswordDialogOpen(false);
+    resetPassword();
+  };
+
+  const handleChangePasswordDialogOpenChanged = (open: boolean) => {
+    setIsChangePasswordDialogOpen(open);
+    resetPassword();
+  };
+
   const handleUploadSuccess = (url: string) => {
+    setIsAvatarDirty(true);
     setAvatar(url);
   };
 
-  const onSubmitFullName = async (values: UpdateFullNameFormValues) => {
-    console.log(values);
-
-    // await updateProfile(values)
+  const handleAvatarSave = () => {
+    updateUserMutation({
+      avatar: avatar,
+    }, {
+      onSuccess: () => {
+        setIsAvatarDirty(false);
+      },
+      onError: (error) => {
+        toast.error((error as any)?.response?.data?.message || (error as Error).message || 'Failed to update avatar');
+      },
+    });
   };
 
-
-  const onSubmitPassword = async (values: UpdatePasswordFormValues) => {
-    console.log(values);
-
-    // await updatePassword(values)
+  const handleAvatarRemove = () => {
+    setAvatar("");
+    setIsAvatarDirty(true);
   };
 
   useEffect(() => {
@@ -101,11 +162,8 @@ export function AccountSettingsForm() {
     resetFullName({
       fullName: user.fullName ?? "",
     });
-    resetEmail({
-      email: user.email ?? "",
-    });
     resetPassword({
-      oldPassword: "",
+      currentPassword: "",
       newPassword: "",
       confirmNewPassword: "",
     });
@@ -113,7 +171,7 @@ export function AccountSettingsForm() {
     setAvatar(user.avatar ?? "");
   }, [user, resetFullName, resetPassword, setAvatar]);
 
-  if (isLoading) {
+  if (isLoading || isLoadingProviders) {
     return (
       <div className="flex flex-col w-full gap-2 px-2">
         <div className="flex items-center gap-2">
@@ -134,39 +192,110 @@ export function AccountSettingsForm() {
 
   return (
     <>
-      <UniversalUploader
-        variant="popup"
-        isOpen={isUploaderOpen}
-        onClose={() => setIsUploaderOpen(false)}
-        onUploadSuccess={handleUploadSuccess}
-      />
-
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              Are you sure?
+            </DialogTitle>
+            <DialogDescription>
+              Once disconnected, you won't be able to use your {disconnectProvider === 'google' ? 'Google account' : 'password'} to access this account.
+              <br />
+              <strong>This action forces you to logout</strong>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
+            <Button variant="destructive" onClick={handleDisconnectConfirmed} disabled={isPendingRemovePassword || isPendingRemoveGoogle || isPendingLogout}>
+              {isPendingRemovePassword || isPendingRemoveGoogle || isPendingLogout ? <Spinner /> : 'Disconnect'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={isChangePasswordDialogOpen} onOpenChange={handleChangePasswordDialogOpenChanged}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              Change Password
+            </DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSubmitPassword(onSubmitPassword)} className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="currentPassword">Current Password</Label>
+              <Input type="password" id="currentPassword" {...registerPassword("currentPassword")} />
+            </div>
+            {errorsPassword.currentPassword && (
+              <p className="text-xs text-red-500">
+                {errorsPassword.currentPassword.message}
+              </p>
+            )}
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="newPassword">New Password</Label>
+              <Input type="password" id="newPassword" {...registerPassword("newPassword")} />
+            </div>
+            {errorsPassword.newPassword && (
+              <p className="text-xs text-red-500">
+                {errorsPassword.newPassword.message}
+              </p>
+            )}
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="confirmNewPassword">Confirm New Password</Label>
+              <Input type="password" id="confirmNewPassword" {...registerPassword("confirmNewPassword")} />
+            </div>
+            {errorsPassword.confirmNewPassword && (
+              <p className="text-xs text-red-500">
+                {errorsPassword.confirmNewPassword.message}
+              </p>
+            )}
+            <div className="flex items-center justify-end gap-2">
+              <Button variant="outline" type="button" onClick={handleCloseChangePasswordDialog}>Cancel</Button>
+              <Button type="submit" variant="default" disabled={isSubmittingPassword || isPendingChangePassword}>
+                {isSubmittingPassword || isPendingChangePassword ? <Spinner /> : 'Change Password'}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+      <UniversalUploader variant="popup" isOpen={isUploaderOpen} onClose={() => setIsUploaderOpen(false)} onUploadSuccess={handleUploadSuccess}/>
       <Card className="mt-2 w-full max-w-2xl rounded-md py-0">
-        
           <Table>
             <TableBody>
               <TableRow>
                 <TableCell colSpan={2} className="p-4">
-                  <div className="flex justify-center">
-                    <button
-                      type="button"
-                      onClick={() => setIsUploaderOpen(true)}
-                      className="group relative size-24 overflow-hidden rounded-full border border-muted"
-                    >
-                      <Avatar className="size-24">
-                        <AvatarImage src={avatar} />
+                  <div className="flex justify-center gap-2">
+                    <div className="flex flex-col justify-center items-center gap-2">
+                      <div
+                        onClick={() => setIsUploaderOpen(true)}
+                        className="group relative size-24 overflow-hidden rounded-full border border-muted"
+                      >
+                      
+                        <BaseAvatar
+                          src={avatar}
+                          alt="Avatar"
+                          className="size-24 rounded-full"
+                          fallbackInitials={initials}
+                        />
+                          
 
-                        <AvatarFallback className="text-4xl font-bold">
-                          {initials}
-                        </AvatarFallback>
-                      </Avatar>
-
-                      <div className="cursor-pointer absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-                        <span className="select-none px-1 text-center text-[10px] font-medium leading-tight text-white">
-                          Change
-                        </span>
+                        <div className="cursor-pointer absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                          <span className="select-none px-1 text-center text-[10px] font-medium leading-tight text-white">
+                            Change
+                          </span>
+                        </div>
                       </div>
-                    </button>
+                     
+                        <div className="flex items-center justify-center">
+                          {avatar && (
+                            <Button type="button" variant="destructive" size='xs' className="min-w-[70px]" onClick={handleAvatarRemove}>Remove</Button>
+                          )}
+                          {isAvatarDirty && (
+                            <Button type="button" variant="default" disabled={isPendingUpdateUser} size='xs' className="min-w-[70px]" onClick={handleAvatarSave}>
+                              {isPendingUpdateUser ? <Spinner /> : 'Save'}
+                            </Button>
+                          )}
+                        </div>
+                  
+                    </div>
                   </div>
                 </TableCell>
               </TableRow>
@@ -184,8 +313,9 @@ export function AccountSettingsForm() {
                       <InputGroupInput type="text" {...registerFullName("fullName")} />
                       <InputGroupAddon align="inline-end" className="min-w-16 flex items-center justify-end">
                         <div className="flex items-center justify-end gap-2 w-full">
-                          {isDirtyFullName && <Button type="submit" variant='default' size='xs' disabled={isSubmittingFullName}>Save</Button>}
-                          {isSubmittingFullName && <Spinner />}
+                          {isDirtyFullName && <Button type="submit" variant='default' size='xs' disabled={isSubmittingFullName || isPendingUpdateUser}>
+                            {isSubmittingFullName || isPendingUpdateUser ? <Spinner /> : 'Save'}
+                          </Button>}
                         </div>
                       </InputGroupAddon>
                     </InputGroup>
@@ -207,64 +337,43 @@ export function AccountSettingsForm() {
                 
                 <TableCell>
                     <InputGroup>
-                      <InputGroupInput type="email" disabled {...registerEmail("email")} />
+                      <InputGroupInput type="email" disabled value={user?.email ?? ""} />
                     </InputGroup>
-            
                 </TableCell>
               </TableRow>
 
               <TableRow>
                 <TableCell className="align-top">
-                  <Label className="whitespace-nowrap">
-                    Password
+                  <Label className="whitespace-nowrap mt-1.5">
+                    Authentication
                   </Label>
                 </TableCell>
 
                 <TableCell className="flex flex-col gap-2">
-                  <div>
-                    <form onSubmit={handleSubmitPassword(onSubmitPassword)} className="flex flex-col gap-2">
-                      <div className="flex flex-col">
-                        <InputGroup>
-                          <InputGroupInput type="password" placeholder="Old Password" autoComplete="new-password" {...registerPassword("oldPassword")} />
-                        </InputGroup>
-                        {errorsPassword.oldPassword && isDirtyPassword && (
-                          <p className="text-xs text-red-500">
-                            {errorsPassword.oldPassword.message}
-                          </p>
-                        )}
+                  {providers?.includes('google') && (
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="flex items-center gap-2">
+                        Google account <CircleCheck className="size-4 text-green-500" />
+                      </span>
+                      <Button type="button" variant="destructive" size='xs' onClick={() => handleDisconnectClicked('google')}>Disconnect</Button>
+                    </div>
+                  )}
+
+                  {providers?.includes('password') && (
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="flex items-center gap-2">
+                        Password <CircleCheck className="size-4 text-green-500" />
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <Button type="button" variant="secondary" size='xs' onClick={handleChangePasswordClicked}>Change Password</Button>
+                        <Button type="button" variant="destructive" size='xs' onClick={() => handleDisconnectClicked('password')}>Disconnect</Button>
                       </div>
-                      <div className="flex flex-col">
-                        <InputGroup>
-                          <InputGroupInput type="password" placeholder="New Password" autoComplete="new-password" {...registerPassword("newPassword")} />
-                        </InputGroup>
-                        {errorsPassword.newPassword && isDirtyPassword && (
-                          <p className="text-xs text-red-500">
-                            {errorsPassword.newPassword.message}
-                          </p>
-                        )}
-                      </div>
-                      <div className="flex flex-col">
-                        <InputGroup>
-                          <InputGroupInput type="password" placeholder="Confirm New Password" autoComplete="new-password" {...registerPassword("confirmNewPassword")} />
-                        </InputGroup>
-                        {errorsPassword.confirmNewPassword && isDirtyPassword && (
-                          <p className="text-xs text-red-500">
-                            {errorsPassword.confirmNewPassword.message}
-                          </p>
-                        )}
-                      </div>
-                      
-                      <div className="flex items-center justify-end gap-2 w-full">
-                        {isDirtyPassword && <Button type="submit" variant='default' size='xs' disabled={isSubmittingPassword}>Save</Button>}
-                        {isSubmittingPassword && <Spinner />}
-                      </div>
-                    </form>
-                  </div>
+                    </div>
+                  )}
+
                 </TableCell>
               </TableRow>
-            </TableBody>
-
-            
+            </TableBody>    
           </Table>
       </Card>
     </>

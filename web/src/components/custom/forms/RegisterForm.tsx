@@ -5,11 +5,14 @@ import { toast } from "sonner";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { RegisterFormValues, registerSchema } from "@/features/auth/validator";
-import { useRegister } from "@/features/auth/hooks";
+import { useRegister, useRegisterWithGoogle } from "@/features/auth/hooks";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { useGoogleLogin } from "@react-oauth/google";
+import { Separator } from "@/components/ui/separator";
+import { FcGoogle } from "react-icons/fc";
 
 export default function RegisterForm() {
   const router = useRouter();
@@ -17,11 +20,53 @@ export default function RegisterForm() {
     register,
     handleSubmit,
     formState: { errors },
+    getValues,
+    setError,
+    reset,
+    resetField,
   } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
+    defaultValues: {
+      companyName: "",
+      slug: "",
+      fullName: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+    },
   });
 
   const { mutate: registerMutation, isPending } = useRegister();
+  const { mutate: registerWithGoogleMutation, isPending: isRegisterWithGooglePending } = useRegisterWithGoogle();
+
+  const registerWithGoogle = useGoogleLogin({
+    onSuccess: (tokenResponse) => {
+      console.log(tokenResponse);
+      registerWithGoogleMutation({
+        token: tokenResponse.access_token,
+        companyName: getValues().companyName,
+        slug: getValues().slug,
+      });
+    },
+    onError: () => {
+      toast.error("Failed to register with Google");
+    },
+  });
+
+  const handleRegisterWithGoogle = () => {
+    if (!getValues().companyName || !getValues().slug) {
+      resetField("fullName");
+      resetField("email");
+      resetField("password");
+      resetField("confirmPassword");
+      setError("companyName", { message: "Company name must be at least 2 characters" });
+      setError("slug", { message: "Slug must be at least 2 characters" });
+
+      toast.error("Please fill in all required fields");
+      return;
+    }
+    registerWithGoogle();
+  };
 
   const onSubmit = async (values: RegisterFormValues) => {
     registerMutation(values, {
@@ -39,7 +84,30 @@ export default function RegisterForm() {
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)}>
             <div className="flex flex-col gap-6">
-            
+                
+                <div className="grid gap-2">
+                    <Label htmlFor="companyName">Company Name</Label>
+                    <Input
+                        id="companyName"
+                        type="text"
+                        placeholder="Acme Corporation"
+                        autoComplete="companyName"
+                        {...register("companyName")}
+                    />
+                    {errors.companyName && <p className="text-sm text-red-500">{errors.companyName.message}</p>}
+                </div>
+                <div className="grid gap-2">
+                    <Label htmlFor="slug">Slug</Label>
+                    <Input
+                        id="slug"
+                        type="text"
+                        placeholder="acme-corporation"
+                        autoComplete="slug"
+                        {...register("slug")}
+                    />
+                    {errors.slug && <p className="text-sm text-red-500">{errors.slug.message}</p>}
+                </div>
+                <Separator />
                 <div className="grid gap-2">
                     <Label htmlFor="fullName">Full Name</Label>
                     <Input
@@ -73,32 +141,21 @@ export default function RegisterForm() {
                     <Input id="confirmPassword" type="password" autoComplete="new-password" {...register("confirmPassword")} />
                     {errors.confirmPassword && <p className="text-sm text-red-500">{errors.confirmPassword.message}</p>}
                 </div>
-                <div className="grid gap-2">
-                    <Label htmlFor="companyName">Company Name</Label>
-                    <Input
-                        id="companyName"
-                        type="text"
-                        placeholder="Acme Corporation"
-                        autoComplete="companyName"
-                        {...register("companyName")}
-                    />
-                    {errors.companyName && <p className="text-sm text-red-500">{errors.companyName.message}</p>}
-                </div>
-                <div className="grid gap-2">
-                    <Label htmlFor="slug">Slug</Label>
-                    <Input
-                        id="slug"
-                        type="text"
-                        placeholder="acme-corporation"
-                        autoComplete="slug"
-                        {...register("slug")}
-                    />
-                    {errors.slug && <p className="text-sm text-red-500">{errors.slug.message}</p>}
-                </div>
             </div>
-            <Button type="submit" className="w-full mt-4" disabled={isPending}>
+            <div className="flex flex-col gap-2">
+              <Button type="submit" className="w-full mt-4" disabled={isPending}>
                 Register
-            </Button>
+              </Button>
+              <div className="flex items-center justify-center gap-2">
+                <Separator className="flex-1" />
+                <span className="text-sm text-muted-foreground">Or</span>
+                <Separator className="flex-1" />
+              </div>
+              <Button type="button" variant="secondary" className="w-full mt-4" disabled={isRegisterWithGooglePending} onClick={handleRegisterWithGoogle}>
+                <FcGoogle className="h-4 w-4" /> Continue with Google
+              </Button>
+
+            </div>
         </form>
       </CardContent>
     </Card>

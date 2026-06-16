@@ -21,3 +21,7 @@ export interface IUser {
 export interface IGetMeResponse extends IResponse {
   data: IUser;
 }
+
+export interface IGetMeProvidersResponse extends IResponse {
+  data: ('password' | 'google')[];
+}

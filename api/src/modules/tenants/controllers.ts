@@ -15,7 +15,7 @@ export const createTenantController = asyncHandler(async (req: Request, res: Res
 });
 
 export const updateTenantController = asyncHandler(async (req: Request, res: Response) => {
-    const tenantId = (req as any).user.tenantId;
+    const tenantId = req.params.id;
     const tenant = await updateTenantService(tenantId as string, req.body);
     res.status(HTTPSTATUS.OK).json({ success: true, data: tenant });
 });

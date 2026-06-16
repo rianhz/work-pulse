@@ -8,6 +8,7 @@ import AuthServerProvider from "@/providers/AuthServerProvider";
 import { Toaster } from "sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import GoogleAuthProvider from "@/providers/GoogleAuthProvider";
 
 const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
@@ -28,18 +29,20 @@ export default function RootLayout({
       className={cn("font-sans h-full antialiased", geist.variable)}
     >
       <body className="min-h-full flex flex-col">
-         <ReactQueryProvider>
-          <StoreProvider>
-              <ThemeProvider>
-                <AuthServerProvider>
-                  <TooltipProvider>
-                    <Toaster position="top-right" />
-                    {children}
-                  </TooltipProvider>
-                </AuthServerProvider>
-              </ThemeProvider>
-          </StoreProvider>
-        </ReactQueryProvider>
+        <GoogleAuthProvider>
+          <ReactQueryProvider>
+            <StoreProvider>
+                <ThemeProvider>
+                  <AuthServerProvider>
+                    <TooltipProvider>
+                      <Toaster position="top-right" />
+                      {children}
+                    </TooltipProvider>
+                  </AuthServerProvider>
+                </ThemeProvider>
+            </StoreProvider>
+          </ReactQueryProvider>
+        </GoogleAuthProvider>
       </body>
     </html>
   );

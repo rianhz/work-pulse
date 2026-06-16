@@ -6,6 +6,12 @@ export interface IRegisterPayload {
     fullName: string;
 }
 
+export interface IRegisterWithGooglePayload {
+    token: string;
+    companyName: string;
+    slug: string;
+}
+
 export interface ILoginPayload {
     email: string;
     password: string;

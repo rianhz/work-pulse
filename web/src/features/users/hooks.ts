@@ -1,5 +1,8 @@
-import { useQuery } from "@tanstack/react-query";
-import { getMe } from "./api";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { getMe, getMeProviders, updateUser } from "./api";
+import { toast } from "sonner";
+import { IResponse } from "@/global";
+import { IUser } from "./users";
 
 export const useGetMe = () => {
   return useQuery<any>({
@@ -13,5 +16,33 @@ export const useGetMe = () => {
       }
     },
     retry: false,
+  });
+};
+
+export const useGetMeProviders = () => {
+  return useQuery<('password' | 'google')[]>({
+    queryKey: ["providers"],
+    queryFn: async () => {
+      try {
+        const response = await getMeProviders();
+        return response;
+      } catch (error) {
+        throw error;
+      }
+    },
+  });
+};
+
+export const useUpdateUser = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: Partial<IUser>) => updateUser(payload),
+    onSuccess: (data: IResponse<void>) => {
+      toast.success(data.message);
+      queryClient.invalidateQueries({ queryKey: ["me"] });
+    },
+    onError: error => {
+      toast.error((error as any)?.response?.data?.message || error?.message);
+    },
   });
 };

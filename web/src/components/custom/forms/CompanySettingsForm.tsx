@@ -1,37 +1,38 @@
 "use client";
 import { Label } from "@/components/ui/label";
-import { Table, TableBody, TableCell, TableFooter, TableRow } from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
+import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CompanyDescriptionFormValues, companyDescriptionSchema, CompanyNameFormValues, companyNameSchema, CompanySettingsFormValues, companySettingsSchema, CompanySlugFormValues, companySlugSchema } from "@/features/tenants/validator";
+import { CompanyDescriptionFormValues, companyDescriptionSchema, CompanyNameFormValues, companyNameSchema, CompanySlugFormValues, companySlugSchema } from "@/features/tenants/validator";
 import { Button } from "@/components/ui/button";
-import { useGetTenantById } from "@/features/tenants/hooks";
+import { useGetTenantById, useUpdateTenant } from "@/features/tenants/hooks";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store";
 import { useEffect, useMemo, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Textarea } from "@/components/ui/textarea";
 import { CircleCheck, CircleQuestionMark } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
 import { UniversalUploader } from "../uploader/ImageUploader";
-import { InputGroup, InputGroupAddon, InputGroupInput, InputGroupText, InputGroupTextarea } from "@/components/ui/input-group";
+import { InputGroup, InputGroupAddon, InputGroupInput, InputGroupTextarea } from "@/components/ui/input-group";
 import { Spinner } from "@/components/ui/spinner";
+import { useQueryClient } from "@tanstack/react-query";
+import BaseAvatar from "../images/BaseImage";
 
 export function CompanySettingsForm() {
   const tenantId = useSelector((state: RootState) => state.currentUser.user?.tenantId);
+  const { mutate: updateTenant, isPending: isPendingUpdateTenant } = useUpdateTenant();
   const { data: tenant, isLoading } = useGetTenantById(tenantId);
   const [isUploaderOpen, setIsUploaderOpen] = useState(false);
+  const queryClient = useQueryClient();
 
   const [logo, setLogo] = useState('');
+  const [isLogoDirty, setIsLogoDirty] = useState(false);
  
   const tenantInitials = useMemo(() => {
     return tenant?.name.split(' ').map((name) => name[0]).join('').slice(0, 2).toUpperCase() || '';
   }, [tenant]);
-
-
 
   const { register: registerName, handleSubmit: handleSubmitName, formState: { errors: errorsName, isDirty: isDirtyName, isSubmitting: isSubmittingName }, setValue: setValueName, reset: resetName } = useForm<CompanyNameFormValues>({
     resolver: zodResolver(companyNameSchema),
@@ -53,20 +54,48 @@ export function CompanySettingsForm() {
   });
 
 
-  const handleUploadSucess = (url: string) => {
-    setLogo(url);
-  };
-
   const onSubmitName = (values: CompanyNameFormValues) => {
-    console.log(values);
+    updateTenant({ id: tenantId || '', payload: values },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ['tenant', tenantId] });
+        },
+      }
+    );
   };
 
   const onSubmitSlug = (values: CompanySlugFormValues) => {
-    console.log(values);
+    updateTenant({ id: tenantId || '', payload: values },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ['tenant', tenantId] });
+        },
+      }
+    );
   };
 
   const onSubmitDescription = (values: CompanyDescriptionFormValues) => {
-    console.log(values);
+    updateTenant({ id: tenantId || '', payload: values },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ['tenant', tenantId] });
+        },
+      }
+    );
+  };
+
+  const handleUploadSucess = (url: string) => {
+    setLogo(url);
+    setIsLogoDirty(true);
+  };
+
+  const handleLogoSave = () => {
+    updateTenant({ id: tenantId || '', payload: { logo: logo } });
+  };
+
+  const handleLogoRemove = () => {
+    setLogo('');
+    setIsLogoDirty(true);
   };
 
   useEffect(() => {
@@ -80,24 +109,26 @@ export function CompanySettingsForm() {
       resetDescription({
         description: tenant.description || '',
       });
-      setLogo(tenant.logo || '');
+      setLogo(tenant.logo ?? '');
     }
-  }, [tenant, resetName]);
+  }, [tenant, resetName, resetSlug, resetDescription, setLogo]);
 
   if (isLoading) {
-    return <div className="flex flex-col w-full gap-2 px-2">
-      <div className="flex items-center gap-2">
-        <Skeleton className="w-1/4 h-6" />
-        <Skeleton className="w-12 h-12 rounded-full" />
-      </div>
-      <Skeleton className="w-full h-6" />
-      <Skeleton className="w-full h-6" />
-      <Skeleton className="w-full h-6" />
-      <Skeleton className="w-full h-6" />
-      <Skeleton className="w-full h-6" />
+    return (
+      <div className="flex flex-col w-full gap-2 px-2">
+        <div className="flex items-center gap-2">
+          <Skeleton className="w-1/4 h-6" />
+          <Skeleton className="w-12 h-12 rounded-full" />
+        </div>
+        <Skeleton className="w-full h-6" />
+        <Skeleton className="w-full h-6" />
+        <Skeleton className="w-full h-6" />
+        <Skeleton className="w-full h-6" />
+        <Skeleton className="w-full h-6" />
 
-      <Skeleton className="w-[20%] h-6 ml-auto" />
-    </div>
+        <Skeleton className="w-[20%] h-6 ml-auto" />
+      </div>
+    )
   }
 
   return (
@@ -109,23 +140,32 @@ export function CompanySettingsForm() {
             <TableBody>
               <TableRow>
                 <TableCell colSpan={2} className="p-4">
-                  <div className="flex justify-center w-full">
+                  <div className="flex flex-col items-center justify-center w-full gap-2">
                     <div 
                       className="group relative size-24 cursor-pointer overflow-hidden rounded-full border border-muted"
                       onClick={() => setIsUploaderOpen(true)}
                     >
-                      <Avatar className="size-24">
-                        <AvatarImage src={logo} />
-                        <AvatarFallback className="text-4xl font-bold">
-                          {tenantInitials}
-                        </AvatarFallback>
-                      </Avatar>
+                      <BaseAvatar
+                        src={logo}
+                        alt="Logo"
+                        className="size-24 rounded-full"
+                        fallbackInitials={tenantInitials}
+                      />
 
                       <div className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
                         <span className="text-[10px] font-medium text-white text-center leading-tight px-1 select-none">
                           Change<br />logo
                         </span>
                       </div>
+                    </div>
+
+                    <div className="flex items-center justify-center gap-2">
+                      {logo && (
+                        <Button type="button" variant="destructive" size='xs' className="min-w-[70px]" onClick={handleLogoRemove}>Remove</Button>
+                      )}
+                      {isLogoDirty && (
+                        <Button type="button" variant='default' size='xs' className="min-w-[70px]" onClick={handleLogoSave} disabled={isPendingUpdateTenant}>{isPendingUpdateTenant ? <Spinner /> : 'Save'}</Button>
+                      )}
                     </div>
 
                   </div>
@@ -141,8 +181,7 @@ export function CompanySettingsForm() {
                       <InputGroup>
                         <InputGroupInput type="text" id="name" placeholder="Name" {...registerName("name")} />
                         <InputGroupAddon align="inline-end" className="min-w-16 flex items-center justify-end">
-                          {isDirtyName && <Button type="submit" variant='default' size='xs' disabled={isSubmittingName}>Save</Button>}
-                          {isSubmittingName && <Spinner />}
+                          {isDirtyName && <Button type="submit" variant='default' size='xs' disabled={isSubmittingName || isPendingUpdateTenant}>{isPendingUpdateTenant ? <Spinner /> : 'Save'}</Button>}
                         </InputGroupAddon>
                       </InputGroup>
                       {errorsName.name && isDirtyName && <p className="text-xs text-red-500">{errorsName.name.message}</p>}
@@ -160,7 +199,7 @@ export function CompanySettingsForm() {
                       <InputGroup>
                         <InputGroupInput type="text" id="slug" placeholder="Slug" {...registerSlug("slug")} />
                         <InputGroupAddon align="inline-end" className="min-w-16 flex items-center justify-end">
-                          {isDirtySlug && <Button type="submit" variant='default' size='xs' disabled={isSubmittingSlug}>Save</Button>}
+                          {isDirtySlug && <Button type="submit" variant='default' size='xs' disabled={isSubmittingSlug || isPendingUpdateTenant}>Save</Button>}
                           {isSubmittingSlug && <Spinner />}
                         </InputGroupAddon>
                       </InputGroup>
@@ -183,7 +222,7 @@ export function CompanySettingsForm() {
                           {...registerDescription("description")}
                         />
                         <div className="flex items-center justify-end gap-2 w-full absolute bottom-2 right-2">
-                          {isDirtyDescription && <Button type="submit" variant='default' size='xs' disabled={isSubmittingDescription}>Save</Button>}
+                          {isDirtyDescription && <Button type="submit" variant='default' size='xs' disabled={isSubmittingDescription || isPendingUpdateTenant}>Save</Button>}
                           {isSubmittingDescription && <Spinner />}
                         </div>
                       </InputGroup>
@@ -212,7 +251,7 @@ export function CompanySettingsForm() {
                           <CircleQuestionMark className="size-4" />
                       </TooltipTrigger>
                       <TooltipContent>
-                        This is the plan that the tenant is on.
+                        This is the plan that currently your tenant is on.
                       </TooltipContent>
                     </Tooltip>
                   </div>
