@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { useGoogleLogin } from "@react-oauth/google";
 import { FcGoogle } from "react-icons/fc";
 import { Separator } from "@/components/ui/separator";
+import Link from "next/link";
 
 export default function LoginForm() {
   const {
@@ -45,7 +46,9 @@ export default function LoginForm() {
 
   return (
     <Card className="w-full max-w-sm">
-      <CardContent>
+      <CardContent className="flex flex-col gap-4">
+        <h1 className="text-3xl font-bold">Sign in</h1>
+        <span className="text-sm text-muted-foreground">New here? <Link className="text-primary hover:underline" href="/signup">Create an account</Link></span>
         <form onSubmit={handleSubmit(onSubmit)}>
             <div className="flex flex-col gap-6">
                 <div className="grid gap-2">
@@ -62,12 +65,7 @@ export default function LoginForm() {
                 <div className="grid gap-2">
                 <div className="flex items-center">
                     <Label htmlFor="password">Password</Label>
-                    <a
-                    href="#"
-                    className="ml-auto inline-block text-sm underline-offset-4 hover:underline text-muted-foreground"
-                    >
-                    Forgot your password?
-                    </a>
+                    <Link className="ml-auto text-primary hover:underline" href="/forgot-password">Forgot password?</Link>
                 </div>
                 <Input id="password" type="password" placeholder="Example@123" autoComplete="new-password" {...register("password")} />
                 {errors.password && <p className="text-xs text-red-500">{errors.password.message}</p>}

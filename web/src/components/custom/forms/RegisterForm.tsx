@@ -41,7 +41,6 @@ export default function RegisterForm() {
 
   const registerWithGoogle = useGoogleLogin({
     onSuccess: (tokenResponse) => {
-      console.log(tokenResponse);
       registerWithGoogleMutation({
         token: tokenResponse.access_token,
         companyName: getValues().companyName,

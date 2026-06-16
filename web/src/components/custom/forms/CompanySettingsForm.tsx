@@ -18,6 +18,7 @@ import { InputGroup, InputGroupAddon, InputGroupInput, InputGroupTextarea } from
 import { Spinner } from "@/components/ui/spinner";
 import { useQueryClient } from "@tanstack/react-query";
 import BaseAvatar from "../images/BaseImage";
+import { toast } from "sonner";
 
 export function CompanySettingsForm() {
   const tenantId = useSelector((state: RootState) => state.currentUser.user?.tenantId);
@@ -26,7 +27,7 @@ export function CompanySettingsForm() {
   const { mutate: updateFullName, isPending: isPendingUpdateFullName } = useUpdateFullName();
   const { mutate: updateSlug, isPending: isPendingUpdateSlug } = useUpdateSlug();
   const { mutate: updateDescription, isPending: isPendingUpdateDescription } = useUpdateDescription();
-  const { data: tenant, isLoading, refetch } = useGetTenantById(tenantId);
+  const { data: tenant, isLoading, error, isError } = useGetTenantById(tenantId);
   const [isUploaderOpen, setIsUploaderOpen] = useState(false);
   const queryClient = useQueryClient();
 
@@ -125,6 +126,12 @@ export function CompanySettingsForm() {
     setLogo('');
     setIsLogoDirty(true);
   };
+
+  useEffect(() => {
+    if (isError) {
+      toast.error((error as any)?.response?.data?.message || (error as Error).message || 'Failed to get tenant');
+    }
+  }, [isError, error]);
 
   useEffect(() => {
     if (tenant) {

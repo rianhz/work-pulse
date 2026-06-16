@@ -114,7 +114,6 @@ export function AccountSettingsForm() {
   };
 
   const handleDisconnectConfirmed = async () => {
-    console.log(disconnectProvider);
     try {
       if (disconnectProvider === 'google') {
         removeGoogleMutation();
@@ -262,7 +261,7 @@ export function AccountSettingsForm() {
             <div className="flex items-center justify-end gap-2">
               <Button variant="outline" type="button" onClick={handleCloseChangePasswordDialog}>Cancel</Button>
               <Button type="submit" variant="default" disabled={isSubmittingPassword || isPendingChangePassword}>
-                {isSubmittingPassword || isPendingChangePassword ? <Spinner /> : 'Change Password'}
+                {isSubmittingPassword || isPendingChangePassword ? <Spinner /> : 'Save'}
               </Button>
             </div>
           </form>
@@ -377,7 +376,7 @@ export function AccountSettingsForm() {
                         Password <CircleCheck className="size-4 text-green-500" />
                       </span>
                       <div className="flex items-center gap-2">
-                        <Button type="button" variant="secondary" size='xs' onClick={handleChangePasswordClicked}>Change Password</Button>
+                        <Button type="button" variant="secondary" size='xs' onClick={handleChangePasswordClicked}>Change</Button>
                         <Button type="button" variant="destructive" size='xs' onClick={() => handleDisconnectClicked('password')}>Disconnect</Button>
                       </div>
                     </div>

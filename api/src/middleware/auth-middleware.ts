@@ -11,6 +11,7 @@ import {
 } from "../utils/constant";
 import { UserModel } from "../modules/users/schema";
 import { compareValue, hashValue } from "../utils/bcrypt";
+import { HTTPSTATUS } from "../utils/http-config";
 
 export const protectRoute = async (
     req: Request,
@@ -20,10 +21,6 @@ export const protectRoute = async (
     try {
         const accessToken = req.cookies.accessToken;
         const refreshToken = req.cookies.refreshToken;
-        
-        console.log("--- protectRoute Hook Triggered ---");
-        console.log("Received Access Token:", !!accessToken);
-        console.log("Received Refresh Token:", !!refreshToken);
 
         if (accessToken) {
             try {
@@ -32,25 +29,29 @@ export const protectRoute = async (
                     ACCESS_TOKEN_SECRET
                 ) as JwtPayload;
 
-                (req as any).user = decoded;
+                (req as any).user = {
+                    userId: decoded.userId,
+                    tenantId: decoded.tenantId,
+                    role: decoded.role,
+                };                
+                
                 return next();
 
             } catch (error: any) {
                 if (error.name !== "TokenExpiredError") {
-                    res.status(401).json({
+                    res.status(HTTPSTATUS.UNAUTHORIZED).json({
                         success: false,
-                        message: "Invalid access token structure",
+                        message: "Session expired. Please sign in again.",
                     });
                     return;
                 }
-                console.log("Access Token expired. Dropping down to refresh validation...");
             }
         }
 
         if (!refreshToken) {
-            res.status(401).json({
+            res.status(HTTPSTATUS.UNAUTHORIZED).json({
                 success: false,
-                message: "Session expired. Refresh token missing",
+                message: "Session expired. Please sign in again.",
             });
             return;
         }
@@ -62,19 +63,23 @@ export const protectRoute = async (
 
         const userId = decodedRefresh.userId.toString();
         const tenantId = decodedRefresh.tenantId.toString();
+        const role = decodedRefresh.role.toString();
 
         if (!userId) {
             console.error("Payload Extraction Failed. No clear user identification found.");
             res.clearCookie("accessToken", ACCESS_COOKIE_OPTIONS);
             res.clearCookie("refreshToken", REFRESH_COOKIE_OPTIONS);
-            res.status(401).json({ success: false, message: "Malformed session credentials" });
+            res.status(HTTPSTATUS.UNAUTHORIZED).json({
+                success: false,
+                message: "Malformed session credentials",
+            });
             return;
         }
 
         const user = await UserModel.findById(userId);
 
         if (!user || !user.refreshToken?.token) {
-            res.status(401).json({
+            res.status(HTTPSTATUS.UNAUTHORIZED).json({
                 success: false,
                 message: "User session not found or revoked",
             });
@@ -86,9 +91,6 @@ export const protectRoute = async (
             refreshToken,
             user.refreshToken.token
         );
-
-        console.log("isRefreshTokenMatch", isRefreshTokenMatch);
-
 
         if (!isRefreshTokenMatch) {
             await UserModel.findByIdAndUpdate(userId, {
@@ -102,7 +104,7 @@ export const protectRoute = async (
             res.clearCookie("accessToken", ACCESS_COOKIE_OPTIONS);
             res.clearCookie("refreshToken", REFRESH_COOKIE_OPTIONS);
 
-            res.status(401).json({
+            res.status(HTTPSTATUS.UNAUTHORIZED).json({
                 success: false,
                 message: "Invalid session token security match",
             });
@@ -110,12 +112,12 @@ export const protectRoute = async (
         }
 
         const newAccessToken = generateAccessToken(
-            { userId: userId.toString(), tenantId: tenantId },
+            { userId: userId.toString(), tenantId: tenantId, role: role },
             ACCESS_TOKEN_EXPIRES_IN
         );
 
         const newRefreshToken = generateRefreshToken(
-            { userId: userId.toString(), tenantId: tenantId },
+            { userId: userId.toString(), tenantId: tenantId, role: role },
             REFRESH_TOKEN_EXPIRES_IN
         );
 
@@ -134,17 +136,14 @@ export const protectRoute = async (
         res.cookie("accessToken", newAccessToken, ACCESS_COOKIE_OPTIONS);
         res.cookie("refreshToken", newRefreshToken, REFRESH_COOKIE_OPTIONS);
 
-        (req as any).user = { userId: userId.toString(), tenantId: tenantId };
+        (req as any).user = { userId: userId.toString(), tenantId: tenantId, role: role };
         console.log("Tokens cycled successfully mid-flight! Forwarding request details.");
         next();
     } catch (error) {
-        console.error("Fatal protectRoute breakdown crash:", error);
-
-        // CRUCIAL: Pass options object configurations down to clear HttpOnly attributes correctly
         res.clearCookie("accessToken", ACCESS_COOKIE_OPTIONS);
         res.clearCookie("refreshToken", REFRESH_COOKIE_OPTIONS);
 
-        res.status(401).json({
+        res.status(HTTPSTATUS.UNAUTHORIZED).json({
             success: false,
             message: "Unauthorized session tracking collapse",
         });

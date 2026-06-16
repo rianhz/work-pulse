@@ -137,11 +137,8 @@ export const googleLoginService = async (
       email: email.toLowerCase(),
     });
 
-    if (!user) {
-      throw new NotFoundException(
-        "No account found. Please register first."
-      );
-    }
+    if (!user) throw new NotFoundException("No account found. Please register first.");
+    
 
     await IdentityModel.create({
       userId: user._id.toString(),

@@ -9,7 +9,7 @@ export function proxy(request: NextRequest) {
         request.cookies.get("refreshToken");
 
     const isAuthPage =
-        request.nextUrl.pathname.startsWith("/signin")
+        request.nextUrl.pathname.startsWith("/signin") || request.nextUrl.pathname.startsWith("/signup")
 
     const isProtectedPage =
         request.nextUrl.pathname.startsWith("/dashboard");

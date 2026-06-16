@@ -223,7 +223,6 @@ export function BaseEditor({initialContent, onChange}: {initialContent?: string,
     ],
     onUpdate: ({ editor }) => {
       onChange(editor.getHTML())
-      console.log("editor on update triggered")
     },
   })
 

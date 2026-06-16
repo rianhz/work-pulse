@@ -56,7 +56,6 @@ export default function TimesheetDialog({
 
   const save = async () => {
     if (timeSheetData._id) {
-      console.log(timeSheetData);
       updateTimesheet({ id: timeSheetData._id, timesheet: event }, {
         onSuccess: () => {
           toast.success("Timesheet updated successfully");
@@ -66,7 +65,6 @@ export default function TimesheetDialog({
       });
     } else {
       const { _id, ...rest } = event;
-      console.log(rest);
       createTimesheet(event, {
         onSuccess: () => {
           toast.success("Timesheet created successfully");
@@ -78,7 +76,6 @@ export default function TimesheetDialog({
   };
 
   const handleDescriptionChange = (content: string) => {
-    console.log(content);
     setEvent((prev) => ({
       ...prev,
       description: content,

@@ -1,3 +1,9 @@
+export interface AuthUser {
+  userId: string;
+  tenantId: string;
+  role: string;
+}
+
 export interface IRegisterPayload {
     email: string;
     password: string;
