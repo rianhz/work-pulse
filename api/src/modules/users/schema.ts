@@ -53,6 +53,12 @@ const userSchema = new mongoose.Schema<IUser>(
       ref: "Project",
     }],
 
+    reportsTo: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+
     refreshToken: {
       token: {
         type: String,

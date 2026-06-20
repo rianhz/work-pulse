@@ -8,6 +8,7 @@ export interface IUser {
     avatar: string;
     projects: string[];
     loginType: ('password' | 'google')[];
+    reportsTo: string | null;
     refreshToken: {
         token: string | null;
         expiresIn: number | null;

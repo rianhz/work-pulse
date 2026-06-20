@@ -3,12 +3,41 @@ import { AccountSettingsForm } from "@/components/custom/forms/AccountSettingsFo
 import { CompanySettingsForm } from "@/components/custom/forms/CompanySettingsForm";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useGetMe } from "@/features/users/hooks";
+import { useGetTenantById } from "@/features/tenants/hooks";
+import { useSelector } from "react-redux";
+import { RootState } from "@/store";
+import { BillingPlansSettingsForm } from "@/components/custom/forms/BillingPlansSettingsForm";
+import { ITenant } from "@/features/tenants/tenant";
+import { ErrorMessage } from "@/components/custom/errors-and-empty/ErrorsMessage";
+import { IUser } from "@/features/users/users";
+import { useGetMe, useGetMeProviders } from "@/features/users/hooks";
+import { SecurityUserSettingsForm } from "@/components/custom/forms/SecurityUserSettingsForm";
+
+export interface IUserWithProviders extends IUser {
+  providers: ('password' | 'google')[];
+}
 
 export default function SettingsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const tab = searchParams.get("tab") || "account";  
+  const tab = searchParams.get("tab") || "account";
+
+  const { data: user, isLoading: isLoadingUser, error: errorUser, isError: isErrorUser } = useGetMe();
+  if(isErrorUser) {
+    return <ErrorMessage title={(errorUser as any)?.response?.data?.message || (errorUser as Error).message || 'Failed to get user'} />
+  }
+
+  const { data: providers, isLoading: isLoadingProviders, error: errorProviders, isError: isErrorProviders } = useGetMeProviders();
+  if(isErrorProviders) {
+    return <ErrorMessage title={(errorProviders as any)?.response?.data?.message || (errorProviders as Error).message || 'Failed to get providers'} />
+  }
+
+  const tenantId = useSelector((state: RootState) => (state as RootState).currentUser.user?.tenantId);
+  const { data: tenant, isLoading: isLoadingTenant, error: errorTenant, isError: isErrorTenant } = useGetTenantById(tenantId);
+
+  if(isErrorTenant) {
+    return <ErrorMessage title={(errorTenant as any)?.response?.data?.message || (errorTenant as Error).message || 'Failed to get tenant'} />
+  }
 
   return (
     <Tabs defaultValue={tab} className="w-full max-w-3xl">
@@ -17,14 +46,37 @@ export default function SettingsPage() {
         <TabsTrigger onClick={() => router.push("/settings?tab=company")} value="company">Company</TabsTrigger>
       </TabsList>
       <TabsContent value="account">
-        <AccountSettingsForm />
+        <h1 className="text-2xl font-bold">Account Settings</h1>
+        <p className="text-sm text-muted-foreground">Manage your account settings and preferences.</p>
+        <Tabs defaultValue="general" orientation="vertical" className="mt-4">
+          <TabsList className="bg-transparent px-0! pt-0!">
+            <TabsTrigger className="rounded-sm data-active:bg-transparent hover:bg-sidebar-accent p-2!" value="general">General</TabsTrigger>
+            <TabsTrigger className="rounded-sm data-active:bg-transparent hover:bg-sidebar-accent p-2!" value="security">Security</TabsTrigger>
+          </TabsList>
+          <TabsContent value="general">
+            <AccountSettingsForm user={{ ...user, providers }} isLoading={isLoadingUser || isLoadingProviders} />
+          </TabsContent>
+          <TabsContent value="security">
+            <SecurityUserSettingsForm user={{ ...user, providers }} isLoading={isLoadingUser || isLoadingProviders} />
+          </TabsContent>
+        </Tabs>
       </TabsContent>
       <TabsContent value="company">
-        <CompanySettingsForm />
+        <h1 className="text-2xl font-bold">Organization Settings</h1>
+        <p className="text-sm text-muted-foreground">Manage your organization's identity, team permissions, and cloud integrations.</p>
+        <Tabs defaultValue="general" orientation="vertical" className="mt-4">
+          <TabsList className="bg-transparent px-0! pt-0!">
+            <TabsTrigger className="rounded-sm data-active:bg-transparent hover:bg-sidebar-accent p-2!" value="general">General</TabsTrigger>
+            <TabsTrigger className="rounded-sm data-active:bg-transparent hover:bg-sidebar-accent p-2!" value="billing">Billing & Plans</TabsTrigger>
+          </TabsList>
+          <TabsContent value="general">
+            <CompanySettingsForm tenantId={tenantId as string} tenant={tenant as ITenant} isLoading={isLoadingTenant} />
+          </TabsContent>
+          <TabsContent value="billing">
+            <BillingPlansSettingsForm tenantId={tenantId as string} tenant={tenant as ITenant} isLoading={isLoadingTenant} />
+          </TabsContent>
+        </Tabs>
       </TabsContent>
     </Tabs>
-
-    
-    
   );
 }

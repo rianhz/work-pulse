@@ -1,5 +1,5 @@
 import { AxiosError, RawAxiosRequestHeaders } from "axios";
-import { IGetMeProvidersResponse, IGetMeResponse, IUser } from "./users";
+import { IGetMeProvidersResponse, IGetMeResponse, IGetUsersResponse, IUser } from "./users";
 import { api } from "@/lib/axios";
 import { IResponse } from "@/global";
 
@@ -27,10 +27,19 @@ export const getMeProviders = async () => {
   }
 };
 
-export const updateUser = async (payload: Partial<IUser>) => {
+export const updateUser = async (userId: string, payload: Partial<IUser>) => {
   try {
-    const response = await api.put(`/users/update`, payload);
+    const response = await api.put(`/users/update/${userId}`, payload);
     return response.data
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getUsers = async () => {
+  try {
+    const response = await api.get<IGetUsersResponse>("/users");
+    return response.data.data;
   } catch (error) {
     throw error;
   }

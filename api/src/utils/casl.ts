@@ -1,9 +1,9 @@
-import { Ability, AbilityBuilder, createMongoAbility } from "@casl/ability";
-import { UnauthorizedException } from "./app-error";
+import { Ability, AbilityBuilder, createMongoAbility, subject as caslSubject } from "@casl/ability";
+import { ForbiddenException, UnauthorizedException } from "./app-error";
 import { AuthUser } from "../modules/authentication/interfaces";
 
 export type Actions = "manage" | "create" | "read" | "update" | "delete";
-export type Subjects = "User" | "Project" | "Timesheet" | "Tenant" | "all";
+export type Subjects = "User" | "Project" | "Timesheet" | "Tenant" | "Invitation" | "all";
 
 export async function defineAbilitiesFor(user: AuthUser) {
   const { can, build } = new AbilityBuilder(createMongoAbility);
@@ -18,14 +18,18 @@ export async function defineAbilitiesFor(user: AuthUser) {
       can("manage", "Project");
       can("manage", "Timesheet");
       can("manage", "Tenant");
+      can("manage", "Invitation");
       break;
 
     case "manager":
       can("manage", "Project");
       can("manage", "Timesheet");
+      can("read", "User");
       break;
 
     case "employee":
+      can("read", "User", { id: user.userId });
+      can("update", "User", { id: user.userId });
       can("read", "Project");
       can("create", "Timesheet");
       can("read", "Timesheet");
@@ -36,19 +40,18 @@ export async function defineAbilitiesFor(user: AuthUser) {
   return build();
 }
 
-export async function isHaveAccess(authenticatedUser: AuthUser, targetTenantId: string, action: Actions, subject: Subjects, field?: string) {
-  console.log("authenticatedUser.tenantId", authenticatedUser.tenantId);
-  console.log("targetTenantId", targetTenantId);
-  console.log("authenticatedUser.role", authenticatedUser.role);
+export async function isHaveAccess(authenticatedUser: AuthUser, resourceData: any, subjectName: Subjects, action: Actions, field?: string) {
+  console.log("authenticatedUser", authenticatedUser);
+  console.log("resourceData", resourceData);
+  console.log("subjectName", subjectName);
   console.log("action", action);
-  console.log("subject", subject);
   console.log("field", field);
-  if (authenticatedUser.tenantId !== targetTenantId) {
-    throw new UnauthorizedException("You are not authorized to access this resource");
-  }
   const ability = await defineAbilitiesFor(authenticatedUser);
-  if (!ability.can(action, subject, field)) {
-    throw new UnauthorizedException("You are not authorized to perform this action");
+
+  const target = resourceData ? caslSubject(subjectName, resourceData) : subjectName;
+
+  if (!ability.can(action, target, field)) {
+    throw new ForbiddenException("You are not authorized to access this resource");
   }
 
   return true;

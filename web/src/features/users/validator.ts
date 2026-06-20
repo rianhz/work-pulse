@@ -1,7 +1,8 @@
 import { z } from "zod";
 
-export const updateFullNameSchema = z.object({
+export const updateAccountSettingsSchema = z.object({
   fullName: z.string().min(1, "Full name is required"),
+  avatar: z.string().optional(),
 });
 
 export const updateEmailSchema = z.object({
@@ -17,6 +18,6 @@ export const updatePasswordSchema = z.object({
   path: ["confirmNewPassword"],
 });
 
-export type UpdateFullNameFormValues = z.infer<typeof updateFullNameSchema>;
+export type UpdateAccountSettingsFormValues = z.infer<typeof updateAccountSettingsSchema>;
 export type UpdateEmailFormValues = z.infer<typeof updateEmailSchema>;
 export type UpdatePasswordFormValues = z.infer<typeof updatePasswordSchema>;
