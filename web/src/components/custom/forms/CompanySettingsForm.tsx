@@ -107,7 +107,7 @@ export function CompanySettingsForm({ tenantId, tenant, isLoading }: { tenantId:
                           className="group relative w-[100px] h-[100px] overflow-hidden rounded-full border border-muted"
                         >
                         
-                          <BaseAvatar src={logo ?? ""} alt="Logo" className="w-[100px] h-[100px] rounded-full" fallbackInitials={tenantInitials} />
+                          <BaseAvatar src={logo ?? ""} alt="Logo" className="w-[100px] h-[100px] rounded-full" fallbackInitials={tenantInitials} imageLoading="eager" />
                           <div className="cursor-pointer absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
                             <span className="select-none px-1 text-center text-[10px] font-medium leading-tight text-white">
                               Change

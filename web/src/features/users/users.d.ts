@@ -11,6 +11,10 @@ export interface IUser {
   createdAt: Date;
   updatedAt: Date;
   reportsTo: string | null;
+  nickName: string | null;
+  birthDate: Date | null;
+  department: string | null;
+  position: string | null;
   refreshToken: {
     token: string;
     expiresIn: number;

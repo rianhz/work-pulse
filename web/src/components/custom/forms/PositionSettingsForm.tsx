@@ -8,7 +8,6 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Textarea } from "@/components/ui/textarea";
 import { Spinner } from "@/components/ui/spinner";
 import { DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { DropdownMenu } from "@/components/ui/dropdown-menu";
@@ -124,6 +123,7 @@ export function PositionSettingsForm({ tenantId, tenant, isLoading }: { tenantId
   const handleDropdownClicked = (method: 'edit' | 'delete' | 'disable', data: PositionSchema) => {
     if (method === 'edit') {
       setIsEditOpen(true);
+      setSelectedPositionId(data._id || '');
       resetEdit({
         _id: data._id,
         name: data.name,

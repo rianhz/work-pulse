@@ -1,8 +1,8 @@
 import { IPosition, IPositionResponse } from "./positions";
 import { api } from "@/lib/axios";
 
-export const getPositions = async (tenantId: string) => {
-  const response = await api.get<IPositionResponse<IPosition[]>>(`/positions?tenantId=${tenantId}`);
+export const getPositions = async () => {
+  const response = await api.get<IPositionResponse<IPosition[]>>(`/positions`);
   return response.data;
 }
 

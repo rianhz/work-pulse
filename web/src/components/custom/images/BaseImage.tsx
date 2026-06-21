@@ -9,7 +9,8 @@ interface BaseAvatarProps {
   alt?: string;
   fallbackInitials?: string;
   className?: string;
-  priority?: boolean; // Added to handle Largest Contentful Paint (LCP) dynamically
+  priority?: boolean;
+  imageLoading?: "lazy" | "eager";
 }
 
 export default function BaseAvatar({
@@ -18,6 +19,7 @@ export default function BaseAvatar({
   fallbackInitials,
   className = "",
   priority = false, // Defaults to false, set to true if it's the main page element
+  imageLoading = "lazy",
 }: BaseAvatarProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -44,11 +46,12 @@ export default function BaseAvatar({
         src={src}
         alt={alt || ""}
         fill
-        priority={priority} // Clears warning #2 when passed as true
-        sizes="(max-width: 768px) 96px, 96px" // Clears warning #1 (Informs Next.js this avatar is roughly 96px wide)
+        priority={priority}
+        sizes="(max-width: 768px) 96px, 96px"
         className={`object-cover transition-opacity duration-300 ${
           loading ? "opacity-0" : "opacity-100"
         }`}
+        loading={imageLoading}
         onLoad={() => setLoading(false)}
         onError={() => {
           setLoading(false);

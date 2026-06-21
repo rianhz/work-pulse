@@ -52,6 +52,7 @@ const userSchema = new mongoose.Schema<IUser>(
     projects: [{
       type: mongoose.Schema.Types.ObjectId,
       ref: "Project",
+      default: null,
     }],
 
     reportsTo: {
@@ -75,11 +76,13 @@ const userSchema = new mongoose.Schema<IUser>(
     department: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Department",
+      default: null,
     },
 
     position: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Position",
+      default: null,
     },
 
     refreshToken: {

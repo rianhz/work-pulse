@@ -35,7 +35,6 @@ const invitationSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-invitationSchema.index({ token: 1 });
 invitationSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
 export const InvitationModel = mongoose.model("Invitation", invitationSchema);

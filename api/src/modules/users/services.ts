@@ -6,7 +6,7 @@ import { AuthUser } from '../authentication/interfaces';
 import { QueryOptions } from '../global';
 
 export const getMeService = async (userId: string): Promise<IUser> => {
-    const user = await UserModel.findById(userId).select("-refreshToken").select("-__v").select("-createdAt").select("-updatedAt").lean();
+    const user = await UserModel.findById(userId).populate("department").populate("position").select("-refreshToken").select("-__v").select("-createdAt").select("-updatedAt").lean();
     if (!user) throw new NotFoundException('User not found');
     return user;
 };
@@ -86,6 +86,8 @@ export const getDirectReportsTreeService = async (
   const [users, total] = await Promise.all([
     UserModel.find(baseQuery)
       .populate("reportsTo", "fullName email role")
+      .populate("department", "name")
+      .populate("position", "name")
       .sort({ fullName: 1 })
       .skip(skip)
       .limit(limit),

@@ -9,7 +9,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Label } from "@/components/ui/label";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   UpdateAccountSettingsFormValues,
@@ -24,6 +24,8 @@ import { Spinner } from "@/components/ui/spinner";
 import BaseAvatar from "../images/BaseImage";
 import { useQueryClient } from "@tanstack/react-query";
 import { IUserWithProviders } from "@/app/settings/page";
+import moment from "moment";
+import { BaseDatePicker } from "../date-picker/BaseDatePicker";
 
 
 export function AccountSettingsForm({ user, isLoading }: { user: IUserWithProviders, isLoading: boolean }) {
@@ -33,6 +35,7 @@ export function AccountSettingsForm({ user, isLoading }: { user: IUserWithProvid
   const [isUploaderOpen, setIsUploaderOpen] = useState(false);
   
   const {
+    control,
     register: registerAccountSettings,
     handleSubmit: handleSubmitAccountSettings,
     setValue: setValueAccountSettings,
@@ -45,6 +48,10 @@ export function AccountSettingsForm({ user, isLoading }: { user: IUserWithProvid
     defaultValues: {
       fullName: "",
       avatar: "",
+      nickName: "",
+      birthDate: new Date(),
+      // department: "",
+      // position: "",
     },
   });
 
@@ -66,18 +73,26 @@ export function AccountSettingsForm({ user, isLoading }: { user: IUserWithProvid
     setValueAccountSettings("avatar", "", { shouldDirty: true });
   };
 
-  const handleSaveChanges = (data: UpdateAccountSettingsFormValues) => {
+  const onSubmitAccountSettings = (data: UpdateAccountSettingsFormValues) => {
     updateUserMutation({
       userId: user._id,
       payload: {
         fullName: getValuesAccountSettings("fullName"),
         avatar: getValuesAccountSettings("avatar"),
+        nickName: getValuesAccountSettings("nickName"),
+        birthDate: getValuesAccountSettings("birthDate"),
+        // department: getValuesAccountSettings("department"),
+        // position: getValuesAccountSettings("position"),
       },
     }, {
       onSuccess: () => {
         resetAccountSettings({
           fullName: data.fullName,
           avatar: data.avatar,
+          nickName: data.nickName,
+          birthDate: data.birthDate,
+          // department: data.department,
+          // position: data.position,
         });
         queryClient.invalidateQueries({ queryKey: ["me"] });
       },
@@ -90,9 +105,15 @@ export function AccountSettingsForm({ user, isLoading }: { user: IUserWithProvid
     resetAccountSettings({
       fullName: user.fullName ?? "",
       avatar: user.avatar ?? "",
+      nickName: user.nickName || (user.fullName ? user.fullName.split(" ")[0] : "") || "",
+      birthDate: user.birthDate ? new Date(user.birthDate) : new Date(),
+      // department: user.department ?? "",
+      // position: user.position ?? "",
     });
 
   }, [user, resetAccountSettings]);
+
+  console.log(user.birthDate)
 
   if (isLoading) {
     return (
@@ -117,7 +138,7 @@ export function AccountSettingsForm({ user, isLoading }: { user: IUserWithProvid
     <>
       <UniversalUploader variant="popup" isOpen={isUploaderOpen} onClose={() => setIsUploaderOpen(false)} onUploadSuccess={handleUploadSuccess}/>
       <Card className="w-full max-w-2xl rounded-md py-0">
-        <form onSubmit={handleSubmitAccountSettings(handleSaveChanges)}>
+        <form onSubmit={handleSubmitAccountSettings(onSubmitAccountSettings)}>
           <Table>
             <TableBody>
               <TableRow>
@@ -130,7 +151,7 @@ export function AccountSettingsForm({ user, isLoading }: { user: IUserWithProvid
                           className="group relative w-[100px] h-[100px] overflow-hidden rounded-full border border-muted"
                         >
                         
-                          <BaseAvatar src={avatar ?? ""} alt="Avatar" className="w-[100px] h-[100px] rounded-full" fallbackInitials={initials} />
+                          <BaseAvatar src={avatar ?? ""} alt="Avatar" className="w-[100px] h-[100px] rounded-full" fallbackInitials={initials} imageLoading="eager" />
                           <div className="cursor-pointer absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
                             <span className="select-none px-1 text-center text-[10px] font-medium leading-tight text-white">
                               Change
@@ -148,12 +169,16 @@ export function AccountSettingsForm({ user, isLoading }: { user: IUserWithProvid
                     </div>
                     {isAccountSettingsDirty && (
                       <div className="flex flex-col gap-2">
-                        <Button type="submit" disabled={isSubmittingAccountSettings || isPendingUpdateUser}>
-                          {isSubmittingAccountSettings || isPendingUpdateUser ? <Spinner /> : 'Save Changes'}
+                        <Button type="submit" onClick={() => console.log("data", getValuesAccountSettings())} disabled={isPendingUpdateUser}>
+                          {isPendingUpdateUser ? <Spinner /> : 'Save Changes'}
                         </Button>
                         <Button type="button" variant="outline" className="min-w-[70px]" onClick={() => resetAccountSettings({
                           fullName: user?.fullName ?? "",
                           avatar: user?.avatar ?? "",
+                          nickName: user?.nickName ?? "",
+                          birthDate: user?.birthDate ?? new Date(),
+                          // department: user?.department ?? "",
+                          // position: user?.position ?? "",
                         })}>Cancel</Button>
                       </div>
                     )}
@@ -175,6 +200,53 @@ export function AccountSettingsForm({ user, isLoading }: { user: IUserWithProvid
                     {errorsAccountSettings.fullName && (
                       <p className="text-xs text-red-500">
                         {errorsAccountSettings.fullName.message}
+                      </p>
+                    )}
+                </TableCell>
+              </TableRow>
+
+              <TableRow>
+                <TableCell>
+                  <Label className="whitespace-nowrap">
+                    Nickname
+                  </Label>
+                </TableCell>
+                <TableCell>
+                    <InputGroup>
+                      <InputGroupInput type="text" {...registerAccountSettings("nickName")} />
+                    </InputGroup>
+                    {errorsAccountSettings.nickName && (
+                      <p className="text-xs text-red-500">
+                        {errorsAccountSettings.nickName.message}
+                      </p>
+                    )}
+                </TableCell>
+              </TableRow>
+
+              <TableRow>
+                <TableCell>
+                  <Label className="whitespace-nowrap">
+                    Birth Date
+                  </Label>
+                </TableCell>
+                <TableCell>
+                    <Controller
+                      control={control}
+                      name="birthDate"
+                      render={({ field }) => (
+                        <BaseDatePicker
+                          value={field.value}
+                          onChange={(date) => {
+                            // Automatically transforms the date and triggers form state rules
+                            field.onChange(date ? moment(date).toDate() : null);
+                          }}
+                          placeholder="Select date"
+                        />
+                      )}
+                    />
+                    {errorsAccountSettings.birthDate && (
+                      <p className="text-xs text-red-500">
+                        {errorsAccountSettings.birthDate.message}
                       </p>
                     )}
                 </TableCell>

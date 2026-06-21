@@ -1,6 +1,3 @@
-import { IDepartment } from "../departments/interfaces";
-import { IPosition } from "../positions/interfaces";
-
 export interface IUser {
     _id: string;
     tenantId: string;
@@ -14,8 +11,8 @@ export interface IUser {
     loginType: ('password' | 'google')[];
     reportsTo: string | null;
     birthDate: Date | null;
-    department: IDepartment | null;
-    position: IPosition | null;
+    department: string | null;
+    position: string | null;
 
     refreshToken: {
         token: string | null;

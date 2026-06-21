@@ -3,10 +3,10 @@ import { createPosition, deletePosition, getPositionById, updatePosition, getPos
 import { IPosition } from "./positions";
 import { toast } from "sonner";
 
-export const useGetPositions = (tenantId: string) => {
+export const useGetPositions = () => {
   return useQuery({
     queryKey: ['positions'],
-    queryFn: () => getPositions(tenantId),
+    queryFn: () => getPositions(),
   });
 }
 
