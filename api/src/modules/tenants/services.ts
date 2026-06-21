@@ -1,12 +1,19 @@
 import { TenantModel } from './schema';
 import { ITenant } from './interfaces';
 import { NotFoundException } from '../../utils/app-error';
+import { AuthUser } from '../authentication/interfaces';
 
 export const getTenantService = async (tenantId: string): Promise<ITenant> => {
     const tenant = await TenantModel.findById(tenantId).lean();
     if (!tenant) {
         throw new NotFoundException('Tenant not found');
     }
+    return tenant;
+};
+
+export const getPublicTenantService = async (tenantId: string): Promise<Partial<ITenant>> => {
+    const tenant = await TenantModel.findById(tenantId).select('name slug logo').lean();
+    if (!tenant) throw new NotFoundException('Tenant not found');
     return tenant;
 };
 
@@ -24,7 +31,7 @@ export const updateTenantService = async (tenantId: string, tenant: ITenant): Pr
 };
 
 export const deleteTenantService = async (tenantId: string): Promise<ITenant> => {
-    const deletedTenant = await TenantModel.findByIdAndDelete(tenantId).lean();
+    const deletedTenant = await TenantModel.findByIdAndUpdate(tenantId, { status: "deleted" }, { new: true }).lean();
     if (!deletedTenant) {
         throw new NotFoundException('Tenant not found');
     }

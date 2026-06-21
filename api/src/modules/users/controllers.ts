@@ -1,7 +1,8 @@
 import { Request, Response } from 'express';
-import { addProjectToUserService, getLoginTypesService, getMeService, removeProjectFromUserService, updateUserService } from './services';
+import { addProjectToUserService, getDirectReportsTreeService, getLoginTypesService, getMeService, removeProjectFromUserService, updateUserService } from './services';
 import { HTTPSTATUS } from '../../utils/http-config';
 import { asyncHandler } from '../../middleware/async-handler';
+import { isHaveAccess } from '../../utils/casl';
 
 export const getMeController = asyncHandler(async (req: Request, res: Response) => {
     const { userId } = (req as any).user;
@@ -16,9 +17,13 @@ export const getMeProvidersController = asyncHandler(async (req: Request, res: R
 });
 
 export const updateUserController = asyncHandler(async (req: Request, res: Response) => {
-    const { userId } = (req as any).user;
+    const { userId } = req.params;
+    const authenticatedUser = (req as any).user;
+
+    await isHaveAccess(authenticatedUser, { id: userId }, "User", "update");
+
     const payload = req.body;
-    await updateUserService(userId, payload);
+    await updateUserService(userId as string, payload);
     res.status(HTTPSTATUS.OK).json({ success: true, message: 'User updated successfully' });
 });
 
@@ -34,4 +39,20 @@ export const removeProjectFromUserController = asyncHandler(async (req: Request,
     const { projectId, userId } = req.body;
     await removeProjectFromUserService(userId, projectId);
     res.status(HTTPSTATUS.OK).json({ success: true, message: 'Project removed from user successfully' });
+});
+
+export const getUsersController = asyncHandler(async (req: Request, res: Response) => {
+    const authenticatedUser = (req as any).user;
+    await isHaveAccess(authenticatedUser, null, "User", "read");
+
+    const search = req.query.search as string || "";
+    const page = parseInt(req.query.page as string, 10) || 1;
+    const limit = parseInt(req.query.limit as string, 10) || 10;
+    
+    const { users, total } = await getDirectReportsTreeService(authenticatedUser, { search, page, limit });
+    res.status(HTTPSTATUS.OK).json({ 
+      success: true, 
+      data: users,
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) }
+    });
 });

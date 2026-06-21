@@ -63,7 +63,7 @@ function DropdownMenuGroup({
   return (
     <DropdownMenuPrimitive.Group
       data-slot="tiptap-dropdown-menu-group"
-      className={cn("tiptap-dropdown-menu-group bg-background border border-border rounded-md", className)}
+      className={cn("tiptap-dropdown-menu-group bg-popover border border-border rounded-md", className)}
       {...props}
     />
   )

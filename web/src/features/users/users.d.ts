@@ -10,6 +10,7 @@ export interface IUser {
   avatar: string;
   createdAt: Date;
   updatedAt: Date;
+  reportsTo: string | null;
   refreshToken: {
     token: string;
     expiresIn: number;
@@ -24,4 +25,8 @@ export interface IGetMeResponse extends IResponse {
 
 export interface IGetMeProvidersResponse extends IResponse {
   data: ('password' | 'google')[];
+}
+
+export interface IGetUsersResponse extends IResponse {
+  data: IUser[];
 }

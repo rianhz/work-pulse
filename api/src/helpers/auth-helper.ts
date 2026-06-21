@@ -9,11 +9,12 @@ import { UserModel } from '../modules/users/schema';
 interface ITokenPayload {
     userId: string;
     tenantId: string;
+    role: string;
 }
 
 export const generateAccessToken = (payload: ITokenPayload, duration: jwt.SignOptions['expiresIn']): string => {
     return jwt.sign(
-        { userId: payload.userId, tenantId: payload.tenantId }, 
+        { userId: payload.userId, tenantId: payload.tenantId, role: payload.role }, 
         process.env.JWT_ACCESS_SECRET as string, 
         { expiresIn: duration }
     );
@@ -21,7 +22,7 @@ export const generateAccessToken = (payload: ITokenPayload, duration: jwt.SignOp
 
 export const generateRefreshToken = (payload: ITokenPayload, duration: jwt.SignOptions['expiresIn']): string => {
     return jwt.sign(
-        { userId: payload.userId, tenantId: payload.tenantId }, 
+        { userId: payload.userId, tenantId: payload.tenantId, role: payload.role }, 
         process.env.JWT_REFRESH_SECRET as string, 
         { expiresIn: duration }
     );
@@ -55,7 +56,7 @@ export async function verifyGoogleToken(token: string) {
 }
 
 export const issueTokens = async (
-  user: IUser
+  user: IUser,
 ): Promise<{
   accessToken: string;
   refreshToken: string;
@@ -64,6 +65,7 @@ export const issueTokens = async (
     {
       userId: user._id.toString(),
       tenantId: user.tenantId,
+      role: user.role,
     },
     ACCESS_TOKEN_EXPIRES_IN
   );
@@ -72,6 +74,7 @@ export const issueTokens = async (
     {
       userId: user._id.toString(),
       tenantId: user.tenantId,
+      role: user.role,
     },
     REFRESH_TOKEN_EXPIRES_IN
   );

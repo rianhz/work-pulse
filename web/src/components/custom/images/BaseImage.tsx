@@ -3,13 +3,13 @@
 import { useState } from "react";
 import Image from "next/image";
 import { Spinner } from "@/components/ui/spinner";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 interface BaseAvatarProps {
   src?: string;
-  alt: string;
+  alt?: string;
   fallbackInitials?: string;
   className?: string;
+  priority?: boolean; // Added to handle Largest Contentful Paint (LCP) dynamically
 }
 
 export default function BaseAvatar({
@@ -17,13 +17,14 @@ export default function BaseAvatar({
   alt,
   fallbackInitials,
   className = "",
+  priority = false, // Defaults to false, set to true if it's the main page element
 }: BaseAvatarProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
   if (!src || error) {
     return (
-      <div className={`size-24 flex items-center justify-center align-center bg-muted rounded-full`}>
+      <div className={`w-[100px] h-[100px] flex items-center justify-center align-center bg-muted rounded-full`}>
         <span className="text-4xl font-bold bg-muted text-muted-foreground">
           {fallbackInitials}
         </span>
@@ -41,8 +42,10 @@ export default function BaseAvatar({
 
       <Image
         src={src}
-        alt={alt}
+        alt={alt || ""}
         fill
+        priority={priority} // Clears warning #2 when passed as true
+        sizes="(max-width: 768px) 96px, 96px" // Clears warning #1 (Informs Next.js this avatar is roughly 96px wide)
         className={`object-cover transition-opacity duration-300 ${
           loading ? "opacity-0" : "opacity-100"
         }`}

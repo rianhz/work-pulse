@@ -1,0 +1,199 @@
+import { IUserWithProviders } from "@/app/settings/page";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Spinner } from "@/components/ui/spinner";
+import { TableBody, TableCell, TableRow } from "@/components/ui/table";
+
+import { Table } from "@/components/ui/table";
+import { useChangePassword, useLogout, useRemoveGoogle, useRemovePassword } from "@/features/auth/hooks";
+import { UpdatePasswordFormValues, updatePasswordSchema } from "@/features/users/validator";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { CircleCheck } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { useState } from "react";
+import { toast } from "sonner";
+import { Input } from "@/components/ui/input";
+
+export function SecurityUserSettingsForm({ user, isLoading }: { user: IUserWithProviders, isLoading: boolean }) {
+  const { mutate: removePasswordMutation, isPending: isPendingRemovePassword } = useRemovePassword();
+  const { mutate: removeGoogleMutation, isPending: isPendingRemoveGoogle } = useRemoveGoogle();
+  const { mutate: logoutMutation, isPending: isPendingLogout } = useLogout();
+  const { mutate: changePasswordMutation, isPending: isPendingChangePassword } = useChangePassword();
+  
+  const [disconnectProvider, setDisconnectProvider] = useState<string | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isChangePasswordDialogOpen, setIsChangePasswordDialogOpen] = useState(false);
+
+  const {
+    register: registerPassword,
+    handleSubmit: handleSubmitPassword,
+    formState: { errors: errorsPassword, isSubmitting: isSubmittingPassword },
+    reset: resetPassword,
+  } = useForm<UpdatePasswordFormValues>({
+    resolver: zodResolver(updatePasswordSchema),
+    defaultValues: {
+      currentPassword: "",
+      newPassword: "",
+      confirmNewPassword: "",
+    },
+  });
+  
+  const handleChangePasswordClicked = () => {
+    setIsChangePasswordDialogOpen(true);
+  };
+
+  const handleDisconnectClicked = (provider: string) => {
+    setDisconnectProvider(provider);
+    setIsDialogOpen(true);
+  };
+
+  const handleDisconnectConfirmed = async () => {
+    try {
+      if (disconnectProvider === 'google') {
+        removeGoogleMutation();
+        logoutMutation();
+      } else if (disconnectProvider === 'password') {
+        removePasswordMutation();
+        logoutMutation();
+      }
+    } catch (error) {
+      toast.error((error as any)?.response?.data?.message || (error as Error).message || 'Failed to disconnect provider');
+    } finally {
+      setIsDialogOpen(false);
+    }
+  };
+
+  const handleChangePasswordDialogOpenChanged = (open: boolean) => {
+    setIsChangePasswordDialogOpen(open);
+    resetPassword();
+  };
+
+  const onSubmitPassword = async (values: UpdatePasswordFormValues) => {
+    changePasswordMutation({
+      currentPassword: values.currentPassword,
+      newPassword: values.newPassword,
+    },{
+      onSuccess: () => {
+        setIsChangePasswordDialogOpen(false);
+        resetPassword({
+          currentPassword: "",
+          newPassword: "",
+          confirmNewPassword: "",
+        });
+      },
+    });
+  };
+
+  const handleCloseChangePasswordDialog = () => {
+    setIsChangePasswordDialogOpen(false);
+    resetPassword();
+  };
+
+  return (
+    <>
+      <Dialog open={isChangePasswordDialogOpen} onOpenChange={handleChangePasswordDialogOpenChanged}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              Change Password
+            </DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSubmitPassword(onSubmitPassword)} className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="currentPassword">Current Password</Label>
+              <Input type="password" id="currentPassword" {...registerPassword("currentPassword")} />
+            </div>
+            {errorsPassword.currentPassword && (
+              <p className="text-xs text-red-500">
+                {errorsPassword.currentPassword.message}
+              </p>
+            )}
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="newPassword">New Password</Label>
+              <Input type="password" id="newPassword" {...registerPassword("newPassword")} />
+            </div>
+            {errorsPassword.newPassword && (
+              <p className="text-xs text-red-500">
+                {errorsPassword.newPassword.message}
+              </p>
+            )}
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="confirmNewPassword">Confirm New Password</Label>
+              <Input type="password" id="confirmNewPassword" {...registerPassword("confirmNewPassword")} />
+            </div>
+            {errorsPassword.confirmNewPassword && (
+              <p className="text-xs text-red-500">
+                {errorsPassword.confirmNewPassword.message}
+              </p>
+            )}
+            <div className="flex items-center justify-end gap-2">
+              <Button variant="outline" type="button" onClick={handleCloseChangePasswordDialog}>Cancel</Button>
+              <Button type="submit" variant="default" disabled={isSubmittingPassword || isPendingChangePassword}>
+                {isSubmittingPassword || isPendingChangePassword ? <Spinner /> : 'Save'}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {user.providers && user.providers.length > 1 ? 'Are you sure?' : 'Alert'}
+            </DialogTitle>
+            <DialogDescription>
+              {user.providers && user.providers.length > 1 ? `Once disconnected, you won't be able to use your {disconnectProvider === 'google' ? 'Google account' : 'password'} to access this account.
+              <br />
+              <strong>This action forces you to logout</strong>` : 'You cannot disconnect your last provider. Please add another provider to continue.'}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            {user.providers && user.providers.length > 1 ? (
+              <>
+                <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
+                <Button variant="destructive" onClick={handleDisconnectConfirmed} disabled={isPendingRemovePassword || isPendingRemoveGoogle || isPendingLogout}>
+                  {isPendingRemovePassword || isPendingRemoveGoogle || isPendingLogout ? <Spinner /> : 'Disconnect'}
+                </Button>
+              </>
+            ) : (
+              <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Close</Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Card className="w-full max-w-2xl py-0 rounded-md">
+        <Table>
+          <TableBody>
+            <TableRow>
+              <TableCell colSpan={2} className="flex flex-col gap-2">
+                {user?.providers?.includes('google') && (
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="flex items-center gap-2">
+                      Google account <CircleCheck className="size-4 text-green-500" />
+                    </span>
+                    <Button type="button" variant="destructive" size='xs' onClick={() => handleDisconnectClicked('google')}>Disconnect</Button>
+                  </div>
+                )}
+
+                {user?.providers?.includes('password') && (
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="flex items-center gap-2">
+                      Password <CircleCheck className="size-4 text-green-500" />
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <Button type="button" variant="secondary" size='xs' onClick={handleChangePasswordClicked}>Change</Button>
+                      <Button type="button" variant="destructive" size='xs' onClick={() => handleDisconnectClicked('password')}>Disconnect</Button>
+                    </div>
+                  </div>
+                )}
+
+              </TableCell>
+            </TableRow>
+          </TableBody>
+        </Table>
+      </Card>
+    </>
+  )
+}

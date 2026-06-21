@@ -48,10 +48,39 @@ const userSchema = new mongoose.Schema<IUser>(
       ],
       default: "active",
     },
+
     projects: [{
       type: mongoose.Schema.Types.ObjectId,
       ref: "Project",
     }],
+
+    reportsTo: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+
+    nickName: {
+      type: String,
+      required: false,
+      default: null,
+    },
+
+    birthDate: {
+      type: Date,
+      required: false,
+      default: null,
+    },
+
+    department: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Department",
+    },
+
+    position: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Position",
+    },
 
     refreshToken: {
       token: {
@@ -78,6 +107,8 @@ const userSchema = new mongoose.Schema<IUser>(
 
 userSchema.index({
   email: 1,
+  fullName: 1,
+  tenantId: 1,
 });
 
 export const UserModel = mongoose.model<IUser>("User", userSchema);

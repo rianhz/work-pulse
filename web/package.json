@@ -6,6 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "create-module": "node src/scripts/create-module.js",
     "lint": "eslint"
   },
   "dependencies": {
