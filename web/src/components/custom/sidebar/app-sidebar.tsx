@@ -50,7 +50,7 @@ export function AppSidebar() {
   const { isMobile, open } = useSidebar();
 
   return (
-    <Sidebar variant="sidebar" collapsible={!isMobile ? 'icon' : 'offcanvas'}>
+    <Sidebar variant="sidebar" collapsible={!isMobile ? 'none' : 'offcanvas'}>
       <SidebarHeader>
         <div className="flex justify-center items-center py-2">
           <h1 className={`font-bold ${open ? "text-2xl" : "text-xl"}`}>WP</h1>

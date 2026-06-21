@@ -1,11 +1,9 @@
 import { UserModel } from './schema';
 import { IUser } from './interfaces';
-import { IdentityModel } from '../idp/schema';
-import { compareValue, hashValue } from '../../utils/bcrypt';
-import { BadRequestException, ForbiddenException, NotFoundException } from '../../utils/app-error';
+import { ForbiddenException, NotFoundException } from '../../utils/app-error';
 import { getIdentityService } from '../idp/service';
 import { AuthUser } from '../authentication/interfaces';
-import mongoose from 'mongoose';
+import { QueryOptions } from '../global';
 
 export const getMeService = async (userId: string): Promise<IUser> => {
     const user = await UserModel.findById(userId).select("-refreshToken").select("-__v").select("-createdAt").select("-updatedAt").lean();
@@ -39,61 +37,60 @@ export const updateUserService = async (userId: string, payload: Partial<IUser>)
     return user;
 };
 
-export const getDirectReportsTreeService = async (currentUser: AuthUser) => {
+export const getDirectReportsTreeService = async (
+  currentUser: AuthUser, 
+  options: QueryOptions
+): Promise<{ users: IUser[], total: number }> => {
   const { userId, role, tenantId } = currentUser;
+  const { search, page, limit } = options;
+
+  const skip = (page - 1) * limit;
+
+  const baseQuery: any = { tenantId };
+  if (search) {
+    baseQuery.$or = [
+      { fullName: { $regex: search, $options: "i" } },
+      { email: { $regex: search, $options: "i" } }
+    ];
+  }
 
   switch (role) {
     case "owner":
     case "admin":
-      // 🏢 Owner/Admin: See EVERYONE in the tenant
-      return UserModel.find({ tenantId }).populate("reportsTo", "fullName email role");
+      break;
 
     case "employee":
-      // 🚫 Employee: Can't see anyone
       throw new ForbiddenException("Employees are not authorized to view the reporting tree.");
 
     case "team-leader":
-      // 👥 Team Leader: Only see users directly reporting to them
-      return UserModel.find({ 
-        tenantId, 
-        reportsTo: userId, 
-        role: "employee" 
-      });
+      baseQuery.reportsTo = userId;
+      baseQuery.role = "employee";
+      break;
 
     case "manager":
-      // 🌳 Manager: Needs a tree structure. 
-      // Get Team Leaders reporting to them, and nest the Employees reporting to those leaders.
-      return UserModel.aggregate([
-        {
-          $match: {
-            tenantId,
-            reportsTo: new mongoose.Types.ObjectId(userId),
-            role: "team-leader"
-          }
-        },
-        {
-          $lookup: {
-            from: "users", // MongoDB collection name (usually lowercase plural)
-            localField: "_id",
-            foreignField: "reportsTo",
-            as: "directReports"
-          }
-        },
-        {
-          $project: {
-            fullName: 1,
-            email: 1,
-            role: 1,
-            status: 1,
-            "directReports.fullName": 1,
-            "directReports.email": 1,
-            "directReports.role": 1,
-            "directReports._id": 1
-          }
-        }
-      ]);
+      const directTeamLeaders = await UserModel.find({ tenantId, reportsTo: userId, role: "team-leader" }).select("_id");
+      const teamLeaderIds = directTeamLeaders.map(tl => tl._id);
+
+      const directEmployees = await UserModel.find({ tenantId, reportsTo: { $in: teamLeaderIds }, role: "employee" }).select("_id");
+      const employeeIds = directEmployees.map(emp => emp._id);
+
+      const accessibleUserIds = [...teamLeaderIds, ...employeeIds];
+      
+      baseQuery._id = { $in: accessibleUserIds };
+      break;
 
     default:
       throw new ForbiddenException("Invalid role mapping.");
   }
-}
+
+  const [users, total] = await Promise.all([
+    UserModel.find(baseQuery)
+      .populate("reportsTo", "fullName email role")
+      .sort({ fullName: 1 })
+      .skip(skip)
+      .limit(limit),
+    UserModel.countDocuments(baseQuery)
+  ]);
+
+  return { users, total };
+};

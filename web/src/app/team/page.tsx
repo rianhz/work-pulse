@@ -4,13 +4,13 @@ import { ErrorMessage } from "@/components/custom/errors-and-empty/ErrorsMessage
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useGetUsers } from "@/features/users/hooks";
-import { MoreHorizontalIcon, UserIcon, Users } from "lucide-react";
-import { useState } from "react";
+import { MoreHorizontalIcon, Users } from "lucide-react";
+import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -20,11 +20,28 @@ import { useInviteUsers } from "@/features/invitations/hooks";
 import { EmptyData } from "@/components/custom/errors-and-empty/EmptyData";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store";
+import { useDebounce } from "@/hooks/use-debounce";
+import { InputGroup, InputGroupInput } from "@/components/ui/input-group";
+import { BasePagination } from "@/components/custom/pagination/BasePagination";
 
 export default function TeamPage() {
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const limit = 5;
+
+  const debouncedSearch = useDebounce(search, 1000);
+
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
+    setPage(1);
+  };
+
   const currentUser = useSelector((state: RootState) => state.currentUser.user);
-  const { data: users, isLoading: isLoadingUsers, error: errorUsers, isError: isErrorUsers } = useGetUsers();
+  const { data: usersResponse, isLoading: isLoadingUsers, error: errorUsers, isError: isErrorUsers } = useGetUsers({ search: debouncedSearch, page, limit });
   const { mutate: inviteUsers, isPending: isInvitingUsers } = useInviteUsers();
+
+  const pagination = useMemo(() => usersResponse?.pagination, [usersResponse]);
+  const users = useMemo(() => usersResponse?.data, [usersResponse]);
 
   const [open, setOpen] = useState(false);
 
@@ -102,16 +119,21 @@ export default function TeamPage() {
     
       <main className="flex flex-1 flex-col gap-4">
         <Card>
-          <CardHeader className="flex justify-between items-center">
+          <CardHeader className="flex justify-between items-end">
             <div>
               <CardTitle className="text-2xl font-bold">Team</CardTitle>
               <CardDescription>List of all users in your team</CardDescription>
             </div>
-            {currentUser?.role === "admin" || currentUser?.role === "owner" && (
+            {(currentUser?.role === "admin" || currentUser?.role === "owner") && (
               <Button onClick={() => setOpen(true)}>Invite</Button>
             )}
           </CardHeader>
           <CardContent>
+            {!isErrorUsers && 
+              <InputGroup>
+                <InputGroupInput placeholder="Searching..." value={search} onChange={(e) => handleSearchChange(e.target.value)} />
+              </InputGroup>
+            }
             {isLoadingUsers && <div className="flex justify-center items-center min-h-[200px]"> <Spinner className="size-10" /> </div>}
             {!isLoadingUsers && users && users.length === 0 && 
               <EmptyData description="No users found in your team" icon={<Users className="size-10 text-muted-foreground" />} />
@@ -149,6 +171,12 @@ export default function TeamPage() {
             )}
           </CardContent>
         </Card>
+
+
+        {pagination && pagination.totalPages > 1 && (
+          <BasePagination currentPage={page} totalPages={pagination.totalPages} onPageChange={(page) => setPage(page)} />
+        )}
+
       </main>
     </>
   );

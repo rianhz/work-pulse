@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { useGoogleLogin } from "@react-oauth/google";
 import { Separator } from "@/components/ui/separator";
 import { FcGoogle } from "react-icons/fc";
+import Link from "next/link";
 
 export default function RegisterForm() {
   const router = useRouter();
@@ -80,7 +81,9 @@ export default function RegisterForm() {
 
   return (
     <Card className="w-full max-w-sm">
-      <CardContent>
+      <CardContent className="flex flex-col gap-4">
+        <h1 className="text-3xl font-bold">Sign up</h1>
+        <span className="text-sm text-muted-foreground">Already have an account? <Link className="text-primary hover:underline" href="/signin">Sign in</Link></span>
         <form onSubmit={handleSubmit(onSubmit)}>
             <div className="flex flex-col gap-6">
                 

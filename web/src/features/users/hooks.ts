@@ -1,7 +1,7 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { getMe, getMeProviders, getUsers, updateUser } from "./api";
 import { toast } from "sonner";
-import { IResponse } from "@/global";
+import { IGetPaginatedResponse, IPaginationQueryOptions } from "@/global";
 import { IUser } from "./users";
 
 export const useGetMe = () => {
@@ -45,12 +45,12 @@ export const useUpdateUser = () => {
   });
 };
 
-export const useGetUsers = () => {
-  return useQuery<IUser[]>({
-    queryKey: ["users"],
+export const useGetUsers = (params: IPaginationQueryOptions) => {
+  return useQuery<IGetPaginatedResponse<IUser[]>>({
+    queryKey: ["users", params],
     queryFn: async () => {
       try {
-        const response = await getUsers();
+        const response = await getUsers(params);
         return response;
       } catch (error) {
         throw error;

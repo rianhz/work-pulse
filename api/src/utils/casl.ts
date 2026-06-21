@@ -3,7 +3,7 @@ import { ForbiddenException, UnauthorizedException } from "./app-error";
 import { AuthUser } from "../modules/authentication/interfaces";
 
 export type Actions = "manage" | "create" | "read" | "update" | "delete";
-export type Subjects = "User" | "Project" | "Timesheet" | "Tenant" | "Invitation" | "all";
+export type Subjects = "User" | "Project" | "Timesheet" | "Tenant" | "Invitation" | "Department" | "Position" | "all";
 
 export async function defineAbilitiesFor(user: AuthUser) {
   const { can, build } = new AbilityBuilder(createMongoAbility);
@@ -19,6 +19,8 @@ export async function defineAbilitiesFor(user: AuthUser) {
       can("manage", "Timesheet");
       can("manage", "Tenant");
       can("manage", "Invitation");
+      can("manage", "Department");
+      can("manage", "Position");
       break;
 
     case "manager":
@@ -41,11 +43,6 @@ export async function defineAbilitiesFor(user: AuthUser) {
 }
 
 export async function isHaveAccess(authenticatedUser: AuthUser, resourceData: any, subjectName: Subjects, action: Actions, field?: string) {
-  console.log("authenticatedUser", authenticatedUser);
-  console.log("resourceData", resourceData);
-  console.log("subjectName", subjectName);
-  console.log("action", action);
-  console.log("field", field);
   const ability = await defineAbilitiesFor(authenticatedUser);
 
   const target = resourceData ? caslSubject(subjectName, resourceData) : subjectName;

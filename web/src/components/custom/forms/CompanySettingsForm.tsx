@@ -46,7 +46,6 @@ export function CompanySettingsForm({ tenantId, tenant, isLoading }: { tenantId:
   };
 
   const onSubmitCompanySettings = (data: CompanySettingsFormValues) => {
-    console.log(data);
     updateTenant({
       id: tenantId || '',
       payload: data,
@@ -100,45 +99,45 @@ export function CompanySettingsForm({ tenantId, tenant, isLoading }: { tenantId:
             <TableBody>
               <TableRow>
                 <TableCell colSpan={2}>
-                    <div className="flex justify-between gap-2">
-                      <div className="flex items-center gap-2">
-                        <div className="flex flex-col justify-center items-center gap-2">
-                          <div
-                            onClick={() => setIsUploaderOpen(true)}
-                            className="group relative w-[100px] h-[100px] overflow-hidden rounded-full border border-muted"
-                          >
-                          
-                            <BaseAvatar src={logo ?? ""} alt="Logo" className="w-[100px] h-[100px] rounded-full" fallbackInitials={tenantInitials} />
-                            <div className="cursor-pointer absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-                              <span className="select-none px-1 text-center text-[10px] font-medium leading-tight text-white">
-                                Change
-                              </span>
-                            </div>
+                  <div className="flex justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <div className="flex flex-col justify-center items-center gap-2">
+                        <div
+                          onClick={() => setIsUploaderOpen(true)}
+                          className="group relative w-[100px] h-[100px] overflow-hidden rounded-full border border-muted"
+                        >
+                        
+                          <BaseAvatar src={logo ?? ""} alt="Logo" className="w-[100px] h-[100px] rounded-full" fallbackInitials={tenantInitials} />
+                          <div className="cursor-pointer absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                            <span className="select-none px-1 text-center text-[10px] font-medium leading-tight text-white">
+                              Change
+                            </span>
                           </div>
                         </div>
-                        <div>
-                          <p className="text-sm font-medium">Logo</p>
-                          <p className="text-xs text-muted-foreground">Recommended size 100x100px</p>
-                          {logo && (
-                            <Button type="button" variant="destructive" size='xs' className="min-w-[70px] mt-2" onClick={handleLogoRemove}>Remove</Button>
-                          )}
-                        </div>
                       </div>
-                      {isDirtyCompany && (
-                        <div className="flex flex-col gap-2">
-                          <Button type="submit" disabled={isSubmittingCompany || isPendingUpdateTenant}>
-                            {isSubmittingCompany || isPendingUpdateTenant ? <Spinner /> : 'Save Changes'}
-                          </Button>
-                          <Button type="button" variant="outline" className="min-w-[70px]" onClick={() => resetCompany({
-                            name: tenant?.name ?? "",
-                            slug: tenant?.slug ?? "",
-                            description: tenant?.description ?? "",
-                            logo: tenant?.logo ?? "",
-                          })}>Cancel</Button>
-                        </div>
-                      )}
+                      <div>
+                        <p className="text-sm font-medium">Logo</p>
+                        <p className="text-xs text-muted-foreground">Recommended size 100x100</p>
+                        {logo && (
+                          <Button type="button" variant="destructive" size='xs' className="min-w-[70px] mt-2" onClick={handleLogoRemove}>Remove</Button>
+                        )}
+                      </div>
                     </div>
-                  </TableCell>
+                    {isDirtyCompany && (
+                      <div className="flex flex-col gap-2">
+                        <Button type="submit" disabled={isSubmittingCompany || isPendingUpdateTenant}>
+                          {isSubmittingCompany || isPendingUpdateTenant ? <Spinner /> : 'Save Changes'}
+                        </Button>
+                        <Button type="button" variant="outline" className="min-w-[70px]" onClick={() => resetCompany({
+                          name: tenant?.name ?? "",
+                          slug: tenant?.slug ?? "",
+                          description: tenant?.description ?? "",
+                          logo: tenant?.logo ?? "",
+                        })}>Cancel</Button>
+                      </div>
+                    )}
+                  </div>
+                </TableCell>
               </TableRow>
               <TableRow>
                 <TableCell>

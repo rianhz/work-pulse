@@ -186,7 +186,7 @@ function Sidebar({
           data-sidebar="sidebar"
           data-slot="sidebar"
           data-mobile="true"
-          className="w-(--sidebar-width) p-0 [&>button]:hidden"
+          className="w-(--sidebar-width) p-0 [&>button]:hidden bg-popover"
           style={
             {
               "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
@@ -212,16 +212,16 @@ function Sidebar({
       data-variant={variant}
       data-side={side}
       data-slot="sidebar"
-      onMouseEnter={() => {
-        if (collapsible === "icon" && !open) {
-          setOpen(true);
-        }
-      }}
-      onMouseLeave={() => {
-        if (collapsible === "icon" && open) {
-          setOpen(false);
-        }
-      }}
+      // onMouseEnter={() => {
+      //   if (collapsible === "icon" && !open) {
+      //     setOpen(true);
+      //   }
+      // }}
+      // onMouseLeave={() => {
+      //   if (collapsible === "icon" && open) {
+      //     setOpen(false);
+      //   }
+      // }}
     >
       {/* This is what handles the sidebar gap on desktop */}
       <div

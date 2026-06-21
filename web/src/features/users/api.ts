@@ -1,7 +1,7 @@
 import { AxiosError, RawAxiosRequestHeaders } from "axios";
-import { IGetMeProvidersResponse, IGetMeResponse, IGetUsersResponse, IUser } from "./users";
+import { IGetMeProvidersResponse, IGetMeResponse, IUser } from "./users";
 import { api } from "@/lib/axios";
-import { IResponse } from "@/global";
+import { IGetPaginatedResponse, IPaginationQueryOptions } from "@/global";
 
 export const getMe = async (headers?: RawAxiosRequestHeaders) => {
   try {
@@ -36,10 +36,10 @@ export const updateUser = async (userId: string, payload: Partial<IUser>) => {
   }
 };
 
-export const getUsers = async () => {
+export const getUsers = async (params: IPaginationQueryOptions) => {
   try {
-    const response = await api.get<IGetUsersResponse>("/users");
-    return response.data.data;
+    const response = await api.get<IGetPaginatedResponse<IUser[]>>("/users", { params });
+    return response.data;
   } catch (error) {
     throw error;
   }

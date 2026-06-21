@@ -140,7 +140,7 @@ export function AccountSettingsForm({ user, isLoading }: { user: IUserWithProvid
                       </div>
                       <div>
                         <p className="text-sm font-medium">Profile Picture</p>
-                        <p className="text-xs text-muted-foreground">Recommended size 100x100px</p>
+                        <p className="text-xs text-muted-foreground">Recommended size 100x100</p>
                         {avatar && (
                           <Button type="button" variant="destructive" size='xs' className="min-w-[70px] mt-2" onClick={handleAvatarRemove}>Remove</Button>
                         )}
@@ -190,6 +190,20 @@ export function AccountSettingsForm({ user, isLoading }: { user: IUserWithProvid
                 <TableCell>
                     <InputGroup>
                       <InputGroupInput type="email" disabled value={user?.email ?? ""} />
+                    </InputGroup>
+                </TableCell>
+              </TableRow>
+
+              <TableRow>
+                <TableCell>
+                  <Label className="whitespace-nowrap">
+                    Role
+                  </Label>
+                </TableCell>
+                
+                <TableCell>
+                    <InputGroup>
+                      <InputGroupInput type="text" disabled value={user?.role?.charAt(0).toUpperCase() + user?.role?.slice(1).toLowerCase() || ""} />
                     </InputGroup>
                 </TableCell>
               </TableRow>
