@@ -1,33 +1,13 @@
 import { UserModel } from "../../modules/users/schema";
 
-export async function migrateExistingUsers() {
-  try {
-    console.log("🔄 Starting user schema synchronization...");
+export async function usersMigrations() {
+  console.log("   -> Starting direct database cleanup...");
 
-    const query = {
-      $or: [
-        { nickName: { $exists: false } },
-        { birthDate: { $exists: false } },
-        { department: { $exists: false } },
-        { position: { $exists: false } },
-      ]
-    };
+  const cleanupResult = await UserModel.updateMany(
+    {}, 
+    { $unset: { reportsTo: "" } },
+    { strict: false }
+  );
 
-    const result = await UserModel.updateMany(
-      query,
-      {
-        $set: {
-          nickName: null,
-          birthDate: null,
-          department: null,
-          position: null,
-        },
-      },
-      { strict: false }
-    );
-
-    console.log(`✅ Migration complete! Matched ${result.matchedCount} documents and modified ${result.modifiedCount} old user records.`);
-  } catch (error) {
-    console.error("❌ Schema migration failed:", error);
-  }
+  console.log(`   └─ Done! Successfully deleted 'reportsTo' from ${cleanupResult.modifiedCount} user documents.`);
 }

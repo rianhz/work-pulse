@@ -50,8 +50,8 @@ export function AccountSettingsForm({ user, isLoading }: { user: IUserWithProvid
       avatar: "",
       nickName: "",
       birthDate: new Date(),
-      // department: "",
-      // position: "",
+      department: "",
+      position: "",
     },
   });
 
@@ -91,8 +91,8 @@ export function AccountSettingsForm({ user, isLoading }: { user: IUserWithProvid
           avatar: data.avatar,
           nickName: data.nickName,
           birthDate: data.birthDate,
-          // department: data.department,
-          // position: data.position,
+          department: data.department,
+          position: data.position,
         });
         queryClient.invalidateQueries({ queryKey: ["me"] });
       },
@@ -113,7 +113,6 @@ export function AccountSettingsForm({ user, isLoading }: { user: IUserWithProvid
 
   }, [user, resetAccountSettings]);
 
-  console.log(user.birthDate)
 
   if (isLoading) {
     return (
@@ -137,7 +136,7 @@ export function AccountSettingsForm({ user, isLoading }: { user: IUserWithProvid
   return (
     <>
       <UniversalUploader variant="popup" isOpen={isUploaderOpen} onClose={() => setIsUploaderOpen(false)} onUploadSuccess={handleUploadSuccess}/>
-      <Card className="w-full max-w-2xl rounded-md py-0">
+      <Card className="w-full max-w-3xl rounded-md py-0">
         <form onSubmit={handleSubmitAccountSettings(onSubmitAccountSettings)}>
           <Table>
             <TableBody>
@@ -169,7 +168,7 @@ export function AccountSettingsForm({ user, isLoading }: { user: IUserWithProvid
                     </div>
                     {isAccountSettingsDirty && (
                       <div className="flex flex-col gap-2">
-                        <Button type="submit" onClick={() => console.log("data", getValuesAccountSettings())} disabled={isPendingUpdateUser}>
+                        <Button type="submit" disabled={isPendingUpdateUser}>
                           {isPendingUpdateUser ? <Spinner /> : 'Save Changes'}
                         </Button>
                         <Button type="button" variant="outline" className="min-w-[70px]" onClick={() => resetAccountSettings({
@@ -237,7 +236,6 @@ export function AccountSettingsForm({ user, isLoading }: { user: IUserWithProvid
                         <BaseDatePicker
                           value={field.value}
                           onChange={(date) => {
-                            // Automatically transforms the date and triggers form state rules
                             field.onChange(date ? moment(date).toDate() : null);
                           }}
                           placeholder="Select date"

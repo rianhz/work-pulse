@@ -1,8 +1,7 @@
 import { Request, Response } from 'express';
-import { addProjectToUserService, getDirectReportsTreeService, getLoginTypesService, getMeService, removeProjectFromUserService, updateUserService } from './services';
+import { addProjectToUserService, getDirectReportsTreeService, getLoginTypesService, getMeService, removeProjectFromUserService, searchUsersService, updateUserService } from './services';
 import { HTTPSTATUS } from '../../utils/http-config';
 import { asyncHandler } from '../../middleware/async-handler';
-import { isHaveAccess } from '../../utils/casl';
 
 export const getMeController = asyncHandler(async (req: Request, res: Response) => {
     const { userId } = (req as any).user;
@@ -19,31 +18,28 @@ export const getMeProvidersController = asyncHandler(async (req: Request, res: R
 export const updateUserController = asyncHandler(async (req: Request, res: Response) => {
     const { userId } = req.params;
     const authenticatedUser = (req as any).user;
-
-    await isHaveAccess(authenticatedUser, { id: userId }, "User", "update");
-
     const payload = req.body;
-    await updateUserService(userId as string, payload);
+
+    await updateUserService(authenticatedUser, userId as string, payload);
     res.status(HTTPSTATUS.OK).json({ success: true, message: 'User updated successfully' });
 });
 
 export const addProjectToUserController = asyncHandler(async (req: Request, res: Response) => {
-    // const { userId } = (req as any).user;
+    const authenticatedUser = (req as any).user;
     const { projectId, userId } = req.body;
-    await addProjectToUserService(userId, projectId);
+    await addProjectToUserService(authenticatedUser, userId, projectId);
     res.status(HTTPSTATUS.OK).json({ success: true, message: 'Project added to user successfully' });
 });
 
 export const removeProjectFromUserController = asyncHandler(async (req: Request, res: Response) => {
-    // const { userId } = (req as any).user;
+    const authenticatedUser = (req as any).user;
     const { projectId, userId } = req.body;
-    await removeProjectFromUserService(userId, projectId);
+    await removeProjectFromUserService(authenticatedUser, userId, projectId);
     res.status(HTTPSTATUS.OK).json({ success: true, message: 'Project removed from user successfully' });
 });
 
 export const getUsersController = asyncHandler(async (req: Request, res: Response) => {
     const authenticatedUser = (req as any).user;
-    await isHaveAccess(authenticatedUser, null, "User", "read");
 
     const search = req.query.search as string || "";
     const page = parseInt(req.query.page as string, 10) || 1;
@@ -55,4 +51,11 @@ export const getUsersController = asyncHandler(async (req: Request, res: Respons
       data: users,
       pagination: { page, limit, total, totalPages: Math.ceil(total / limit) }
     });
+});
+
+export const searchUsersController = asyncHandler(async (req: Request, res: Response) => {
+    const authenticatedUser = (req as any).user;
+    const search = req.query.search as string || "";
+    const users = await searchUsersService(authenticatedUser, search);
+    res.status(HTTPSTATUS.OK).json({ success: true, data: users });
 });

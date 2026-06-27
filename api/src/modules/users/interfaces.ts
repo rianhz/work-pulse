@@ -9,7 +9,7 @@ export interface IUser {
     avatar: string;
     projects: string[];
     loginType: ('password' | 'google')[];
-    reportsTo: string | null;
+    leader: string | null;
     birthDate: Date | null;
     department: string | null;
     position: string | null;

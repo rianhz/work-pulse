@@ -93,7 +93,7 @@ export function CompanySettingsForm({ tenantId, tenant, isLoading }: { tenantId:
   return (
     <>
       <UniversalUploader variant="popup" isOpen={isUploaderOpen} onClose={() => setIsUploaderOpen(false)} onUploadSuccess={handleUploadSucess} />
-      <Card className="w-full max-w-2xl py-0 rounded-md">
+      <Card className="w-full max-w-3xl py-0 rounded-md">
         <form onSubmit={handleSubmitCompany(onSubmitCompanySettings)}>
           <Table>
             <TableBody>

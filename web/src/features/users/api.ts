@@ -44,3 +44,12 @@ export const getUsers = async (params: IPaginationQueryOptions) => {
     throw error;
   }
 };
+
+export const searchUsers = async (query: string) => {
+  try {
+    const response = await api.get<{ data: IUser[] }>(`/users/search?search=${encodeURIComponent(query)}`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};

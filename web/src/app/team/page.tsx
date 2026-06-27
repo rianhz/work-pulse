@@ -3,12 +3,12 @@
 import { ErrorMessage } from "@/components/custom/errors-and-empty/ErrorsMessage";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useGetUsers, useUpdateUser } from "@/features/users/hooks";
+import { useDeleteUser, useGetUsers, useSearchUsers, useUpdateUser } from "@/features/users/hooks";
 import { MoreHorizontalIcon, Users } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
@@ -31,36 +31,48 @@ import { useQueryClient } from "@tanstack/react-query";
 import { EditUserFormValues, editUserSchema } from "@/features/users/validator";
 import { Skeleton } from "@/components/ui/skeleton";
 import moment from "moment";
+import { Command, CommandEmpty, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 
 export default function TeamPage() {
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
+  const [leaderSearch, setLeaderSearch] = useState("");
+  const [selectedLeaderName, setSelectedLeaderName] = useState("");
   const [page, setPage] = useState(1);
-  const limit = 5;
+  const limit = 15;
 
   const debouncedSearch = useDebounce(search, 1000);
+  const debouncedLeaderSearch = useDebounce(leaderSearch, 1000);
 
   const handleSearchChange = (value: string) => {
     setSearch(value);
     setPage(1);
   };
+  const handleLeaderSearchChange = (value: string) => {
+    setLeaderSearch(value);
+  };
 
   const currentUser = useSelector((state: RootState) => state.currentUser.user);
   const { data: usersResponse, isLoading: isLoadingUsers, error: errorUsers, isError: isErrorUsers } = useGetUsers({ search: debouncedSearch, page, limit });
+  const { data: leadersResponse, isLoading: isLoadingLeaders, isError: isErrorLeaders } = useSearchUsers(debouncedLeaderSearch);
   const { mutate: inviteUsers, isPending: isInvitingUsers } = useInviteUsers();
   const { mutate: updateUserMutation, isPending: isPendingUpdateUser } = useUpdateUser();
+  const { mutate: deleteUserMutation, isPending: isPendingDeleteUser } = useDeleteUser();
   const { data: departments, isLoading: isLoadingDepartments } = useGetDepartments();
   const { data: positions, isLoading: isLoadingPositions } = useGetPositions();
 
   const pagination = useMemo(() => usersResponse?.pagination, [usersResponse]);
   const users = useMemo(() => usersResponse?.data, [usersResponse]);
+  const leaders = useMemo(() => leadersResponse?.data, [leadersResponse]);
 
   const [open, setOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 
-  const { register: registerInvite, handleSubmit: handleSubmitInvite, formState: { errors: errorsInvite, isValid: isValidInvite }, reset: resetInvite, setValue: setValueInvite } = useForm<{ email: string, role: "admin" | "manager" | "team-leader" | "employee" }>({
+  const { control: controlInvite, handleSubmit: handleSubmitInvite, formState: { errors: errorsInvite, isValid: isValidInvite }, reset: resetInvite } = useForm<{ email: string, role: "admin" | "manager" | "employee" }>({
     resolver: zodResolver(z.object({
       email: z.string().email("Invalid email address"),
-      role: z.enum(["admin", "manager", "team-leader", "employee"]),
+      role: z.enum(["admin", "manager", "employee"]),
     })),
     defaultValues: {
       email: "",
@@ -68,7 +80,7 @@ export default function TeamPage() {
     },
   });
 
-  const { register: registerEdit, handleSubmit: handleSubmitEdit, setValue: setValueEdit, getValues: getValuesEdit, control: controlEdit, formState: { errors: errorsEdit, isDirty: isDirtyEdit, dirtyFields: dirtyFieldsEdit }, reset: resetEdit } = useForm<EditUserFormValues>({
+  const { handleSubmit: handleSubmitSelectedUser, getValues: getValuesSelectedUser, control: controlSelectedUser, formState: { errors: errorsSelectedUser, isDirty: isDirtySelectedUser, dirtyFields: dirtyFieldsSelectedUser }, reset: resetSelectedUser } = useForm<EditUserFormValues>({
     resolver: zodResolver(editUserSchema),
     defaultValues: {
       _id: "",
@@ -77,11 +89,11 @@ export default function TeamPage() {
       department: null,
       position: null,
       birthDate: null,
+      leader: null,
     },
   });
 
-  const onSubmit = (data: { email: string, role: "admin" | "manager" | "team-leader" | "employee" }) => {
-    console.log(data);
+  const onSubmit = (data: { email: string, role: "admin" | "manager" | "employee" }) => {
     inviteUsers({ 
       emails: [data.email], 
       role: data.role
@@ -94,7 +106,7 @@ export default function TeamPage() {
         });
       },
     });
-  }
+  };
 
   const handleOpenChange = (open: boolean) => {
     setOpen(open);
@@ -102,25 +114,36 @@ export default function TeamPage() {
       email: "",
       role: "employee",
     });
-  }
+  };
 
-  const handleEditClicked = (user: IUser) => {
-    setIsEditOpen(true);
-    resetEdit({
+  const handleSelectedUser = (user: IUser, method: 'edit' | 'delete') => {
+    if (method === 'edit') {
+      setIsEditOpen(true);
+    } else {
+      setIsDeleteOpen(true);
+    }
+
+    const leaderId = user.leader && typeof user.leader === "object" ? user.leader._id : (user.leader || null);
+    const leaderName = user.leader && typeof user.leader === "object" ? user.leader.fullName : "";
+
+    resetSelectedUser({
       _id: user._id,
       fullName: user.fullName,
-      role: user.role as "admin" | "manager" | "team-leader" | "employee",
-      department: user.department as string,
-      position: user.position as string,
+      role: user.role as "admin" | "manager" | "employee",
+      department: user.department?._id || null,
+      position: user.position?._id || null,
       birthDate: user.birthDate ? moment(user.birthDate).format("YYYY-MM-DD") : null,
+      leader: leaderId,
     });
-  }
-  const queryClient = useQueryClient();
+
+    setSelectedLeaderName(leaderName);
+    setLeaderSearch("");
+  };
 
   const onSubmitEdit = (data: EditUserFormValues) => {
     const partialPayload: Record<string, any> = {};
 
-    Object.keys(dirtyFieldsEdit).forEach((key) => {
+    Object.keys(dirtyFieldsSelectedUser).forEach((key) => {
       if (key !== "_id") {
         partialPayload[key] = data[key as keyof typeof data];
       }
@@ -132,12 +155,40 @@ export default function TeamPage() {
     }, {
       onSuccess: () => {
         setIsEditOpen(false);
-        resetEdit(data);
-        
+        resetSelectedUser({
+          _id: "",
+          fullName: "",
+          role: "employee",
+          department: null,
+          position: null,
+          birthDate: null,
+          leader: null,
+        });
+        setSelectedLeaderName("");
         queryClient.invalidateQueries({ queryKey: ['users'] });
       },
     });
-  }
+  };
+
+  const onSubmitDelete = (data: EditUserFormValues) => {
+    deleteUserMutation({
+      userId: data._id,
+    }, {
+      onSuccess: () => {
+        setIsDeleteOpen(false);
+        resetSelectedUser({
+          _id: "",
+          fullName: "",
+          role: "employee",
+          department: null,
+          position: null,
+          birthDate: null,
+          leader: null,
+        });
+        queryClient.invalidateQueries({ queryKey: ['users'] });
+      },
+    });
+  };
 
   if (isLoadingDepartments || isLoadingPositions) {
     return (
@@ -152,8 +203,8 @@ export default function TeamPage() {
     );
   }
 
-  if(isErrorUsers) {
-    return <ErrorMessage title={(errorUsers as any)?.response?.data?.message || (errorUsers as Error).message || 'Failed to get users'} />
+  if (isErrorUsers) {
+    return <ErrorMessage title={(errorUsers as any)?.response?.data?.message || (errorUsers as Error).message || 'Failed to get users'} />;
   }
 
   return (
@@ -166,58 +217,88 @@ export default function TeamPage() {
           <form onSubmit={handleSubmitInvite(onSubmit)} className="flex flex-col justify-between items-end gap-4 w-full">
             <div className="grid gap-2 w-full">
               <Label htmlFor="email">Email</Label>
-              <Input placeholder="Email" {...registerInvite("email")} />
+              <Controller
+                control={controlInvite}
+                name="email"
+                render={({ field }) => (
+                  <Input placeholder="Email" {...field} />
+                )}
+              />
               {errorsInvite.email && <p className="text-sm text-red-500">{errorsInvite.email.message}</p>}
             </div>
             <div className="grid gap-2 w-full">
               <Label htmlFor="role">Role</Label>
-              <Select onValueChange={(value) => setValueInvite("role", value as "admin" | "manager" | "team-leader" | "employee")} defaultValue="employee" {...registerInvite("role")}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a role" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="admin">Admin</SelectItem>
-                  <SelectItem value="manager">Manager</SelectItem>
-                  <SelectItem value="team-leader">Team Leader</SelectItem>
-                  <SelectItem value="employee">Employee</SelectItem>
-                </SelectContent>
-              </Select>
+              <Controller
+                control={controlInvite}
+                name="role"
+                render={({ field }) => (
+                  <Select
+                    value={field.value}
+                    onValueChange={field.onChange}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="admin">Admin</SelectItem>
+                      <SelectItem value="manager">Manager</SelectItem>
+                      <SelectItem value="employee">Employee</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+              />
               {errorsInvite.role && <p className="text-sm text-red-500">{errorsInvite.role.message}</p>}
             </div>
             <Button type="submit" disabled={isInvitingUsers || !isValidInvite}>{isInvitingUsers ? <Spinner /> : "Invite"}</Button>
           </form>
         </DialogContent>
       </Dialog>
+
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Edit User</DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleSubmitEdit(onSubmitEdit)} className="flex flex-col justify-between items-end gap-4 w-full">
+          <form onSubmit={handleSubmitSelectedUser(onSubmitEdit)} className="flex flex-col justify-between items-end gap-4 w-full">
             <div className="grid gap-2 w-full">
-              <Label htmlFor="email">FullName</Label>
-              <Input placeholder="FullName" {...registerEdit("fullName")} />
-              {errorsEdit.fullName && <p className="text-sm text-red-500">{errorsEdit.fullName.message}</p>}
+              <Label htmlFor="fullName">FullName</Label>
+              <Controller
+                control={controlSelectedUser}
+                name="fullName"
+                render={({ field }) => (
+                  <Input placeholder="FullName" {...field} />
+                )}
+              />
+              {errorsSelectedUser.fullName && <p className="text-sm text-red-500">{errorsSelectedUser.fullName.message}</p>}
             </div>
             <div className="grid gap-2 w-full">
               <Label htmlFor="role">Role</Label>
-              <Select value={getValuesEdit("role")} onValueChange={(value) => setValueEdit("role", value as "admin" | "manager" | "team-leader" | "employee")} defaultValue="employee" {...registerEdit("role")}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select a role" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="admin">Admin</SelectItem>
-                  <SelectItem value="manager">Manager</SelectItem>
-                  <SelectItem value="team-leader">Team Leader</SelectItem>
-                  <SelectItem value="employee">Employee</SelectItem>
-                </SelectContent>
-              </Select>
-              {errorsEdit.role && <p className="text-sm text-red-500">{errorsEdit.role.message}</p>}
+              <Controller
+                control={controlSelectedUser}
+                name="role"
+                defaultValue="employee"
+                render={({ field }) => (
+                  <Select
+                    value={String(field.value ?? "employee")}
+                    onValueChange={field.onChange}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="admin">Admin</SelectItem>
+                      <SelectItem value="manager">Manager</SelectItem>
+                      <SelectItem value="employee">Employee</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+              {errorsSelectedUser.role && <p className="text-sm text-red-500">{errorsSelectedUser.role.message}</p>}
             </div>
             <div className="grid gap-2 w-full">
               <Label htmlFor="department">Department</Label>
               <Controller
-                control={controlEdit}
+                control={controlSelectedUser}
                 name="department"
                 render={({ field }) => {
                   const rawValue = field.value && typeof field.value === "object"
@@ -226,8 +307,8 @@ export default function TeamPage() {
 
                   return (
                     <Select 
-                      value={rawValue || undefined} 
-                      onValueChange={(value) => field.onChange(value)}
+                      value={String(rawValue ?? "")}
+                      onValueChange={(value) => field.onChange(value || null)}
                     >
                       <SelectTrigger className="w-full">
                         <SelectValue placeholder="Select a department" />
@@ -243,12 +324,12 @@ export default function TeamPage() {
                   );
                 }}
               />
-              {errorsEdit.department && <p className="text-sm text-red-500">{errorsEdit.department.message}</p>}
+              {errorsSelectedUser.department && <p className="text-sm text-red-500">{errorsSelectedUser.department.message}</p>}
             </div>
             <div className="grid gap-2 w-full">
               <Label htmlFor="position">Position</Label>
               <Controller
-                control={controlEdit}
+                control={controlSelectedUser}
                 name="position"
                 render={({ field }) => {
                   const rawValue = field.value && typeof field.value === "object"
@@ -257,8 +338,8 @@ export default function TeamPage() {
 
                   return (
                     <Select 
-                      value={rawValue || undefined} 
-                      onValueChange={(value) => field.onChange(value)}
+                      value={String(rawValue ?? "")}
+                      onValueChange={(value) => field.onChange(value || null)}
                     >
                       <SelectTrigger className="w-full">
                         <SelectValue placeholder="Select a position" />
@@ -274,12 +355,88 @@ export default function TeamPage() {
                   );
                 }}
               />
-              {errorsEdit.position && <p className="text-sm text-red-500">{errorsEdit.position.message}</p>}
+              {errorsSelectedUser.position && <p className="text-sm text-red-500">{errorsSelectedUser.position.message}</p>}
+            </div>
+            <div className="grid gap-2 w-full">
+              <Label htmlFor="leader">Leader</Label>
+              <Controller
+                control={controlSelectedUser}
+                name="leader"
+                render={({ field }) => {
+                  const currentLeaderId = typeof field.value === "string" ? field.value : "";
+                  const selectedLeaderUser = leaders?.find((u) => u._id === currentLeaderId);
+                  const displayLabel = selectedLeaderUser?.fullName || selectedLeaderName || "Select a leader...";
+
+                  return (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          className="w-full justify-between font-normal"
+                        >
+                          {displayLabel}
+                          <span className="ml-2 opacity-50">▼</span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      
+                      <DropdownMenuContent className="p-0 w-[var(--radix-dropdown-menu-trigger-width)]" align="start">
+                        <Command className="w-full p-0!" shouldFilter={false}>
+                          <CommandInput
+                            placeholder="Search users..."
+                            value={leaderSearch}
+                            onValueChange={handleLeaderSearchChange}
+                          />
+                          <CommandList className="max-h-[100px] overflow-y-auto mt-2">
+                            {isLoadingLeaders && (
+                              <div className="flex justify-center items-center py-4">
+                                <Spinner className="size-4" />
+                              </div>
+                            )}
+
+                            {!isLoadingLeaders && !isErrorLeaders && (
+                              <>
+                                {leaders && leaders.length === 0 && (
+                                  <CommandItem disabled className="justify-center py-2 text-sm text-muted-foreground">
+                                    No users found.
+                                  </CommandItem>
+                                )}
+                                
+                                {leaders && leaders.map((user) => (
+                                  <CommandItem
+                                    key={user._id}
+                                    value={user.fullName} 
+                                    onSelect={() => {
+                                      field.onChange(user._id);
+                                      setSelectedLeaderName(user.fullName);
+                                      setLeaderSearch("");
+                                    }}
+                                    className="cursor-pointer"
+                                  >
+                                    {user.fullName}
+                                  </CommandItem>
+                                ))}
+                              </>
+                            )}
+
+                            {isErrorLeaders && (
+                              <CommandItem disabled className="text-center text-red-500">
+                                Failed to load users.
+                              </CommandItem>
+                            )}
+                          </CommandList>
+                        </Command>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  );
+                }}
+              />
+              {errorsSelectedUser.leader && <p className="text-sm text-red-500">{errorsSelectedUser.leader.message}</p>}
             </div>
             <div className="grid gap-2 w-full">
               <Label htmlFor="birthDate">Birth Date</Label>
               <Controller
-                control={controlEdit}
+                control={controlSelectedUser}
                 name="birthDate"
                 render={({ field }) => (
                   <BaseDatePicker
@@ -291,16 +448,33 @@ export default function TeamPage() {
                   />
                 )}
               />
-              {errorsEdit.birthDate && <p className="text-sm text-red-500">{errorsEdit.birthDate.message}</p>}
+              {errorsSelectedUser.birthDate && <p className="text-sm text-red-500">{errorsSelectedUser.birthDate.message}</p>}
             </div>
-            <Button type="submit" disabled={isPendingUpdateUser || !isDirtyEdit}>{isPendingUpdateUser ? <Spinner /> : "Update"}</Button>
+            <Button type="submit" disabled={isPendingUpdateUser || !isDirtySelectedUser}>{isPendingUpdateUser ? <Spinner /> : "Update"}</Button>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete User</DialogTitle>
+          </DialogHeader>
+          <DialogDescription>
+            Are you sure you want to delete this user? This action cannot be undone.
+          </DialogDescription>
+          <DialogFooter>
+            <Button type="button" variant="outline" className="min-w-[70px]" onClick={() => setIsDeleteOpen(false)}>Cancel</Button>
+            <Button type="submit" variant="destructive" disabled={isPendingDeleteUser} onClick={() => onSubmitDelete(getValuesSelectedUser())}>
+              {isPendingDeleteUser ? <Spinner /> : "Delete"}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     
       <main className="flex flex-1 flex-col gap-4">
         <Card>
-          <CardHeader className="flex justify-between items-end">
+          <CardHeader className="flex justify-between items-end flex-row">
             <div>
               <CardTitle className="text-2xl font-bold">Team</CardTitle>
               <CardDescription>List of all users in your team</CardDescription>
@@ -326,22 +500,29 @@ export default function TeamPage() {
                     <TableHead>Name</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Role</TableHead>
+                    <TableHead>Department</TableHead>
+                    <TableHead>Position</TableHead>
+                    <TableHead />
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {users?.map((user) => (
+                  {users.map((user) => (
                     <TableRow key={user._id}>
                       <TableCell>{user.fullName}</TableCell>
                       <TableCell>{user.email}</TableCell>
                       <TableCell>{user.role.charAt(0).toUpperCase() + user.role.slice(1)}</TableCell>
+                      <TableCell>{user.department?.name}</TableCell>
+                      <TableCell>{user.position?.name}</TableCell>
                       <TableCell className="text-right"> 
                         <DropdownMenu> 
                           <DropdownMenuTrigger asChild> 
+                            <button className="p-1 hover:bg-muted rounded-md transition-colors">
                               <MoreHorizontalIcon className="cursor-pointer" />
+                            </button>
                           </DropdownMenuTrigger> 
                           <DropdownMenuContent align="end"> 
-                            <DropdownMenuItem className="cursor-pointer" onClick={() => handleEditClicked(user)}>Edit</DropdownMenuItem>
-                            <DropdownMenuItem className="cursor-pointer" variant="destructive"> Delete </DropdownMenuItem> 
+                            <DropdownMenuItem className="cursor-pointer" onClick={() => handleSelectedUser(user, 'edit')}>Edit</DropdownMenuItem>
+                            <DropdownMenuItem className="cursor-pointer" onClick={() => handleSelectedUser(user, 'delete')} variant="destructive"> Delete </DropdownMenuItem> 
                           </DropdownMenuContent> 
                         </DropdownMenu> 
                       </TableCell>
@@ -353,11 +534,9 @@ export default function TeamPage() {
           </CardContent>
         </Card>
 
-
         {pagination && pagination.totalPages > 1 && (
           <BasePagination currentPage={page} totalPages={pagination.totalPages} onPageChange={(page) => setPage(page)} />
         )}
-
       </main>
     </>
   );

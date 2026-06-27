@@ -25,10 +25,11 @@ export const updatePasswordSchema = z.object({
 export const editUserSchema = z.object({
   _id: z.string().min(1, "User ID is required"),
   fullName: z.string().min(1, "Full name is required"),
-  role: z.enum(["admin", "manager", "team-leader", "employee"]),
+  role: z.enum(["admin", "manager", "employee"]),
   department: z.string().nullable().or(z.literal("")),
   position: z.string().nullable().or(z.literal("")),
   birthDate: z.string().nullable().or(z.literal("")),
+  leader: z.string().nullable().or(z.literal("")),
 });
 
 export type EditUserFormValues = z.infer<typeof editUserSchema>;

@@ -38,13 +38,13 @@ export function BaseDatePicker({
           id="date"
           disabled={disabled}
           className={cn(
-            "justify-between w-full font-normal text-left bg-input/50 hover:bg-input/50! text-muted-foreground hover:text-muted-foreground! aria-expanded:bg-input/50! aria-expanded:text-muted-foreground!",
+            "justify-between w-full font-normal text-left bg-input/50 hover:bg-input/50! aria-expanded:bg-input/50!",
             !value && "text-muted-foreground",
             className
           )}
         >
           {value ? moment(value).format(formatString) : placeholder}
-          <CalendarIcon className="h-4 w-4 opacity-50" />
+          <CalendarIcon className={cn("h-4 w-4", disabled && "opacity-50")} />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto overflow-hidden p-0" align="start">

@@ -7,7 +7,6 @@ export const useInviteUsers = () => {
   return useMutation({
     mutationFn: (payload: IInviteUsersPayload) => inviteUsersApi(payload),
     onSuccess: (data) => {
-      console.log(data);
       toast.success("Users invited successfully");
     },
     onError: (error) => {

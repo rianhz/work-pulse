@@ -2,19 +2,30 @@ import crypto from "crypto";
 import mongoose from "mongoose";
 import { UserModel } from "../users/schema";
 import { InvitationModel } from "./schema";
-import { BadRequestException, NotFoundException } from "../../utils/app-error";
+import { BadRequestException, NotFoundException, ForbiddenException } from "../../utils/app-error";
 import { hashValue } from "../../utils/bcrypt";
 import { IdentityModel } from "../idp/schema";
 import { IAcceptInvitePayload, IInviteUsersPayload } from "./interfaces";
 import { sendInviteEmail } from "../../utils/email";
 import { Env } from "../../config/env-config";
 import { TenantModel } from "../tenants/schema";
+import { AuthUser } from "../authentication/interfaces";
+import { isHaveAccess } from "../../utils/casl";
 
-export const inviteUsersService = async (payload: IInviteUsersPayload): Promise<{ success: string[]; failed: { email: string; reason: string }[] }> => {
-  const { emails, role, tenantId } = payload;
+export const inviteUsersService = async (
+  authenticatedUser: AuthUser, 
+  payload: Omit<IInviteUsersPayload, "tenantId">
+): Promise<{ success: string[]; failed: { email: string; reason: string }[] }> => {
+  const { emails, role } = payload;
+  const { tenantId } = authenticatedUser;
+
+  await isHaveAccess(authenticatedUser, null, "Invitation", "create");
+
+  if (authenticatedUser.role !== "owner" && role === "admin") {
+    throw new ForbiddenException("You are not authorized to invite users with the 'owner' role.");
+  }
 
   const tenant = await TenantModel.findById(tenantId).lean();
-
   if (!tenant) throw new NotFoundException("Tenant not found");
   
   const success: string[] = [];
@@ -43,7 +54,6 @@ export const inviteUsersService = async (payload: IInviteUsersPayload): Promise<
       );
 
       const inviteUrl = `${Env.FRONTEND_URL}/accept-invitation?token=${token}`;
-
       await sendInviteEmail({ toEmail: formattedEmail, inviteUrl, tenantName: tenant.name });
 
       success.push(formattedEmail);
@@ -97,6 +107,8 @@ export const acceptInviteService = async (payload: IAcceptInvitePayload): Promis
           userId: user._id.toString(),
           provider: "password",
           passwordHash,
+          providerUserId: user.email.toLowerCase(),
+          email: user.email.toLowerCase(),
         },
       ],
       { session }
@@ -114,7 +126,7 @@ export const acceptInviteService = async (payload: IAcceptInvitePayload): Promis
   }
 };
 
-export const verifyInviteTokenService = async (token: string): Promise<{ email: string, tenantId: string, role: 'owner' | 'admin' | 'manager' | 'team-leader' | 'employee' }> => {
+export const verifyInviteTokenService = async (token: string): Promise<{ email: string, tenantId: string, role: string }> => {
   const invitation = await InvitationModel.findOne({ token });
   
   if (!invitation) {

@@ -17,8 +17,6 @@ export const createPosition = async (payload: {name: string }) => {
 }
 
 export const updatePosition = async (id: string, payload: {name: string, status?: 'active' | 'disabled' | 'deleted' }) => {
-  console.log(payload);
-  console.log(id);
   const response = await api.put(`/positions/${id}`, payload);
   return response.data;
 }
