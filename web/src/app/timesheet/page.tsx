@@ -1,4 +1,4 @@
-import TimesheetCalendar from "@/components/custom/calendars/Timesheet";
+import TimesheetCalendar from "@/components/custom/calendar/Timesheet";
 
 export default function TimesheetPage() {
   return (

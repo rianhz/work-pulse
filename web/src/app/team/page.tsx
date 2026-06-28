@@ -7,10 +7,9 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useDeleteUser, useGetUsers, useSearchUsers, useUpdateUser } from "@/features/users/hooks";
-import { MoreHorizontalIcon, Users } from "lucide-react";
-import { useMemo, useState } from "react";
+import { ChevronDownIcon, MoreHorizontalIcon, Users, ArrowUpDown } from "lucide-react";
+import { useMemo, useState, useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -21,25 +20,26 @@ import { EmptyData } from "@/components/custom/errors-and-empty/EmptyData";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store";
 import { useDebounce } from "@/hooks/use-debounce";
-import { InputGroup, InputGroupInput } from "@/components/ui/input-group";
-import { BasePagination } from "@/components/custom/pagination/BasePagination";
 import { useGetDepartments } from "@/features/departments/hooks";
-import { useGetPositions } from "@/features/positions/hooks";
 import { IUser } from "@/features/users/users";
 import { BaseDatePicker } from "@/components/custom/date-picker/BaseDatePicker";
 import { useQueryClient } from "@tanstack/react-query";
 import { EditUserFormValues, editUserSchema } from "@/features/users/validator";
 import { Skeleton } from "@/components/ui/skeleton";
 import moment from "moment";
-import { Command, CommandEmpty, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Command, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+
+import { ColumnDef, VisibilityState } from "@tanstack/react-table";
+import { BaseTable } from "@/components/custom/table/BaseTable";
 
 export default function TeamPage() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [leaderSearch, setLeaderSearch] = useState("");
   const [selectedLeaderName, setSelectedLeaderName] = useState("");
+  const [leaderDropdownOpen, setLeaderDropdownOpen] = useState(false);
   const [page, setPage] = useState(1);
-  const limit = 15;
+  const limit = 10;
 
   const debouncedSearch = useDebounce(search, 1000);
   const debouncedLeaderSearch = useDebounce(leaderSearch, 1000);
@@ -59,15 +59,18 @@ export default function TeamPage() {
   const { mutate: updateUserMutation, isPending: isPendingUpdateUser } = useUpdateUser();
   const { mutate: deleteUserMutation, isPending: isPendingDeleteUser } = useDeleteUser();
   const { data: departments, isLoading: isLoadingDepartments } = useGetDepartments();
-  const { data: positions, isLoading: isLoadingPositions } = useGetPositions();
 
   const pagination = useMemo(() => usersResponse?.pagination, [usersResponse]);
-  const users = useMemo(() => usersResponse?.data, [usersResponse]);
+  const users = useMemo(() => usersResponse?.data || [], [usersResponse]);
   const leaders = useMemo(() => leadersResponse?.data, [leadersResponse]);
 
   const [open, setOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+
+  const isAdminOrOwner = currentUser?.role === "admin" || currentUser?.role === "owner";
 
   const { control: controlInvite, handleSubmit: handleSubmitInvite, formState: { errors: errorsInvite, isValid: isValidInvite }, reset: resetInvite } = useForm<{ email: string, role: "admin" | "manager" | "employee" }>({
     resolver: zodResolver(z.object({
@@ -87,7 +90,7 @@ export default function TeamPage() {
       fullName: "",
       role: "employee",
       department: null,
-      position: null,
+      position: "",
       birthDate: null,
       leader: null,
     },
@@ -131,7 +134,7 @@ export default function TeamPage() {
       fullName: user.fullName,
       role: user.role as "admin" | "manager" | "employee",
       department: user.department?._id || null,
-      position: user.position?._id || null,
+      position: user.position || "",
       birthDate: user.birthDate ? moment(user.birthDate).format("YYYY-MM-DD") : null,
       leader: leaderId,
     });
@@ -160,7 +163,7 @@ export default function TeamPage() {
           fullName: "",
           role: "employee",
           department: null,
-          position: null,
+          position: "",
           birthDate: null,
           leader: null,
         });
@@ -181,7 +184,7 @@ export default function TeamPage() {
           fullName: "",
           role: "employee",
           department: null,
-          position: null,
+          position: "",
           birthDate: null,
           leader: null,
         });
@@ -190,11 +193,102 @@ export default function TeamPage() {
     });
   };
 
-  if (isLoadingDepartments || isLoadingPositions) {
+  const columnDisplayLabels = {
+    fullName: "Name",
+    email: "Email",
+    leader: "Leader",
+    role: "Role",
+    department: "Department",
+    position: "Position"
+  };
+
+  const columns = useMemo<ColumnDef<IUser>[]>(() => [
+    {
+      accessorKey: "fullName",
+      header: ({ column }) => (
+        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")} className="-ml-4 h-8">
+          <span>Name</span>
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      ),
+    },
+    {
+      accessorKey: "email",
+      header: ({ column }) => (
+        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")} className="-ml-4 h-8">
+          <span>Email</span>
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      ),
+    },
+    {
+      id: "leader",
+      accessorFn: (row) => row.leader?.fullName || "",
+      header: ({ column }) => (
+        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")} className="-ml-4 h-8">
+          <span>Leader</span>
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      ),
+    },
+    {
+      accessorKey: "role",
+      header: ({ column }) => (
+        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")} className="-ml-4 h-8">
+          <span>Role</span>
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      ),
+      cell: ({ row }) => {
+        const role = row.original.role;
+        return role.charAt(0).toUpperCase() + role.slice(1);
+      },
+    },
+    {
+      id: "department",
+      accessorFn: (row) => row.department?.name || "",
+      header: ({ column }) => (
+        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")} className="-ml-4 h-8">
+          <span>Department</span>
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      ),
+    },
+    {
+      accessorKey: "position",
+      header: ({ column }) => (
+        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")} className="-ml-4 h-8">
+          <span>Position</span>
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      ),
+    },
+    {
+      id: "actions",
+      enableHiding: false,
+      cell: ({ row }) => {
+        const user = row.original;
+        if (!isAdminOrOwner) return null;
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="p-1 hover:bg-muted rounded-md transition-colors">
+                <MoreHorizontalIcon className="cursor-pointer" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem className="cursor-pointer" onClick={() => handleSelectedUser(user, 'edit')}>Edit</DropdownMenuItem>
+              <DropdownMenuItem className="cursor-pointer" onClick={() => handleSelectedUser(user, 'delete')} variant="destructive">Delete</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        );
+      },
+    },
+  ], [isAdminOrOwner]);
+
+  if (isLoadingDepartments) {
     return (
       <div className="flex flex-col w-full gap-2 px-2">
-        <Skeleton className="h-6 w-full" />
-        <Skeleton className="h-6 w-full" />
         <Skeleton className="h-6 w-full" />
         <Skeleton className="h-6 w-full" />
         <Skeleton className="h-6 w-full" />
@@ -332,26 +426,10 @@ export default function TeamPage() {
                 control={controlSelectedUser}
                 name="position"
                 render={({ field }) => {
-                  const rawValue = field.value && typeof field.value === "object"
-                    ? (field.value as any)._id
-                    : field.value;
+                  const rawValue = field.value ?? "";
 
                   return (
-                    <Select 
-                      value={String(rawValue ?? "")}
-                      onValueChange={(value) => field.onChange(value || null)}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select a position" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {positions?.data && positions.data.map((position) => (
-                          <SelectItem key={position._id} value={position._id}>
-                            {position.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <Input placeholder="Position" value={rawValue} onChange={(e) => field.onChange(e.target.value)} />
                   );
                 }}
               />
@@ -368,15 +446,15 @@ export default function TeamPage() {
                   const displayLabel = selectedLeaderUser?.fullName || selectedLeaderName || "Select a leader...";
 
                   return (
-                    <DropdownMenu>
+                    <DropdownMenu open={leaderDropdownOpen} onOpenChange={setLeaderDropdownOpen}>
                       <DropdownMenuTrigger asChild>
                         <Button
                           variant="outline"
                           role="combobox"
-                          className="w-full justify-between font-normal"
+                          className="w-full justify-between font-normal group"
                         >
                           {displayLabel}
-                          <span className="ml-2 opacity-50">▼</span>
+                          <ChevronDownIcon className="pointer-events-none size-4 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
                         </Button>
                       </DropdownMenuTrigger>
                       
@@ -410,6 +488,7 @@ export default function TeamPage() {
                                       field.onChange(user._id);
                                       setSelectedLeaderName(user.fullName);
                                       setLeaderSearch("");
+                                      setLeaderDropdownOpen(false);
                                     }}
                                     className="cursor-pointer"
                                   >
@@ -477,66 +556,43 @@ export default function TeamPage() {
           <CardHeader className="flex justify-between items-end flex-row">
             <div>
               <CardTitle className="text-2xl font-bold">Team</CardTitle>
-              <CardDescription>List of all users in your team</CardDescription>
+              <CardDescription>A comprehensive view of your reporting tree, leadership structure, and team members.</CardDescription>
             </div>
-            {(currentUser?.role === "admin" || currentUser?.role === "owner") && (
+            {isAdminOrOwner && (
               <Button onClick={() => setOpen(true)}>Invite</Button>
             )}
           </CardHeader>
           <CardContent>
-            {!isErrorUsers && 
-              <InputGroup>
-                <InputGroupInput placeholder="Searching..." value={search} onChange={(e) => handleSearchChange(e.target.value)} />
-              </InputGroup>
-            }
             {isLoadingUsers && <div className="flex justify-center items-center min-h-[200px]"> <Spinner className="size-10" /> </div>}
-            {!isLoadingUsers && users && users.length === 0 && 
+            
+            {!isLoadingUsers && users.length === 0 && 
               <EmptyData description="No users found in your team" icon={<Users className="size-10 text-muted-foreground" />} />
             }
-            {!isLoadingUsers && users && users.length > 0 && (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Role</TableHead>
-                    <TableHead>Department</TableHead>
-                    <TableHead>Position</TableHead>
-                    <TableHead />
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {users.map((user) => (
-                    <TableRow key={user._id}>
-                      <TableCell>{user.fullName}</TableCell>
-                      <TableCell>{user.email}</TableCell>
-                      <TableCell>{user.role.charAt(0).toUpperCase() + user.role.slice(1)}</TableCell>
-                      <TableCell>{user.department?.name}</TableCell>
-                      <TableCell>{user.position?.name}</TableCell>
-                      <TableCell className="text-right"> 
-                        <DropdownMenu> 
-                          <DropdownMenuTrigger asChild> 
-                            <button className="p-1 hover:bg-muted rounded-md transition-colors">
-                              <MoreHorizontalIcon className="cursor-pointer" />
-                            </button>
-                          </DropdownMenuTrigger> 
-                          <DropdownMenuContent align="end"> 
-                            <DropdownMenuItem className="cursor-pointer" onClick={() => handleSelectedUser(user, 'edit')}>Edit</DropdownMenuItem>
-                            <DropdownMenuItem className="cursor-pointer" onClick={() => handleSelectedUser(user, 'delete')} variant="destructive"> Delete </DropdownMenuItem> 
-                          </DropdownMenuContent> 
-                        </DropdownMenu> 
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+            
+            {!isLoadingUsers && users.length > 0 && (
+              <BaseTable 
+                columns={columns} 
+                data={users} 
+                columnLabels={columnDisplayLabels} 
+                columnVisibility={columnVisibility}
+                onColumnVisibilityChange={setColumnVisibility}
+                
+                // Controlled Search Configurations
+                showSearchField={!isErrorUsers}
+                searchValue={search}
+                onSearchChange={handleSearchChange}
+                searchPlaceholder="Searching..."
+
+                // Pagination Configurations
+                currentPage={page}
+                totalPages={pagination?.totalPages}
+                onPageChange={(newPage) => setPage(newPage)}
+
+            
+              />
             )}
           </CardContent>
         </Card>
-
-        {pagination && pagination.totalPages > 1 && (
-          <BasePagination currentPage={page} totalPages={pagination.totalPages} onPageChange={(page) => setPage(page)} />
-        )}
       </main>
     </>
   );

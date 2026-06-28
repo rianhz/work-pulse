@@ -1,14 +1,5 @@
 import { z } from "zod";
 
-export const updateAccountSettingsSchema = z.object({
-  fullName: z.string().min(1, "Full name is required"),
-  avatar: z.string().optional(),
-  nickName: z.string().optional(),
-  birthDate: z.date().optional(),
-  department: z.string().optional(),
-  position: z.string().optional(),
-});
-
 export const updateEmailSchema = z.object({
   email: z.string().email("Invalid email address"),
 });
@@ -27,12 +18,13 @@ export const editUserSchema = z.object({
   fullName: z.string().min(1, "Full name is required"),
   role: z.enum(["admin", "manager", "employee"]),
   department: z.string().nullable().or(z.literal("")),
-  position: z.string().nullable().or(z.literal("")),
+  position: z.string().optional(),
   birthDate: z.string().nullable().or(z.literal("")),
   leader: z.string().nullable().or(z.literal("")),
+  avatar: z.string().optional(),
+  nickName: z.string().optional(),
 });
 
 export type EditUserFormValues = z.infer<typeof editUserSchema>;
-export type UpdateAccountSettingsFormValues = z.infer<typeof updateAccountSettingsSchema>;
 export type UpdateEmailFormValues = z.infer<typeof updateEmailSchema>;
 export type UpdatePasswordFormValues = z.infer<typeof updatePasswordSchema>;

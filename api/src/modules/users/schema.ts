@@ -80,9 +80,9 @@ const userSchema = new mongoose.Schema<IUser>(
     },
 
     position: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Position",
-      default: null,
+      type: String,
+      required: false,
+      default: "",
     },
 
     refreshToken: {

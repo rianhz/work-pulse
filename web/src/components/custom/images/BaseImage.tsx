@@ -3,11 +3,13 @@
 import { useState } from "react";
 import Image from "next/image";
 import { Spinner } from "@/components/ui/spinner";
+import { UserCircle } from "lucide-react";
 
 interface BaseAvatarProps {
   src?: string;
   alt?: string;
   fallbackInitials?: string;
+  fallbackIcon?: React.ReactNode;
   className?: string;
   priority?: boolean;
   imageLoading?: "lazy" | "eager";
@@ -17,6 +19,7 @@ export default function BaseAvatar({
   src,
   alt,
   fallbackInitials,
+  fallbackIcon = <UserCircle size={100} className="text-muted-foreground" />,
   className = "",
   priority = false, // Defaults to false, set to true if it's the main page element
   imageLoading = "lazy",
@@ -25,13 +28,21 @@ export default function BaseAvatar({
   const [error, setError] = useState(false);
 
   if (!src || error) {
+    if(fallbackInitials){
+      return (
+        <div className={`w-[100px] h-[100px] flex items-center justify-center align-center bg-muted rounded-full`}>
+          <span className="text-4xl font-bold bg-muted text-muted-foreground">
+            {fallbackInitials}
+          </span>
+        </div>
+      )
+    }
+
     return (
       <div className={`w-[100px] h-[100px] flex items-center justify-center align-center bg-muted rounded-full`}>
-        <span className="text-4xl font-bold bg-muted text-muted-foreground">
-          {fallbackInitials}
-        </span>
+        {fallbackIcon}
       </div>
-    );
+    )
   }
 
   return (

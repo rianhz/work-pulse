@@ -12,7 +12,7 @@ export interface IUser {
     leader: string | null;
     birthDate: Date | null;
     department: string | null;
-    position: string | null;
+    position: string;
 
     refreshToken: {
         token: string | null;

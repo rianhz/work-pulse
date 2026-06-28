@@ -7,7 +7,7 @@ import { QueryOptions } from '../global';
 import { isHaveAccess } from '../../utils/casl';
 
 export const getMeService = async (userId: string): Promise<IUser> => {
-    const user = await UserModel.findById(userId).populate("department").populate("position").select("-refreshToken").select("-__v").select("-createdAt").select("-updatedAt").lean();
+    const user = await UserModel.findById(userId).populate("department", "name").select("-refreshToken").select("-__v").select("-createdAt").select("-updatedAt").lean();
     if (!user) throw new NotFoundException('User not found');
     return user;
 };
@@ -76,21 +76,77 @@ export const getDirectReportsTreeService = async (
       baseQuery._id = { $ne: userId };
       break;
 
-    case "employee":
-      throw new ForbiddenException("Employees are not authorized to view the reporting tree.");
+    case "employee": {
+  const me = await UserModel.findById(userId).select("leader");
+  if (!me) {
+    throw new NotFoundException("User not found.");
+  }
 
-    case "manager":
-      const directTeamLeaders = await UserModel.find({ tenantId, leader: userId }).select("_id");
-      const teamLeaderIds = directTeamLeaders.map(tl => tl._id);
+  // Base list starts with themselves
+  let employeeIds = [userId];
+  let currentSearchIds = [userId];
 
-      const directEmployees = await UserModel.find({ tenantId, leader: { $in: teamLeaderIds }, role: "employee" }).select("_id");
-      const employeeIds = directEmployees.map(emp => emp._id);
+  // Look UPWARD: If this Employee has a leader, include that leader
+  if (me.leader) {
+    employeeIds.push(me.leader.toString());
+  }
 
-      const accessibleUserIds = [...teamLeaderIds, ...employeeIds];
-      
-      baseQuery._id = { $in: accessibleUserIds };
-      break;
+  // Look DOWNWARD: Recursive loop to find all descendants (subordinates)
+  while (currentSearchIds.length > 0) {
+    const nextLevelReports = await UserModel.find({
+      tenantId,
+      leader: { $in: currentSearchIds },
+      status: { $ne: "deleted" },
+    }).select("_id");
 
+    if (nextLevelReports.length > 0) {
+      const nextLevelIds = nextLevelReports.map(u => u._id.toString());
+      employeeIds.push(...nextLevelIds);
+      currentSearchIds = nextLevelIds;
+    } else {
+      currentSearchIds = [];
+    }
+  }
+
+  baseQuery._id = { $in: [...new Set(employeeIds)] };
+  break;
+}
+
+case "manager": {
+  const me = await UserModel.findById(userId).select("leader");
+  if (!me) {
+    throw new NotFoundException("User not found.");
+  }
+
+  // Base list starts with the Manager's own ID
+  let accessibleUserIds = [userId];
+  let currentSearchIds = [userId];
+
+  // Look UPWARD: Even though they are a manager, if they report to a higher manager, include them!
+  if (me.leader) {
+    accessibleUserIds.push(me.leader.toString());
+  }
+
+  // Look DOWNWARD: Recursive loop to find all descendants down the hierarchy tree
+  while (currentSearchIds.length > 0) {
+    const nextTierReports = await UserModel.find({
+      tenantId,
+      leader: { $in: currentSearchIds },
+      status: { $ne: "deleted" },
+    }).select("_id");
+
+    if (nextTierReports.length > 0) {
+      const nextTierIds = nextTierReports.map(u => u._id.toString());
+      accessibleUserIds.push(...nextTierIds);
+      currentSearchIds = nextTierIds; // Keep drilling down the tree
+    } else {
+      currentSearchIds = []; // Bottom of the tree reached
+    }
+  }
+
+  baseQuery._id = { $in: [...new Set(accessibleUserIds)] };
+  break;
+}
     default:
       throw new ForbiddenException("Invalid role mapping.");
   }
@@ -99,7 +155,8 @@ export const getDirectReportsTreeService = async (
     UserModel.find(baseQuery)
       .populate("leader", "fullName")
       .populate("department", "name")
-      .populate("position", "name")
+      .select("-refreshToken")
+      .select("-__v")
       .sort({ fullName: 1 })
       .collation({ locale: "en", numericOrdering: true })
       .skip(skip)

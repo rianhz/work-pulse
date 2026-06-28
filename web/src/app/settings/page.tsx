@@ -14,7 +14,6 @@ import { useGetMe, useGetMeProviders } from "@/features/users/hooks";
 import { SecurityUserSettingsForm } from "@/components/custom/forms/SecurityUserSettingsForm";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { DepartmentSettingsForm } from "@/components/custom/forms/DepartmentSettingsForm";
-import { PositionSettingsForm } from "@/components/custom/forms/PositionSettingsForm";
 
 export interface IUserWithProviders extends IUser {
   providers: ('password' | 'google')[];
@@ -74,7 +73,6 @@ export default function SettingsPage() {
           <TabsList className="bg-transparent px-0! pt-0!">
             <TabsTrigger className="rounded-sm data-active:bg-transparent hover:bg-sidebar-accent p-2! min-w-[150px]" value="general">General</TabsTrigger>
             <TabsTrigger className="rounded-sm data-active:bg-transparent hover:bg-sidebar-accent p-2! min-w-[150px]" value="departments">Departments</TabsTrigger>
-            <TabsTrigger className="rounded-sm data-active:bg-transparent hover:bg-sidebar-accent p-2! min-w-[150px]" value="positions">Positions</TabsTrigger>
             <TabsTrigger className="rounded-sm data-active:bg-transparent hover:bg-sidebar-accent p-2! min-w-[150px]" value="billing">Billing & Plans</TabsTrigger>
           </TabsList>
           <TabsContent value="general">
@@ -82,9 +80,6 @@ export default function SettingsPage() {
           </TabsContent>
           <TabsContent value="departments">
             <DepartmentSettingsForm tenantId={tenantId as string} tenant={tenant as ITenant} isLoading={isLoadingTenant} />
-          </TabsContent>
-          <TabsContent value="positions">
-            <PositionSettingsForm tenantId={tenantId as string} tenant={tenant as ITenant} isLoading={isLoadingTenant} />
           </TabsContent>
           <TabsContent value="billing">
             <BillingPlansSettingsForm tenantId={tenantId as string} tenant={tenant as ITenant} isLoading={isLoadingTenant} />

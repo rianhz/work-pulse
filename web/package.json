@@ -1,5 +1,5 @@
 {
-  "name": "work-pulse",
+  "name": "web",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -21,6 +21,7 @@
     "@react-oauth/google": "^0.13.5",
     "@reduxjs/toolkit": "^2.12.0",
     "@tanstack/react-query": "^5.101.0",
+    "@tanstack/react-table": "^8.21.3",
     "@tiptap/core": "^3.26.0",
     "@tiptap/extension-highlight": "^3.26.0",
     "@tiptap/extension-horizontal-rule": "^3.26.0",

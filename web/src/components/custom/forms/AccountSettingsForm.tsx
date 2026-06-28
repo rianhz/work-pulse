@@ -12,8 +12,8 @@ import { Label } from "@/components/ui/label";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
-  UpdateAccountSettingsFormValues,
-  updateAccountSettingsSchema,
+  EditUserFormValues,
+  editUserSchema,
 } from "@/features/users/validator";
 import { Card } from "@/components/ui/card";
 import { useUpdateUser } from "@/features/users/hooks";
@@ -43,15 +43,14 @@ export function AccountSettingsForm({ user, isLoading }: { user: IUserWithProvid
     watch: watchAccountSettings,
     formState: { errors: errorsAccountSettings, isDirty: isAccountSettingsDirty, isSubmitting: isSubmittingAccountSettings },
     reset: resetAccountSettings,
-  } = useForm<UpdateAccountSettingsFormValues>({
-    resolver: zodResolver(updateAccountSettingsSchema),
+    formState: { dirtyFields: dirtyFieldsAccountSettings },
+  } = useForm<EditUserFormValues>({
+    resolver: zodResolver(editUserSchema),
     defaultValues: {
       fullName: "",
       avatar: "",
       nickName: "",
-      birthDate: new Date(),
-      department: "",
-      position: "",
+      birthDate: null,
     },
   });
 
@@ -73,26 +72,24 @@ export function AccountSettingsForm({ user, isLoading }: { user: IUserWithProvid
     setValueAccountSettings("avatar", "", { shouldDirty: true });
   };
 
-  const onSubmitAccountSettings = (data: UpdateAccountSettingsFormValues) => {
+  const onSubmitAccountSettings = (data: EditUserFormValues) => {
+    const partialPayload: Record<string, any> = {};
+
+    Object.keys(dirtyFieldsAccountSettings).forEach((key) => {
+      if (key !== "_id") {
+        partialPayload[key] = data[key as keyof typeof data];
+      }
+    });
     updateUserMutation({
       userId: user._id,
-      payload: {
-        fullName: getValuesAccountSettings("fullName"),
-        avatar: getValuesAccountSettings("avatar"),
-        nickName: getValuesAccountSettings("nickName"),
-        birthDate: getValuesAccountSettings("birthDate"),
-        // department: getValuesAccountSettings("department"),
-        // position: getValuesAccountSettings("position"),
-      },
+      payload: partialPayload,
     }, {
       onSuccess: () => {
         resetAccountSettings({
           fullName: data.fullName,
           avatar: data.avatar,
           nickName: data.nickName,
-          birthDate: data.birthDate,
-          department: data.department,
-          position: data.position,
+          birthDate: data.birthDate ? data.birthDate : null,
         });
         queryClient.invalidateQueries({ queryKey: ["me"] });
       },
@@ -105,10 +102,8 @@ export function AccountSettingsForm({ user, isLoading }: { user: IUserWithProvid
     resetAccountSettings({
       fullName: user.fullName ?? "",
       avatar: user.avatar ?? "",
-      nickName: user.nickName || (user.fullName ? user.fullName.split(" ")[0] : "") || "",
-      birthDate: user.birthDate ? new Date(user.birthDate) : new Date(),
-      // department: user.department ?? "",
-      // position: user.position ?? "",
+      nickName: user.nickName ?? "",
+      birthDate: user.birthDate ? user.birthDate : null,
     });
 
   }, [user, resetAccountSettings]);
@@ -150,7 +145,7 @@ export function AccountSettingsForm({ user, isLoading }: { user: IUserWithProvid
                           className="group relative w-[100px] h-[100px] overflow-hidden rounded-full border border-muted"
                         >
                         
-                          <BaseAvatar src={avatar ?? ""} alt="Avatar" className="w-[100px] h-[100px] rounded-full" fallbackInitials={initials} imageLoading="eager" />
+                          <BaseAvatar src={avatar ?? ""} alt="Avatar" className="w-[100px] h-[100px] rounded-full" imageLoading="eager" />
                           <div className="cursor-pointer absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
                             <span className="select-none px-1 text-center text-[10px] font-medium leading-tight text-white">
                               Change
@@ -168,16 +163,16 @@ export function AccountSettingsForm({ user, isLoading }: { user: IUserWithProvid
                     </div>
                     {isAccountSettingsDirty && (
                       <div className="flex flex-col gap-2">
-                        <Button type="submit" disabled={isPendingUpdateUser}>
+                        <Button type="submit" disabled={isPendingUpdateUser} onClick={() => onSubmitAccountSettings(getValuesAccountSettings())}>
                           {isPendingUpdateUser ? <Spinner /> : 'Save Changes'}
                         </Button>
                         <Button type="button" variant="outline" className="min-w-[70px]" onClick={() => resetAccountSettings({
                           fullName: user?.fullName ?? "",
                           avatar: user?.avatar ?? "",
                           nickName: user?.nickName ?? "",
-                          birthDate: user?.birthDate ?? new Date(),
-                          // department: user?.department ?? "",
-                          // position: user?.position ?? "",
+                          birthDate: user?.birthDate ?? null,
+                          department: user?.department?.name ?? null,
+                          position: user?.position ?? "",
                         })}>Cancel</Button>
                       </div>
                     )}
@@ -212,7 +207,7 @@ export function AccountSettingsForm({ user, isLoading }: { user: IUserWithProvid
                 </TableCell>
                 <TableCell>
                     <InputGroup>
-                      <InputGroupInput type="text" {...registerAccountSettings("nickName")} />
+                      <InputGroupInput placeholder="What do you want to be called?" type="text" {...registerAccountSettings("nickName")} />
                     </InputGroup>
                     {errorsAccountSettings.nickName && (
                       <p className="text-xs text-red-500">
@@ -236,7 +231,7 @@ export function AccountSettingsForm({ user, isLoading }: { user: IUserWithProvid
                         <BaseDatePicker
                           value={field.value}
                           onChange={(date) => {
-                            field.onChange(date ? moment(date).toDate() : null);
+                            field.onChange(date ? moment(date).format("YYYY-MM-DD") : null);
                           }}
                           placeholder="Select date"
                         />
@@ -277,6 +272,41 @@ export function AccountSettingsForm({ user, isLoading }: { user: IUserWithProvid
                     </InputGroup>
                 </TableCell>
               </TableRow>
+
+              {user.department &&
+                <TableRow>
+                  <TableCell>
+                    <Label className="whitespace-nowrap">
+                      Department
+                    </Label>
+                  </TableCell>
+                  <TableCell>
+                      <InputGroup>
+                        <InputGroupInput type="text" disabled value={user?.department?.name ?? ""} />
+                      </InputGroup>
+                  </TableCell>
+                </TableRow>
+              } 
+
+              {user.position &&
+                <TableRow>
+                  <TableCell>
+                    <Label className="whitespace-nowrap">
+                      Position
+                    </Label>
+                  </TableCell>
+                  <TableCell>
+                      <InputGroup>
+                        <InputGroupInput type="text" {...registerAccountSettings("position")} disabled />
+                      </InputGroup>
+                      {errorsAccountSettings.position && (
+                        <p className="text-xs text-red-500">
+                          {errorsAccountSettings.position.message}
+                        </p>
+                      )}
+                  </TableCell>
+                </TableRow>
+              }
             </TableBody>    
           </Table>
         </form>

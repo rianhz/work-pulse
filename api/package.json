@@ -8,7 +8,7 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "create-module": "node src/scripts/create-module.js",
-    "migrate": "npm run build && node dist/scripts/runner.js"
+    "migrate": "npm run build && node dist/src/scripts/runner.js"
   },
   "keywords": [],
   "author": "",

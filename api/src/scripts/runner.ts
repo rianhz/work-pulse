@@ -1,12 +1,14 @@
 
 import mongoose from "mongoose";
 import dotenv from "dotenv";
-import { usersMigrations } from "./migrations/usersMigrations";
+// import { usersMigrations } from "./migrations/usersMigrations";
 import { connectDatabase } from "../config/database";
+import { migratePositions } from "./migrations/positionsMigrations";
 dotenv.config();
 
 const migrations = [
-  { name: "usersMigrations", execute: usersMigrations },
+  // { name: "usersMigrations", execute: usersMigrations },
+  { name: "positionsMigrations", execute: migratePositions },
 ];
 
 async function runMigrations() {
