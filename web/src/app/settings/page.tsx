@@ -14,7 +14,6 @@ import { useGetMe, useGetMeProviders } from "@/features/users/hooks";
 import { SecurityUserSettingsForm } from "@/components/custom/forms/SecurityUserSettingsForm";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { DepartmentSettingsForm } from "@/components/custom/forms/DepartmentSettingsForm";
-import { PositionSettingsForm } from "@/components/custom/forms/PositionSettingsForm";
 
 export interface IUserWithProviders extends IUser {
   providers: ('password' | 'google')[];
@@ -46,7 +45,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <Tabs defaultValue={tab} className="w-full max-w-3xl">
+    <Tabs defaultValue={tab} className="w-full">
       <TabsList>
         <TabsTrigger onClick={() => router.push("/settings?tab=account")} value="account">Account</TabsTrigger>
         <TabsTrigger onClick={() => router.push("/settings?tab=company")} value="company">Company</TabsTrigger>
@@ -56,8 +55,8 @@ export default function SettingsPage() {
         <p className="text-sm text-muted-foreground">Manage your account settings and preferences.</p>
         <Tabs defaultValue="general" orientation={isMobile ? "horizontal" : "vertical"} className="mt-4">
           <TabsList className="bg-transparent px-0! pt-0!">
-            <TabsTrigger className="rounded-sm data-active:bg-transparent hover:bg-sidebar-accent p-2!" value="general">General</TabsTrigger>
-            <TabsTrigger className="rounded-sm data-active:bg-transparent hover:bg-sidebar-accent p-2!" value="security">Security</TabsTrigger>
+            <TabsTrigger className="rounded-sm data-active:bg-transparent hover:bg-sidebar-accent p-2! min-w-[150px]" value="general">General</TabsTrigger>
+            <TabsTrigger className="rounded-sm data-active:bg-transparent hover:bg-sidebar-accent p-2! min-w-[150px]" value="security">Security</TabsTrigger>
           </TabsList>
           <TabsContent value="general">
             <AccountSettingsForm user={{ ...user, providers }} isLoading={isLoadingUser || isLoadingProviders} />
@@ -72,19 +71,15 @@ export default function SettingsPage() {
         <p className="text-sm text-muted-foreground">Manage your organization's identity, team permissions, and cloud integrations.</p>
         <Tabs defaultValue="general" orientation={isMobile ? "horizontal" : "vertical"} className="mt-4">
           <TabsList className="bg-transparent px-0! pt-0!">
-            <TabsTrigger className="rounded-sm data-active:bg-transparent hover:bg-sidebar-accent p-2!" value="general">General</TabsTrigger>
-            <TabsTrigger className="rounded-sm data-active:bg-transparent hover:bg-sidebar-accent p-2!" value="departments">Departments</TabsTrigger>
-            <TabsTrigger className="rounded-sm data-active:bg-transparent hover:bg-sidebar-accent p-2!" value="positions">Positions</TabsTrigger>
-            <TabsTrigger className="rounded-sm data-active:bg-transparent hover:bg-sidebar-accent p-2!" value="billing">Billing & Plans</TabsTrigger>
+            <TabsTrigger className="rounded-sm data-active:bg-transparent hover:bg-sidebar-accent p-2! min-w-[150px]" value="general">General</TabsTrigger>
+            <TabsTrigger className="rounded-sm data-active:bg-transparent hover:bg-sidebar-accent p-2! min-w-[150px]" value="departments">Departments</TabsTrigger>
+            <TabsTrigger className="rounded-sm data-active:bg-transparent hover:bg-sidebar-accent p-2! min-w-[150px]" value="billing">Billing & Plans</TabsTrigger>
           </TabsList>
           <TabsContent value="general">
             <CompanySettingsForm tenantId={tenantId as string} tenant={tenant as ITenant} isLoading={isLoadingTenant} />
           </TabsContent>
           <TabsContent value="departments">
             <DepartmentSettingsForm tenantId={tenantId as string} tenant={tenant as ITenant} isLoading={isLoadingTenant} />
-          </TabsContent>
-          <TabsContent value="positions">
-            <PositionSettingsForm tenantId={tenantId as string} tenant={tenant as ITenant} isLoading={isLoadingTenant} />
           </TabsContent>
           <TabsContent value="billing">
             <BillingPlansSettingsForm tenantId={tenantId as string} tenant={tenant as ITenant} isLoading={isLoadingTenant} />

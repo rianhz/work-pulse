@@ -6,7 +6,7 @@
     "moduleResolution": "NodeNext",
 
     "outDir": "./dist",
-    "rootDir": "./src",
+    "rootDir": "./",
 
     "strict": true,
     "strictNullChecks": true,
@@ -18,5 +18,6 @@
     "types": ["node"]
   },
 
-  "include": ["src"]
+  "include": ["src/**/*", "scripts/**/*"],
+  "exclude": ["node_modules", "dist"]
 }

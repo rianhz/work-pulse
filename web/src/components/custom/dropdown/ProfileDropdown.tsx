@@ -8,10 +8,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useSelector } from "react-redux";
+import { RootState } from "@/store";
 
 export const ProfileDropdown = () => {
   const { mutate: logout } = useLogout();
-
+  const user = useSelector((state: RootState) => state.currentUser.user);
   return (
     <DropdownMenu>
       <DropdownMenuTrigger className="cursor-pointer outline-none focus:outline-none rounded-full">
@@ -22,8 +24,8 @@ export const ProfileDropdown = () => {
       </DropdownMenuTrigger>
 
       <DropdownMenuContent align="end" className="p-1">
-        <DropdownMenuItem className="cursor-pointer rounded-lg font-medium">
-          Profile
+        <DropdownMenuItem className="cursor-pointer rounded-lg font-medium cursor-default">
+          {user?.fullName}
         </DropdownMenuItem>
         
         <DropdownMenuItem 

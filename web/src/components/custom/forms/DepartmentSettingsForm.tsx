@@ -57,7 +57,6 @@ export function DepartmentSettingsForm({ tenantId, tenant, isLoading }: { tenant
   });
 
   const onSubmit = (data: DepartmentSchema) => {
-    console.log(data);
     createDepartment(data, {
       onSuccess: () => {
         reset({
@@ -234,27 +233,25 @@ export function DepartmentSettingsForm({ tenantId, tenant, isLoading }: { tenant
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>
-              <TableHead>Description</TableHead>
               <TableHead>Status</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {departments?.map((department) => (
               <TableRow key={department._id}>
-                <TableCell>{department.name}</TableCell>
-                <TableCell>
-                  {department.description ? (
+                <TableCell className="flex items-center gap-2">
+                  <span className="text-sm font-medium">{department.name}</span>
+                  {department.description && (
                     <HoverCard openDelay={10} closeDelay={100}>
                       <HoverCardTrigger asChild>
-                        <Info className="size-4" />
+                        <Info size={16} />
                       </HoverCardTrigger>
                       <HoverCardContent className="flex w-64 flex-col gap-0.5">
                         <div>{department.description}</div>
                       </HoverCardContent>
                     </HoverCard>
-                  ) : (
-                    <div className="text-muted-foreground">-</div>
                   )}
+
                 </TableCell>
                 <TableCell>
                   <Badge className={`${department.status === "active" ? "bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300" : department.status === "disabled" ? "bg-yellow-50 text-yellow-700 dark:bg-yellow-950 dark:text-yellow-300" : "bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300"}`}>

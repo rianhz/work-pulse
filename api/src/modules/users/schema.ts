@@ -27,7 +27,6 @@ const userSchema = new mongoose.Schema<IUser>(
         "owner",
         "admin",
         "manager",
-        "team-leader",
         "employee",
       ],
       default: "employee",
@@ -45,6 +44,7 @@ const userSchema = new mongoose.Schema<IUser>(
         "active",
         "pending",
         "disabled",
+        "deleted",
       ],
       default: "active",
     },
@@ -52,9 +52,10 @@ const userSchema = new mongoose.Schema<IUser>(
     projects: [{
       type: mongoose.Schema.Types.ObjectId,
       ref: "Project",
+      default: null,
     }],
 
-    reportsTo: {
+    leader: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       default: null,
@@ -75,11 +76,13 @@ const userSchema = new mongoose.Schema<IUser>(
     department: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Department",
+      default: null,
     },
 
     position: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Position",
+      type: String,
+      required: false,
+      default: "",
     },
 
     refreshToken: {

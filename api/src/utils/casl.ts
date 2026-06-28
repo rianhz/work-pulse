@@ -1,5 +1,5 @@
 import { Ability, AbilityBuilder, createMongoAbility, subject as caslSubject } from "@casl/ability";
-import { ForbiddenException, UnauthorizedException } from "./app-error";
+import { ForbiddenException } from "./app-error";
 import { AuthUser } from "../modules/authentication/interfaces";
 
 export type Actions = "manage" | "create" | "read" | "update" | "delete";
@@ -10,32 +10,32 @@ export async function defineAbilitiesFor(user: AuthUser) {
 
   switch (user.role) {
     case "owner":
-      can("manage", "all");
+      can("manage", "all", { tenantId: user.tenantId });
       break;
 
     case "admin":
-      can("manage", "User");
-      can("manage", "Project");
-      can("manage", "Timesheet");
-      can("manage", "Tenant");
-      can("manage", "Invitation");
-      can("manage", "Department");
-      can("manage", "Position");
+      can("manage", "User", { tenantId: user.tenantId });
+      can("manage", "Project", { tenantId: user.tenantId });
+      can("manage", "Timesheet", { tenantId: user.tenantId });
+      can("manage", "Invitation", { tenantId: user.tenantId });
+      can("manage", "Department", { tenantId: user.tenantId });
+      can("manage", "Position", { tenantId: user.tenantId });
+      
+      can(["read", "update"], "Tenant", { _id: user.tenantId }); 
       break;
 
     case "manager":
-      can("manage", "Project");
-      can("manage", "Timesheet");
-      can("read", "User");
+      can("manage", "Project", { tenantId: user.tenantId });
+      can("read", "User", { tenantId: user.tenantId });
+      can("read", "Department", { tenantId: user.tenantId });
       break;
 
     case "employee":
-      can("read", "User", { id: user.userId });
-      can("update", "User", { id: user.userId });
-      can("read", "Project");
-      can("create", "Timesheet");
-      can("read", "Timesheet");
-      can("update", "Timesheet");
+      can("read", "User", { _id: user.userId, tenantId: user.tenantId });
+      can("update", "User", { _id: user.userId, tenantId: user.tenantId });
+      can("read", "Project", { tenantId: user.tenantId });
+      can("manage", "Timesheet", { userId: user.userId, tenantId: user.tenantId });
+      can("read", "Department", { tenantId: user.tenantId });
       break;
   }
 
@@ -45,7 +45,7 @@ export async function defineAbilitiesFor(user: AuthUser) {
 export async function isHaveAccess(authenticatedUser: AuthUser, resourceData: any, subjectName: Subjects, action: Actions, field?: string) {
   const ability = await defineAbilitiesFor(authenticatedUser);
 
-  const target = resourceData ? caslSubject(subjectName, resourceData) : subjectName;
+  const target = resourceData ? caslSubject(subjectName, JSON.parse(JSON.stringify(resourceData))) : subjectName;
 
   if (!ability.can(action, target, field)) {
     throw new ForbiddenException("You are not authorized to access this resource");

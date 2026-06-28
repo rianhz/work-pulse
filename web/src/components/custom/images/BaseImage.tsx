@@ -3,33 +3,46 @@
 import { useState } from "react";
 import Image from "next/image";
 import { Spinner } from "@/components/ui/spinner";
+import { UserCircle } from "lucide-react";
 
 interface BaseAvatarProps {
   src?: string;
   alt?: string;
   fallbackInitials?: string;
+  fallbackIcon?: React.ReactNode;
   className?: string;
-  priority?: boolean; // Added to handle Largest Contentful Paint (LCP) dynamically
+  priority?: boolean;
+  imageLoading?: "lazy" | "eager";
 }
 
 export default function BaseAvatar({
   src,
   alt,
   fallbackInitials,
+  fallbackIcon = <UserCircle size={100} className="text-muted-foreground" />,
   className = "",
   priority = false, // Defaults to false, set to true if it's the main page element
+  imageLoading = "lazy",
 }: BaseAvatarProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
   if (!src || error) {
+    if(fallbackInitials){
+      return (
+        <div className={`w-[100px] h-[100px] flex items-center justify-center align-center bg-muted rounded-full`}>
+          <span className="text-4xl font-bold bg-muted text-muted-foreground">
+            {fallbackInitials}
+          </span>
+        </div>
+      )
+    }
+
     return (
       <div className={`w-[100px] h-[100px] flex items-center justify-center align-center bg-muted rounded-full`}>
-        <span className="text-4xl font-bold bg-muted text-muted-foreground">
-          {fallbackInitials}
-        </span>
+        {fallbackIcon}
       </div>
-    );
+    )
   }
 
   return (
@@ -44,11 +57,12 @@ export default function BaseAvatar({
         src={src}
         alt={alt || ""}
         fill
-        priority={priority} // Clears warning #2 when passed as true
-        sizes="(max-width: 768px) 96px, 96px" // Clears warning #1 (Informs Next.js this avatar is roughly 96px wide)
+        priority={priority}
+        sizes="(max-width: 768px) 96px, 96px"
         className={`object-cover transition-opacity duration-300 ${
           loading ? "opacity-0" : "opacity-100"
         }`}
+        loading={imageLoading}
         onLoad={() => setLoading(false)}
         onError={() => {
           setLoading(false);

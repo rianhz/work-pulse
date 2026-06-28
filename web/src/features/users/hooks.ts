@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { getMe, getMeProviders, getUsers, updateUser } from "./api";
+import { getMe, getMeProviders, getUsers, searchUsers, updateUser } from "./api";
 import { toast } from "sonner";
 import { IGetPaginatedResponse, IPaginationQueryOptions } from "@/global";
 import { IUser } from "./users";
@@ -45,6 +45,15 @@ export const useUpdateUser = () => {
   });
 };
 
+export const useDeleteUser = () => {
+  return useMutation({
+    mutationFn: ({ userId }: { userId: string }) => updateUser(userId, { status: "deleted" }),    
+    onSuccess: () => {
+      toast.success('User deleted successfully');
+    },
+  });
+};
+
 export const useGetUsers = (params: IPaginationQueryOptions) => {
   return useQuery<IGetPaginatedResponse<IUser[]>>({
     queryKey: ["users", params],
@@ -56,5 +65,21 @@ export const useGetUsers = (params: IPaginationQueryOptions) => {
         throw error;
       }
     },
+  });
+};
+
+export const useSearchUsers = (query: string) => {
+  return useQuery<{ data: IUser[] }>({
+    queryKey: ["users", "search", query],
+    queryFn: async () => {
+      try {
+        const response = await searchUsers(query);
+        return response;
+      } catch (error) {
+        throw error;
+      }
+    },
+    enabled: !!query,
+    retry: false,
   });
 };

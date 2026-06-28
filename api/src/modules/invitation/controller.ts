@@ -2,17 +2,14 @@ import { Request, Response } from "express";
 import { acceptInviteService, inviteUsersService, verifyInviteTokenService } from "./service";
 import { asyncHandler } from "../../middleware/async-handler";
 import { HTTPSTATUS } from "../../utils/http-config";
-import { isHaveAccess } from "../../utils/casl";
 import { BadRequestException } from "../../utils/app-error";
 
 export const inviteUsersController = asyncHandler(async (req: Request, res: Response) => {
   const { emails, role } = req.body;
   const authenticatedUser = (req as any).user;
-  const { tenantId } = authenticatedUser;
 
-  await isHaveAccess(authenticatedUser, null, "Invitation", "create");
-
-  const { success, failed } = await inviteUsersService({ emails, role, tenantId });
+  const { success, failed } = await inviteUsersService(authenticatedUser, { emails, role });
+  
   res.status(HTTPSTATUS.OK).json({ success, failed });
 });
 

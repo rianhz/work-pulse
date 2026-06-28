@@ -1,6 +1,6 @@
 export interface IInviteUsersPayload {
   emails: string[];
-  role: "admin" | "manager" | "team-leader" | "employee";
+  role: "admin" | "manager" | "employee";
   tenantId: string;
 }
 

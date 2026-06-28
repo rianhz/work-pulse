@@ -14,10 +14,10 @@ export default function BaseLoggedInLayout({
     <SidebarProvider defaultOpen={false}>
       <AppSidebar />
 
-      <div className="flex min-h-screen flex-1 flex-col">
+      <div className="flex h-screen flex-1 flex-col overflow-auto scrollbar-thin scrollbar-thumb-default-200 scrollbar-track-default-100">
         <BaseLoggedInNavTop />
 
-        <main className="flex-1 h-[calc(100vh-48px)] p-4 md:p-6 w-full overflow-auto scrollbar-thin scrollbar-thumb-default-200 scrollbar-track-default-100">
+        <main className="flex-1 p-4 w-full">
           {children}
         </main>
       </div>

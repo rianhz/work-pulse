@@ -11,7 +11,6 @@ import { timesheetRoutes } from './modules/timesheet/routes';
 import { tenantsRoutes } from './modules/tenants/routes';
 import { invitationRoutes } from './modules/invitation/routes';
 import { departmentRoutes } from './modules/departments/routes';
-import { positionRoutes } from './modules/positions/routes';
 const app = express();
 
 app.use(cors(corsOptions));
@@ -25,7 +24,6 @@ app.use('/projects', projectsRoutes);
 app.use('/timesheets', timesheetRoutes);
 app.use('/invitations', invitationRoutes);
 app.use('/departments', departmentRoutes);
-app.use('/positions', positionRoutes);
 
 app.use(errorHandler);
 

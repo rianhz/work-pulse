@@ -6,6 +6,7 @@ import { TenantModel } from '../tenants/schema';
 import { IdentityModel } from '../idp/schema';
 import { compareValue, hashValue } from '../../utils/bcrypt';
 import { BadRequestException, NotFoundException } from '../../utils/app-error';
+import { IIdentity } from '../idp/interfaces';
 
 export const registerService = async (payload: IRegisterPayload): Promise<IUser> => {
     const { email, password, companyName, slug, fullName } = payload;
@@ -35,11 +36,19 @@ export const registerService = async (payload: IRegisterPayload): Promise<IUser>
 
     const passwordHash = await hashValue(password, 10);
 
-    await IdentityModel.create({
-        userId: user._id.toString(),
-        provider: 'password',
-        passwordHash,
-    });
+    const identityPayload: IIdentity = {
+      userId: user._id.toString(),
+      provider: "password",
+      providerUserId: user.email.toLowerCase(),
+      passwordHash,
+      email: email.toLowerCase(),
+    };
+
+    console.log(identityPayload);
+
+    await IdentityModel.create(identityPayload);
+
+    
 
     return user
 };

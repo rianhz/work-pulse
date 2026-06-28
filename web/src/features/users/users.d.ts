@@ -1,4 +1,5 @@
 import { IResponse } from "@/global";
+import { IDepartment } from "../departments/departments";
 
 export interface IUser {
   _id: string;
@@ -10,7 +11,11 @@ export interface IUser {
   avatar: string;
   createdAt: Date;
   updatedAt: Date;
-  reportsTo: string | null;
+  leader: IUser | null;
+  nickName: string | null;
+  birthDate: string | null;
+  department: IDepartment | null;
+  position: string;
   refreshToken: {
     token: string;
     expiresIn: number;

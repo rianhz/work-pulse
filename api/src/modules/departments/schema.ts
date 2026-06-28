@@ -20,6 +20,17 @@ export const departmentSchema = new mongoose.Schema<IDepartment>({
         required: true,
         default: "active",
     },
+    createdBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        required: true,
+    },
+    lastUpdatedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        required: false,
+        default: null,
+    },
 }, {
     timestamps: true,
 });
