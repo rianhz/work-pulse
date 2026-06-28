@@ -551,7 +551,7 @@ export default function TeamPage() {
         </DialogContent>
       </Dialog>
     
-      <main className="flex flex-1 flex-col gap-4">
+      <>
         <Card>
           <CardHeader className="flex justify-between items-end flex-row">
             <div>
@@ -593,7 +593,7 @@ export default function TeamPage() {
             )}
           </CardContent>
         </Card>
-      </main>
+      </>
     </>
   );
 }

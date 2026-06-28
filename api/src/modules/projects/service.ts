@@ -1,8 +1,21 @@
 import { ProjectModel } from "./schema";
-import { IProject } from "./interfaces";
+import { IProject, IProjectParticipant } from "./interfaces";
 import { NotFoundException } from "../../utils/app-error";
+import mongoose from "mongoose";
+import { isHaveAccess } from "../../utils/casl";
+import { AuthUser } from "../authentication/interfaces";
 
-export const createProjectService = async (project: IProject): Promise<IProject> => {
+interface IProjectPayload {
+  name: string;
+  description?: string;
+  entity?: string;
+  tenantId: mongoose.Types.ObjectId | string;
+  participants?: IProjectParticipant[];
+  status: "active" | "inactive" | "deleted";
+}
+
+export const createProjectService = async (authenticatedUser: AuthUser, project: IProjectPayload): Promise<IProject> => {
+    await isHaveAccess(authenticatedUser, null, "Project", "create");
     const newProject = await ProjectModel.create(project);
     return newProject;
 };
@@ -31,7 +44,8 @@ export const getProjectsByBulkIdsService = async (ids: string[]): Promise<IProje
     return projects;
 };
 
-export const updateProjectService = async (id: string, project: IProject): Promise<IProject> => {
+export const updateProjectService = async (authenticatedUser: AuthUser, id: string, project: IProjectPayload): Promise<IProject> => {
+    await isHaveAccess(authenticatedUser, null, "Project", "update");
     const updatedProject = await ProjectModel.findByIdAndUpdate(id, project, { new: true }).lean();
     if (!updatedProject) {
         throw new NotFoundException('Project not found');
@@ -39,7 +53,8 @@ export const updateProjectService = async (id: string, project: IProject): Promi
     return updatedProject;
 };
 
-export const deleteProjectService = async (id: string): Promise<IProject> => {
+export const deleteProjectService = async (authenticatedUser: AuthUser, id: string): Promise<IProject> => {
+    await isHaveAccess(authenticatedUser, null, "Project", "delete");
     const deletedProject = await ProjectModel.findByIdAndDelete(id).lean();
     if (!deletedProject) {
         throw new NotFoundException('Project not found');

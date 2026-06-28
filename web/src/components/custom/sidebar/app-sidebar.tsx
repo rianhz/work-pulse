@@ -25,6 +25,7 @@ import {
   CircleQuestionMark,
   LogOut,
   Users,
+  Briefcase,
 } from "lucide-react";
 import { useLogout } from "@/features/auth/hooks";
 import { Button } from "@/components/ui/button";
@@ -39,6 +40,7 @@ export function AppSidebar() {
     { title: "Chats", url: "/chats", icon: MessageCircle },
     { title: "Timesheet", url: "/timesheet", icon: Calendar },
     { title: "Team", url: "/team", icon: Users },
+    { title: "Projects", url: "/projects", icon: Briefcase },
     { title: "Settings", url: "/settings", icon: Settings },
   ];
 
