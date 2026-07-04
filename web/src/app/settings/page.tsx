@@ -14,12 +14,18 @@ import { useGetMe, useGetMeProviders } from "@/features/users/hooks";
 import { SecurityUserSettingsForm } from "@/components/custom/forms/SecurityUserSettingsForm";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { DepartmentSettingsForm } from "@/components/custom/forms/DepartmentSettingsForm";
+import { useAppSelector } from "@/store/hooks/hooks";
+import { NotAuthorised } from "@/components/custom/errors-and-empty/NotAuthorised";
+import { useEffect } from "react";
 
 export interface IUserWithProviders extends IUser {
   providers: ('password' | 'google')[];
 }
 
 export default function SettingsPage() {
+  const currentUserRole = useAppSelector((state: RootState) => state.currentUser.user?.role);
+  const allowedCompanyTabAccess = currentUserRole === "admin" || currentUserRole === "owner";
+
   const router = useRouter();
   const searchParams = useSearchParams();
   const tab = searchParams.get("tab") || "account";
@@ -45,10 +51,12 @@ export default function SettingsPage() {
   }
 
   return (
-    <Tabs defaultValue={tab} className="w-full">
+    <Tabs value={tab} className="w-full">
       <TabsList>
         <TabsTrigger onClick={() => router.push("/settings?tab=account")} value="account">Account</TabsTrigger>
-        <TabsTrigger onClick={() => router.push("/settings?tab=company")} value="company">Company</TabsTrigger>
+        {allowedCompanyTabAccess && (
+          <TabsTrigger onClick={() => router.push("/settings?tab=company")} value="company">Company</TabsTrigger>
+        )}
       </TabsList>
       <TabsContent value="account">
         <h1 className="text-2xl font-bold">Account Settings</h1>
@@ -67,24 +75,31 @@ export default function SettingsPage() {
         </Tabs>
       </TabsContent>
       <TabsContent value="company">
-        <h1 className="text-2xl font-bold">Organization Settings</h1>
-        <p className="text-sm text-muted-foreground">Manage your organization's identity, team permissions, and cloud integrations.</p>
-        <Tabs defaultValue="general" orientation={isMobile ? "horizontal" : "vertical"} className="mt-4">
-          <TabsList className="bg-transparent px-0! pt-0!">
-            <TabsTrigger className="rounded-sm data-active:bg-transparent hover:bg-sidebar-accent p-2! min-w-[150px]" value="general">General</TabsTrigger>
-            <TabsTrigger className="rounded-sm data-active:bg-transparent hover:bg-sidebar-accent p-2! min-w-[150px]" value="departments">Departments</TabsTrigger>
-            <TabsTrigger className="rounded-sm data-active:bg-transparent hover:bg-sidebar-accent p-2! min-w-[150px]" value="billing">Billing & Plans</TabsTrigger>
-          </TabsList>
-          <TabsContent value="general">
-            <CompanySettingsForm tenantId={tenantId as string} tenant={tenant as ITenant} isLoading={isLoadingTenant} />
-          </TabsContent>
-          <TabsContent value="departments">
-            <DepartmentSettingsForm tenantId={tenantId as string} tenant={tenant as ITenant} isLoading={isLoadingTenant} />
-          </TabsContent>
-          <TabsContent value="billing">
-            <BillingPlansSettingsForm tenantId={tenantId as string} tenant={tenant as ITenant} isLoading={isLoadingTenant} />
-          </TabsContent>
-        </Tabs>
+        {!allowedCompanyTabAccess && tab === "company" && (
+          <NotAuthorised />
+        )}
+        {allowedCompanyTabAccess && tab === "company" && (
+         <>
+          <h1 className="text-2xl font-bold">Organization Settings</h1>
+          <p className="text-sm text-muted-foreground">Manage your organization's identity, team permissions, and cloud integrations.</p>
+          <Tabs defaultValue="general" orientation={isMobile ? "horizontal" : "vertical"} className="mt-4">
+            <TabsList className="bg-transparent px-0! pt-0!">
+              <TabsTrigger className="rounded-sm data-active:bg-transparent hover:bg-sidebar-accent p-2! min-w-[150px]" value="general">General</TabsTrigger>
+              <TabsTrigger className="rounded-sm data-active:bg-transparent hover:bg-sidebar-accent p-2! min-w-[150px]" value="departments">Departments</TabsTrigger>
+              <TabsTrigger className="rounded-sm data-active:bg-transparent hover:bg-sidebar-accent p-2! min-w-[150px]" value="billing">Billing & Plans</TabsTrigger>
+            </TabsList>
+            <TabsContent value="general">
+              <CompanySettingsForm tenantId={tenantId as string} tenant={tenant as ITenant} isLoading={isLoadingTenant} />
+            </TabsContent>
+            <TabsContent value="departments">
+              <DepartmentSettingsForm tenantId={tenantId as string} tenant={tenant as ITenant} isLoading={isLoadingTenant} />
+            </TabsContent>
+            <TabsContent value="billing">
+              <BillingPlansSettingsForm tenantId={tenantId as string} tenant={tenant as ITenant} isLoading={isLoadingTenant} />
+            </TabsContent>
+          </Tabs>
+        </>
+         )}
       </TabsContent>
     </Tabs>
   );

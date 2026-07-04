@@ -1,5 +1,7 @@
 import mongoose from "mongoose";
 import { IProject } from "./interfaces";
+import { baseDateFormat, baseDateTimeFormat } from "../../helpers/date-format";
+import mongooseLeanVirtuals from 'mongoose-lean-virtuals';
 
 export const projectSchema = new mongoose.Schema<IProject>({
     name: {
@@ -22,16 +24,9 @@ export const projectSchema = new mongoose.Schema<IProject>({
     },
     participants: {
         type: [{
-            user: {
-                type: mongoose.Schema.Types.ObjectId,
-                ref: "User",
-                required: true,
-            },
-            role: {
-                type: String,
-                required: [true, "Project role designation is required."],
-                trim: true,
-            },
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+            required: true,
         }],
         required: false,
     },
@@ -40,9 +35,31 @@ export const projectSchema = new mongoose.Schema<IProject>({
         enum: ["active", "inactive", "deleted"],
         default: "active",
     },
+    createdBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        required: false,
+        default: null,
+    },
+    lastUpdatedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        required: false,
+        default: null,
+    },
 }, {
     timestamps: true,
 });
+
+projectSchema.virtual("formattedCreatedAt").get(function(this: Document & IProject & { createdAt: Date }) {
+    return this.createdAt ? baseDateTimeFormat(this.createdAt) : null;
+});
+
+projectSchema.virtual("formattedUpdatedAt").get(function(this: Document & IProject & { updatedAt: Date }) {
+    return this.updatedAt ? baseDateTimeFormat(this.updatedAt) : null;
+});
+
+projectSchema.plugin(mongooseLeanVirtuals);
 
 projectSchema.index({ tenantId: 1, status: 1 })
 

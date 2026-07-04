@@ -10,6 +10,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 
 
 interface BaseDatePickerProps {
+  id: string;
   value: Date | string | null | undefined;
   onChange: (date: Date | undefined) => void;
   placeholder?: string;
@@ -19,6 +20,7 @@ interface BaseDatePickerProps {
 }
 
 export function BaseDatePicker({
+  id,
   value,
   onChange,
   placeholder = "Select date",
@@ -35,7 +37,7 @@ export function BaseDatePicker({
       <PopoverTrigger asChild>
         <Button
           variant="outline"
-          id="date"
+          id={id}
           disabled={disabled}
           className={cn(
             "justify-between w-full font-normal text-left bg-input/50 hover:bg-input/50! aria-expanded:bg-input/50!",

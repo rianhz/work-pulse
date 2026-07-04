@@ -4,188 +4,390 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
-import z from "zod";
-import { IProject } from "@/features/projects/project";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ProjectPayloadFormValues, projectPayloadSchema } from "@/features/projects/validator";
 import { Textarea } from "@/components/ui/textarea";
 import { Spinner } from "@/components/ui/spinner";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { ChevronDownIcon } from "lucide-react";
-import { Command, CommandInput, CommandItem, CommandList, CommandSeparator } from "@/components/ui/command";
 import { useSearchUsers } from "@/features/users/hooks";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { GenericMultiSelect } from "@/components/custom/select/BaseSelect";
+import { useDebounce } from "@/hooks/use-debounce";
+import { useCreateProject, useDeleteProject, useGetProjects, useUpdateProject } from "@/features/projects/hooks";
+import { useQueryClient } from "@tanstack/react-query";
+import { ArrowUpDown, Briefcase, InfoIcon, MoreHorizontal, UsersIcon } from "lucide-react";
+import { BaseTable } from "@/components/custom/table/BaseTable";
+import { Column, ColumnDef, VisibilityState } from "@tanstack/react-table";
+import { IProject } from "@/features/projects/project";
+import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { DropdownMenu, DropdownMenuItem, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { baseDateFormat, baseDateFormatFromNow, baseDateTimeFormat } from "@/helpers/date-format";
+import { NotAuthorised } from "@/components/custom/errors-and-empty/NotAuthorised";
 
 export default function ProjectsPage() {
+  const queryClient = useQueryClient();
   const currentUser = useSelector((state: RootState) => state.currentUser.user);
   const isAdminOrOwner = currentUser?.role === "admin" || currentUser?.role === "owner" || currentUser?.role === "manager";
 
-  const [openCreateProject, setOpenCreateProject] = useState(false);
   const [participantsSearch, setParticipantsSearch] = useState("");
-  const [participantsPopoverOpen, setParticipantsPopoverOpen] = useState(false);
-  const [participant, setParticipant] = useState({ userId: "", role: "" });
+  const debouncedParticipantsSearch = useDebounce(participantsSearch, 1000);
+  const { data: participantsResponse, isLoading: isLoadingParticipants, isError: isErrorParticipants, isFetched: isFetchedParticipants } = useSearchUsers(debouncedParticipantsSearch);
+  const participants = useMemo(() => participantsResponse?.data || [], [participantsResponse]);
 
-  const { data: participantsResponse, isLoading: isLoadingParticipants, isError: isErrorParticipants } = useSearchUsers(participantsSearch);
-  const participants = useMemo(() => participantsResponse?.data, [participantsResponse]);
+  const { mutate: createProjectMutation, isPending: isLoadingCreateProject } = useCreateProject();
+  const { mutate: updateProjectMutation, isPending: isLoadingUpdateProject } = useUpdateProject();
+  const { mutate: deleteProjectMutation, isPending: isLoadingDeleteProject } = useDeleteProject();
 
-  const { handleSubmit, register , formState: { isSubmitting, errors: errorsCreateProject }, reset: resetCreateProject, control: controlCreateProject } = useForm<ProjectPayloadFormValues>({
+  const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 1000);
+  const [page, setPage] = useState(1);
+  const limit = 10;
+  const { data: projectsResponse, isLoading: isLoadingProjects, isError: isErrorProjects } = useGetProjects({ search: debouncedSearch, page, limit });
+
+  const defaultValues: ProjectPayloadFormValues = {
+    name: "",
+    description: "",
+    entity: "",
+    participants: [],
+    status: "active",
+  };
+
+  const { 
+    handleSubmit, 
+    register, 
+    formState: { isSubmitting, errors: errorsCreateProject }, 
+    reset, 
+    control,
+  } = useForm<ProjectPayloadFormValues>({
     resolver: zodResolver(projectPayloadSchema),
-    defaultValues: {
-      name: "",
-      description: "",
-      entity: "",
-      participants: [],
-    },
+    defaultValues,
   });
 
-  const { handleSubmit: handleSubmitParticipant, control: controlParticipant, register: registerParticipant, formState: { errors: errorsParticipant }, reset: resetParticipant } = useForm<{ userId: string, role: string }>({
-    resolver: zodResolver(z.object({
-      userId: z.string(),
-      role: z.string(),
-    })),
-    defaultValues: {
-      userId: "",
-      role: "",
-    },
-  });
+  const [dialogMode, setDialogMode] = useState<"create" | "edit">("create");
+  const [selectedProject, setSelectedProject] = useState<IProject | null>(null);
 
-  const onSubmitParticipant = (data: { userId: string, role: string }) => {
-    console.log(data);
-      setParticipant({ userId: data.userId, role: data.role });
-      resetParticipant();
-      setParticipantsPopoverOpen(false);
-    };
+  const [isProjectDialogOpen, setProjectDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
+  const openCreateDialog = () => {
+    setDialogMode("create");
+    setSelectedProject(null);
+    reset(defaultValues);
+    setProjectDialogOpen(true);
+  };
+
+  const openEditDialog = (project: IProject) => {
+    setDialogMode("edit");
+    setSelectedProject(project);
+
+    reset({
+      name: project.name,
+      description: project.description,
+      entity: project.entity,
+      participants: project.participants,
+      status: project.status,
+    });
+
+    setProjectDialogOpen(true);
+  };
+
+  const openDeleteDialog = (project: IProject) => {
+    setSelectedProject(project);
+    setDeleteDialogOpen(true);
+  };
+
 
   const onSubmit = (data: ProjectPayloadFormValues) => {
-    console.log(data);
+    if (dialogMode === "create") {
+      const payload = {
+        status: data.status, 
+        name: data.name,
+        description: data.description,
+        entity: data.entity,
+        participants: data.participants,
+      };
+      createProjectMutation(payload, {
+        onSuccess: () => {
+          setProjectDialogOpen(false);
+          queryClient.invalidateQueries({ queryKey: ["projects"] });
+        },
+      });
+
+      return;
+    }
+
+    if (!selectedProject) return;
+
+    const payload = {
+      status: data.status,
+      name: data.name,
+      description: data.description,
+      entity: data.entity,
+      participants: data.participants,
+    };
+
+    updateProjectMutation(
+      {
+        projectId: selectedProject._id,
+        payload,
+      },
+      {
+        onSuccess: () => {
+          setProjectDialogOpen(false);
+          queryClient.invalidateQueries({ queryKey: ["projects"] });
+        },
+      }
+    );
   };
+
+  const handleDeleteConfirmed = () => {
+    if (!selectedProject) return;
+    deleteProjectMutation(selectedProject._id, {
+      onSuccess: () => {
+        setDeleteDialogOpen(false);
+        queryClient.invalidateQueries({ queryKey: ["projects"] });
+      },
+    });
+  };
+
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+  const columns = useMemo<ColumnDef<IProject, any>[]>(() => [
+    {
+      accessorKey: "name",
+      header: ({ column }: { column: Column<IProject, any> }) => (
+        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")} className="px-0 h-8 hover:bg-transparent">
+          <span>Name</span>
+          <ArrowUpDown className="h-4 w-4" />
+        </Button>
+      ),  
+    },
+    {
+      accessorKey: "entity",
+      header: ({ column }) => (
+        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")} className="px-0 h-8 hover:bg-transparent">
+          <span>Entity</span>
+          <ArrowUpDown className="h-4 w-4" />
+        </Button>
+      ),
+    },
+    {
+      accessorKey: "participants",
+      header: "Participants",
+      cell: ({ row }) => {
+        const rowParticipants = row.original.participants || [];
+        if (rowParticipants.length === 0) return <span className="text-muted-foreground text-xs">-</span>;
+        return (
+          <div className="flex items-center justify-start">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <p className="flex items-center justify-start gap-0.5">
+                  {rowParticipants.length}
+                  <UsersIcon className="size-3.5" /></p>
+              </TooltipTrigger>
+              <TooltipContent className="flex flex-col justify-start items-start gap-1">
+                <span className="text-md font-bold">Participants:</span>
+                <ul className="list-disc list-inside">
+                  {rowParticipants.map((p: any, index: number) => (
+                    <li key={index} className="text-xs">{p.fullName}</li>
+                  ))}
+                </ul>
+              </TooltipContent>
+            </Tooltip>
+          </div>
+        );
+      }
+    },
+    {
+      accessorKey: "status",
+      header: ({ column }: { column: Column<IProject, any> }) => (
+        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")} className="px-0 h-8 hover:bg-transparent">
+          <span>Status</span>
+          <ArrowUpDown className="h-4 w-4" />
+        </Button>
+      ),
+      cell: ({ row }) => (
+        <Badge className={cn(row.original.status === "active" ? "bg-green-500 text-white hover:bg-green-600" : "bg-red-500 text-white hover:bg-red-600")}>
+          {row.original.status.charAt(0).toUpperCase() + row.original.status.slice(1)}
+        </Badge>
+      )
+    },
+    {
+      accessorKey: "createdAt",
+      header: ({ column }: { column: Column<IProject, any> }) => (
+        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")} className="px-0 h-8 hover:bg-transparent">
+          <span>Date Created</span>
+          <ArrowUpDown className="h-4 w-4" />
+        </Button>
+      ),
+      cell: ({ row }) => {
+        return (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span>{baseDateFormat(row.original.createdAt)}</span>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Created on <strong>{baseDateTimeFormat(row.original.createdAt)}</strong> by <strong>{row.original.createdBy.nickName ?? row.original.createdBy.fullName}</strong></p>
+            </TooltipContent>
+          </Tooltip>
+        )
+      }
+    },
+    {
+      accessorKey: "updatedAt",
+      header: ({ column }: { column: Column<IProject, any> }) => (
+        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")} className="px-0 h-8 hover:bg-transparent">
+          <span>Last Updated</span>
+          <ArrowUpDown className="h-4 w-4" />
+        </Button>
+      ),
+      cell: ({ row }) => {
+        return (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span>{baseDateFormatFromNow(row.original.updatedAt)}</span>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Last updated on <strong>{baseDateTimeFormat(row.original.updatedAt)}</strong> by <strong>{row.original.lastUpdatedBy?.nickName ?? row.original.lastUpdatedBy?.fullName}</strong></p>
+            </TooltipContent>
+          </Tooltip>
+        )
+      }
+    },
+    {
+      id: "actions",
+      enableHiding: false,
+      cell: ({ row }) => {
+        if (!isAdminOrOwner) return null;
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="p-1 hover:bg-muted rounded-md transition-colors">
+                <MoreHorizontal className="cursor-pointer" />
+              </button>
+            </DropdownMenuTrigger>
+
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                className="cursor-pointer"
+                onClick={() => openEditDialog(row.original)}
+              >
+                Edit
+              </DropdownMenuItem>
+
+              <DropdownMenuItem
+                className="cursor-pointer"
+                onClick={() => openDeleteDialog(row.original)}
+                variant="destructive"
+              >
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )
+      }
+    },
+  ], [isAdminOrOwner]);
+
+  const columnDisplayLabels = {
+    name: "Name",
+    entity: "Entity",
+    participants: "Participants",
+    status: "Status",
+    createdAt: "Created On",
+    updatedAt: "Updated On",
+    actions: "Actions",
+  };
+
+  const pagination = useMemo(() => projectsResponse?.data.pagination, [projectsResponse]);
+  const projects = useMemo(() => projectsResponse?.data.data || [], [projectsResponse]);
+
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
+    setPage(1);
+  };
+
+  if (!isAdminOrOwner) return <NotAuthorised />;
 
   return (
     <>
-      <Dialog open={openCreateProject} onOpenChange={setOpenCreateProject}>
-        <DialogContent>
+      <Dialog open={isProjectDialogOpen} onOpenChange={setProjectDialogOpen}>
+        <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Create Project</DialogTitle>
+            <DialogTitle>{dialogMode === "create" ? "Create" : "Edit"} Project</DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col justify-between items-end gap-4 w-full">
+          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4 w-full">
             <div className="grid gap-2 w-full">
               <Label htmlFor="name" required>Name</Label>
               <Input type="text" id="name" {...register("name")} />
-              {errorsCreateProject.name && <p className="text-red-500">{errorsCreateProject.name.message}</p>}
+              {errorsCreateProject.name && <p className="text-red-500 text-xs">{errorsCreateProject.name.message}</p>}
             </div>
+            
             <div className="grid gap-2 w-full">
               <Label htmlFor="description" optional>Description</Label>
               <Textarea rows={3} id="description" {...register("description")} />
-              {errorsCreateProject.description && <p className="text-red-500">{errorsCreateProject.description.message}</p>}
+              {errorsCreateProject.description && <p className="text-red-500 text-xs">{errorsCreateProject.description.message}</p>}
             </div>
+            
             <div className="grid gap-2 w-full">
               <Label htmlFor="entity" optional>Entity</Label>
               <Input type="text" id="entity" {...register("entity")} />
-              {errorsCreateProject.entity && <p className="text-red-500">{errorsCreateProject.entity.message}</p>}
+              {errorsCreateProject.entity && <p className="text-red-500 text-xs">{errorsCreateProject.entity.message}</p>}
             </div>
+            
             <div className="grid gap-2 w-full">
-              <div className="flex justify-between items-center">
-                <Label htmlFor="participants" optional>Participants</Label>
-                <Controller
-                  control={controlCreateProject}
-                  name="participants"
-                  render={({ field }) => {
-                    const currentParticipants = field.value || [];
-                    // const displayLabel = currentParticipants.map((p) => p.user?.fullName).join(", ") || "Select participants...";
-                    const displayLabel = "Select participants...";
-
-                    return (
-                      <Popover open={participantsPopoverOpen} onOpenChange={setParticipantsPopoverOpen}>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="outline"
-                            role="combobox"
-                            size="sm"
-                            className="group"
-                          >
-                            Add participants
-                          </Button>
-                        </PopoverTrigger>
-                        
-                        <PopoverContent className="p-0" align="end">
-                          <form onSubmit={handleSubmitParticipant(onSubmitParticipant)} className="mx-2 my-4">
-                            <Command className="w-full p-0! rounded-none!" shouldFilter={false}>
-                              <Label htmlFor="role" required>Role</Label>
-                              <Input type="text" id="role" placeholder="Set a role (e.g. Developer, Designer)" {...registerParticipant("role")} className="mt-2" />
-                              {errorsParticipant.role && <p className="text-red-500">{errorsParticipant.role.message}</p>}
-                              <CommandSeparator className="my-2" />
-                              <CommandInput
-                                placeholder="Search users..."
-                                value={participantsSearch}
-                                onValueChange={setParticipantsSearch}
-                                className="p-0!"
-                              />
-                              <CommandList className="max-h-[100px] overflow-y-auto mt-2">
-                                {isLoadingParticipants && (
-                                  <div className="flex justify-center items-center py-4">
-                                    <Spinner className="size-4" />
-                                  </div>
-                                )}
-
-                                {!isLoadingParticipants && !isErrorParticipants && (
-                                  <>
-                                    {participants && participants.length === 0 && (
-                                      <CommandItem disabled className="justify-center py-2 text-sm text-muted-foreground">
-                                        No users found.
-                                      </CommandItem>
-                                    )}
-                                    
-                                    {participants && participants.map((user) => (
-                                      <CommandItem
-                                        key={user._id}
-                                        value={user.fullName} 
-                                        onSelect={() => {
-                                          field.onChange([...currentParticipants, { user: user._id, role: "participant" }]);
-                                          console.log(field.value);
-                                          console.log([...currentParticipants, { user: user._id, role: "participant" }])
-                                          // setParticipantsSearch("");
-                                          // setParticipantsPopoverOpen(false);
-                                        }}
-                                        className="cursor-pointer"
-                                      >
-                                        {user.fullName}
-                                      </CommandItem>
-                                    ))}
-                                  </>
-                                )}
-
-                                {isErrorParticipants && (
-                                  <CommandItem disabled className="text-center text-red-500">
-                                    Failed to load users.
-                                  </CommandItem>
-                                )}
-                              </CommandList>
-                            </Command>
-                            <div className="flex justify-end items-center gap-2 mt-4">
-                              <Button type="button" variant="outline" className="min-w-[70px]" onClick={() => resetParticipant()}>Cancel</Button>
-                              <Button type="submit" disabled={isSubmitting}>{isSubmitting ? <Spinner className="size-4" /> : 'Add'}</Button>
-                            </div>
-                          </form>
-                        </PopoverContent>
-                      </Popover>
-                    );
-                  }}
-                />
-              </div>
-              {errorsCreateProject.participants && <p className="text-red-500">{errorsCreateProject.participants.message}</p>}
+              <Label htmlFor="participants" optional>Participants</Label>
+              
+              <Controller
+                control={control}
+                name="participants"
+                render={({ field }) => (
+                  <GenericMultiSelect
+                    id="participants"
+                    selectedItems={field.value || []}
+                    onChange={field.onChange}
+                    searchQuery={participantsSearch}
+                    onSearchChange={setParticipantsSearch}
+                    itemsList={participants} 
+                    displayKey="fullName" 
+                    placeholder="Select participants..."
+                    searchPlaceholder="Search users..."
+                    isLoading={isLoadingParticipants}
+                    isError={isErrorParticipants}
+                    isFetched={isFetchedParticipants}
+                  />
+                )}
+              />
+              {errorsCreateProject.participants && <p className="text-red-500 text-xs">{errorsCreateProject.participants.message}</p>}
             </div>
-            <div className="flex items-center justify-end gap-2 mt-4">
-              <Button type="button" variant="outline" className="min-w-[70px]" onClick={() => setOpenCreateProject(false)}>Cancel</Button>
-              <Button type="submit" disabled={isSubmitting}>{isSubmitting ? <Spinner className="size-4" /> : 'Create'}</Button>
+
+            <div className="flex items-center justify-end gap-2 mt-4 w-full">
+              <Button type="button" variant="outline" className="min-w-[70px]" onClick={() => setProjectDialogOpen(false)}>Cancel</Button>
+              <Button type="submit" disabled={isSubmitting || isLoadingCreateProject || isLoadingUpdateProject}>{isSubmitting || isLoadingCreateProject || isLoadingUpdateProject ? <Spinner className="size-4" /> : dialogMode === "create" ? "Create" : "Save"}</Button>
             </div>
           </form>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Delete Project</DialogTitle>
+          </DialogHeader>
+          <DialogDescription>
+            Are you sure you want to delete this project?
+          </DialogDescription>
+          <div className="flex items-center justify-end gap-2 mt-4 w-full">
+            <Button type="button" variant="outline" className="min-w-[70px]" onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
+            <Button type="button" variant="destructive" className="min-w-[70px]" onClick={handleDeleteConfirmed} disabled={isLoadingDeleteProject}>{isLoadingDeleteProject ? <Spinner className="size-4" /> : "Delete"}</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <Card>
         <CardHeader className="flex justify-between items-end flex-row">
           <div>
@@ -193,11 +395,31 @@ export default function ProjectsPage() {
             <CardDescription>Track, organize, and manage your workspace initiatives, project roles, and delivery lifecycles.</CardDescription>
           </div>
           {isAdminOrOwner && (
-            <Button onClick={() => setOpenCreateProject(true)}>Create Project</Button>
+            <Button onClick={openCreateDialog} disabled={isLoadingProjects}>Create Project</Button>
           )}
         </CardHeader>
         <CardContent>
+            <BaseTable
+              columns={columns}
+              data={projects}
+              columnLabels={columnDisplayLabels}
+              columnVisibility={columnVisibility}
+              onColumnVisibilityChange={setColumnVisibility}
+              // Controlled Search Configurations
+              showSearchField={!isErrorProjects}
+              searchValue={search}
+              onSearchChange={handleSearchChange}
+              searchPlaceholder="Searching..."
+              // Pagination Configurations
+              currentPage={page}
+              totalPages={pagination?.totalPages}
+              onPageChange={(newPage) => setPage(newPage)}
 
+              isLoading={isLoadingProjects}
+              isEmptyData={projects && projects?.length === 0}
+              emptyDataDescription="No projects found"
+              emptyDataIcon={<Briefcase className="size-10 text-muted-foreground" />}
+            />
         </CardContent>
       </Card>
     </>

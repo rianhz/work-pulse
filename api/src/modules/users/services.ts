@@ -5,9 +5,13 @@ import { getIdentityService } from '../idp/service';
 import { AuthUser } from '../authentication/interfaces';
 import { QueryOptions } from '../global';
 import { isHaveAccess } from '../../utils/casl';
+import { ProjectModel } from '../projects/schema';
+import { IProject } from '../projects/interfaces';
 
 export const getMeService = async (userId: string): Promise<IUser> => {
-    const user = await UserModel.findById(userId).populate("department", "name").select("-refreshToken").select("-__v").select("-createdAt").select("-updatedAt").lean();
+    const user = await UserModel.findById(userId).populate("department", "name").select("-refreshToken").select("-__v").select("-createdAt").select("-updatedAt").lean({
+      virtuals: true,
+    });
     if (!user) throw new NotFoundException('User not found');
     return user;
 };
@@ -127,7 +131,6 @@ case "manager": {
     accessibleUserIds.push(me.leader.toString());
   }
 
-  // Look DOWNWARD: Recursive loop to find all descendants down the hierarchy tree
   while (currentSearchIds.length > 0) {
     const nextTierReports = await UserModel.find({
       tenantId,
@@ -138,9 +141,9 @@ case "manager": {
     if (nextTierReports.length > 0) {
       const nextTierIds = nextTierReports.map(u => u._id.toString());
       accessibleUserIds.push(...nextTierIds);
-      currentSearchIds = nextTierIds; // Keep drilling down the tree
+      currentSearchIds = nextTierIds;
     } else {
-      currentSearchIds = []; // Bottom of the tree reached
+      currentSearchIds = [];
     }
   }
 
@@ -160,7 +163,10 @@ case "manager": {
       .sort({ fullName: 1 })
       .collation({ locale: "en", numericOrdering: true })
       .skip(skip)
-      .limit(limit),
+      .limit(limit)
+      .lean({
+        virtuals: true,
+      }),
     UserModel.countDocuments(baseQuery)
   ]);
 
@@ -172,4 +178,16 @@ export const searchUsersService = async (authenticatedUser: AuthUser, search: st
 
   const users = await UserModel.find({ fullName: { $regex: search, $options: "i" } }).select("_id fullName email");
   return users;
+};
+
+export const getMeProjectsService = async (authenticatedUser: AuthUser): Promise<IProject[]> => {
+  await isHaveAccess(authenticatedUser, { participants: [authenticatedUser.userId] }, "Project", "read");
+
+  const projects = await ProjectModel.find({
+    participants: authenticatedUser.userId,
+  })
+  .select("name")
+  .lean({ virtuals: false });
+  if (!projects) throw new NotFoundException('Projects not found');
+  return projects;
 };

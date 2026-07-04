@@ -5,10 +5,10 @@ export const projectPayloadSchema = z.object({
   description: z.string().optional(),
   entity: z.string().optional(),
   participants: z.array(z.object({
-    user: z.string(),
-    role: z.string(),
+    _id: z.string(),
+    fullName: z.string(),
   })).optional(),
-  status: z.enum(["active", "inactive", "deleted"]).optional(),
+  status: z.enum(["active", "inactive", "deleted"]),
 });
 
 export type ProjectPayloadFormValues = z.infer<typeof projectPayloadSchema>;

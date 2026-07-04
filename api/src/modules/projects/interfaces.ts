@@ -9,6 +9,19 @@ export interface IProject extends Document {
     description: string;
     entity: string;
     tenantId: Types.ObjectId | string;
-    participants: IProjectParticipant[];
+    participants: IProjectParticipant[] | string[];
     status: "active" | "inactive" | "deleted";
+    formattedCreatedAt: string;
+    formattedUpdatedAt: string;
+    lastUpdatedBy: Types.ObjectId | string;
+    createdBy: Types.ObjectId | string;
+}
+
+export interface IProjectPayload {
+  name: string;
+  description?: string;
+  entity?: string;
+  tenantId: Types.ObjectId | string;
+  participants?: IProjectParticipant[];
+  status: "active" | "inactive" | "deleted";
 }
