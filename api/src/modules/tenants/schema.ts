@@ -36,10 +36,11 @@ const tenantSchema = new mongoose.Schema(
       type: String,
       default: "active",
     },
-    projects: [{
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Project",
-    }],
+    timezone: {
+      type: String,
+      required: false,
+      default: "",
+    },
   },
   {
     timestamps: true,

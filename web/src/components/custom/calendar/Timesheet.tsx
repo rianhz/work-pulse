@@ -5,7 +5,7 @@ import timeGridPlugin from "@fullcalendar/timegrid";
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from "@fullcalendar/interaction";
 import { useEffect, useMemo, useRef, useState } from "react";
-import TimesheetDialog from "../popup/TimesheetPopup";
+import TimesheetDialog from "../popup/TimesheetDialog";
 import { Button } from "@/components/ui/button";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import moment from "moment";
@@ -121,8 +121,8 @@ export default function TimesheetCalendar() {
 
   return (
     <div className="flex flex-col">
-      <div className="flex items-center justify-between pb-4 px-0 border-b">
-        <div className="flex items-center gap-2">
+      <div className="flex flex-col gap-2 md:flex-row items-start md:items-center justify-start md:justify-between pb-4 px-0 border-b">
+        <div className="flex w-full justify-center md:justify-start md:w-auto items-center gap-2">
           <Button 
             variant="outline"
             onClick={() => handleCalendarAction("prev")}
@@ -140,7 +140,7 @@ export default function TimesheetCalendar() {
           </Button>
         </div>
         
-        <div className="flex items-center gap-4">
+        <div className="flex w-full justify-between md:justify-end md:w-auto items-center gap-4">
           <div className="flex items-center gap-1">
             <Button
               variant="outline"
@@ -196,21 +196,15 @@ export default function TimesheetCalendar() {
             
             const isRunning = start && end && now >= start && now <= end;
 
+            const duration = moment(end).diff(moment(start), 'minutes');
+
             return (
-              <div
-                className={
-                  isRunning
-                    ? "running-event"
-                    : ""
-                }
-                >
+              <div className="flex items-center gap-2 font-bold flex-1 px-2">
                 {isRunning && (
                   <span className="live-dot" />
                 )}
-
-                <span className="flex items-center gap-2">
-                  {arg.event.title} {isUpdating && arg.event.id === updatingEventId && <Spinner className="size-4 animate-spin" /> }
-                </span>
+                <span className={`truncate-2 max-w-[220px] md:max-w-[370px] lg:max-w-[450px] xl:max-w-[800px] ${duration >= 90 ? "line-clamp-2" : "line-clamp-1"}`}>{arg.event.title}</span> 
+                {isUpdating && arg.event.id === updatingEventId && <Spinner className="size-4 animate-spin" /> }
               </div>
             );
           }}

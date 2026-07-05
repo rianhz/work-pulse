@@ -9,14 +9,13 @@ import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { useDeleteUser, useGetUsers, useSearchUsers, useUpdateUser } from "@/features/users/hooks";
 import { ChevronDownIcon, MoreHorizontalIcon, Users, ArrowUpDown } from "lucide-react";
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useInviteUsers } from "@/features/invitations/hooks";
-import { EmptyData } from "@/components/custom/errors-and-empty/EmptyData";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store";
 import { useDebounce } from "@/hooks/use-debounce";
@@ -24,13 +23,31 @@ import { useGetDepartments } from "@/features/departments/hooks";
 import { IUser } from "@/features/users/users";
 import { BaseDatePicker } from "@/components/custom/date-picker/BaseDatePicker";
 import { useQueryClient } from "@tanstack/react-query";
-import { EditUserFormValues, editUserSchema } from "@/features/users/validator";
 import { Skeleton } from "@/components/ui/skeleton";
 import moment from "moment";
 import { Command, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 
 import { ColumnDef, VisibilityState } from "@tanstack/react-table";
 import { BaseTable } from "@/components/custom/table/BaseTable";
+import { EditUserFormValues, editUserSchema } from "@/features/users/validator";
+
+const defaultFormValues: EditUserFormValues = {
+  _id: "",
+  email: "",
+  fullName: "",
+  role: "employee",
+  department: null,
+  position: "",
+  birthDate: null,
+  leader: null,
+};
+
+const inviteUserSchema = z.object({
+  email: z.string().email("Invalid email address"),
+  role: z.enum(["admin", "manager", "employee"]),
+});
+
+export type InviteUserFormValues = z.infer<typeof inviteUserSchema>;
 
 export default function TeamPage() {
   const queryClient = useQueryClient();
@@ -64,75 +81,41 @@ export default function TeamPage() {
   const users = useMemo(() => usersResponse?.data || [], [usersResponse]);
   const leaders = useMemo(() => leadersResponse?.data, [leadersResponse]);
 
-  const [open, setOpen] = useState(false);
-  const [isEditOpen, setIsEditOpen] = useState(false);
-  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-
+  // Combined dialog state handler
+  const [dialogType, setDialogType] = useState<"invite" | "edit" | "delete" | null>(null);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
 
   const isAdminOrOwner = currentUser?.role === "admin" || currentUser?.role === "owner";
 
-  const { control: controlInvite, handleSubmit: handleSubmitInvite, formState: { errors: errorsInvite, isValid: isValidInvite }, reset: resetInvite } = useForm<{ email: string, role: "admin" | "manager" | "employee" }>({
-    resolver: zodResolver(z.object({
-      email: z.string().email("Invalid email address"),
-      role: z.enum(["admin", "manager", "employee"]),
-    })),
-    defaultValues: {
-      email: "",
-      role: "employee",
-    },
-  });
-
-  const { handleSubmit: handleSubmitSelectedUser, getValues: getValuesSelectedUser, control: controlSelectedUser, formState: { errors: errorsSelectedUser, isDirty: isDirtySelectedUser, dirtyFields: dirtyFieldsSelectedUser }, reset: resetSelectedUser } = useForm<EditUserFormValues>({
+  const { 
+    control, 
+    handleSubmit, 
+    formState: { errors, isValid, isDirty, dirtyFields }, 
+    reset, 
+    getValues 
+  } = useForm<EditUserFormValues>({
     resolver: zodResolver(editUserSchema),
-    defaultValues: {
-      _id: "",
-      fullName: "",
-      role: "employee",
-      department: null,
-      position: "",
-      birthDate: null,
-      leader: null,
-    },
+    defaultValues: defaultFormValues,
   });
 
-  const onSubmit = (data: { email: string, role: "admin" | "manager" | "employee" }) => {
-    inviteUsers({ 
-      emails: [data.email], 
-      role: data.role
-    }, {
-      onSuccess: () => {
-        setOpen(false);
-        resetInvite({
-          email: "",
-          role: "employee",
-        });
-      },
-    });
+  const handleCloseDialog = () => {
+    setDialogType(null);
+    reset(defaultFormValues);
+    setSelectedLeaderName("");
+    setLeaderSearch("");
   };
 
-  const handleOpenChange = (open: boolean) => {
-    setOpen(open);
-    resetInvite({
-      email: "",
-      role: "employee",
-    });
-  };
-
-  const handleSelectedUser = (user: IUser, method: 'edit' | 'delete') => {
-    if (method === 'edit') {
-      setIsEditOpen(true);
-    } else {
-      setIsDeleteOpen(true);
-    }
+  const handleSelectedUser = (user: IUser, method: "edit" | "delete") => {
+    setDialogType(method);
 
     const leaderId = user.leader && typeof user.leader === "object" ? user.leader._id : (user.leader || null);
     const leaderName = user.leader && typeof user.leader === "object" ? user.leader.fullName : "";
 
-    resetSelectedUser({
+    reset({
       _id: user._id,
-      fullName: user.fullName,
-      role: user.role as "admin" | "manager" | "employee",
+      email: user.email || "",
+      fullName: user.fullName || "",
+      role: (user.role as "admin" | "manager" | "employee") || "employee",
       department: user.department?._id || null,
       position: user.position || "",
       birthDate: user.birthDate ? moment(user.birthDate).format("YYYY-MM-DD") : null,
@@ -143,11 +126,22 @@ export default function TeamPage() {
     setLeaderSearch("");
   };
 
-  const onSubmitEdit = (data: EditUserFormValues) => {
+  const onInviteSubmit = (data: InviteUserFormValues) => {
+    if (!data.email) return;
+    inviteUsers({ 
+      emails: [data.email], 
+      role: data.role
+    }, {
+      onSuccess: handleCloseDialog,
+    });
+  };
+
+  const onEditSubmit = (data: EditUserFormValues) => {
+    if (!data._id) return;
     const partialPayload: Record<string, any> = {};
 
-    Object.keys(dirtyFieldsSelectedUser).forEach((key) => {
-      if (key !== "_id") {
+    Object.keys(dirtyFields).forEach((key) => {
+      if (key !== "_id" && key !== "email") {
         partialPayload[key] = data[key as keyof typeof data];
       }
     });
@@ -157,38 +151,22 @@ export default function TeamPage() {
       payload: partialPayload,
     }, {
       onSuccess: () => {
-        setIsEditOpen(false);
-        resetSelectedUser({
-          _id: "",
-          fullName: "",
-          role: "employee",
-          department: null,
-          position: "",
-          birthDate: null,
-          leader: null,
-        });
-        setSelectedLeaderName("");
-        queryClient.invalidateQueries({ queryKey: ['users'] });
+        handleCloseDialog();
+        queryClient.invalidateQueries({ queryKey: ["users"] });
       },
     });
   };
 
-  const onSubmitDelete = (data: EditUserFormValues) => {
+  const onDeleteSubmit = () => {
+    const values = getValues();
+    if (!values._id) return;
+
     deleteUserMutation({
-      userId: data._id,
+      userId: values._id,
     }, {
       onSuccess: () => {
-        setIsDeleteOpen(false);
-        resetSelectedUser({
-          _id: "",
-          fullName: "",
-          role: "employee",
-          department: null,
-          position: "",
-          birthDate: null,
-          leader: null,
-        });
-        queryClient.invalidateQueries({ queryKey: ['users'] });
+        handleCloseDialog();
+        queryClient.invalidateQueries({ queryKey: ["users"] });
       },
     });
   };
@@ -206,18 +184,18 @@ export default function TeamPage() {
     {
       accessorKey: "fullName",
       header: ({ column }) => (
-        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")} className="-ml-4 h-8">
+        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")} className="px-0 h-8 hover:bg-transparent">
           <span>Name</span>
-          <ArrowUpDown className="ml-2 h-4 w-4" />
+          <ArrowUpDown className="h-4 w-4" />
         </Button>
       ),
     },
     {
       accessorKey: "email",
       header: ({ column }) => (
-        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")} className="-ml-4 h-8">
+        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")} className="px-0 h-8 hover:bg-transparent">
           <span>Email</span>
-          <ArrowUpDown className="ml-2 h-4 w-4" />
+          <ArrowUpDown className="h-4 w-4" />
         </Button>
       ),
     },
@@ -225,18 +203,18 @@ export default function TeamPage() {
       id: "leader",
       accessorFn: (row) => row.leader?.fullName || "",
       header: ({ column }) => (
-        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")} className="-ml-4 h-8">
+        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")} className="px-0 h-8 hover:bg-transparent">
           <span>Leader</span>
-          <ArrowUpDown className="ml-2 h-4 w-4" />
+          <ArrowUpDown className="h-4 w-4" />
         </Button>
       ),
     },
     {
       accessorKey: "role",
       header: ({ column }) => (
-        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")} className="-ml-4 h-8">
+        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")} className="px-0 h-8 hover:bg-transparent">
           <span>Role</span>
-          <ArrowUpDown className="ml-2 h-4 w-4" />
+          <ArrowUpDown className="h-4 w-4" />
         </Button>
       ),
       cell: ({ row }) => {
@@ -248,18 +226,18 @@ export default function TeamPage() {
       id: "department",
       accessorFn: (row) => row.department?.name || "",
       header: ({ column }) => (
-        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")} className="-ml-4 h-8">
+        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")} className="px-0 h-8 hover:bg-transparent">
           <span>Department</span>
-          <ArrowUpDown className="ml-2 h-4 w-4" />
+          <ArrowUpDown className="h-4 w-4" />
         </Button>
       ),
     },
     {
       accessorKey: "position",
       header: ({ column }) => (
-        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")} className="-ml-4 h-8">
+        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")} className="px-0 h-8 hover:bg-transparent">
           <span>Position</span>
-          <ArrowUpDown className="ml-2 h-4 w-4" />
+          <ArrowUpDown className="h-4 w-4" />
         </Button>
       ),
     },
@@ -277,8 +255,8 @@ export default function TeamPage() {
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem className="cursor-pointer" onClick={() => handleSelectedUser(user, 'edit')}>Edit</DropdownMenuItem>
-              <DropdownMenuItem className="cursor-pointer" onClick={() => handleSelectedUser(user, 'delete')} variant="destructive">Delete</DropdownMenuItem>
+              <DropdownMenuItem className="cursor-pointer" onClick={() => handleSelectedUser(user, "edit")}>Edit</DropdownMenuItem>
+              <DropdownMenuItem className="cursor-pointer" onClick={() => handleSelectedUser(user, "delete")} variant="destructive">Delete</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         );
@@ -298,39 +276,35 @@ export default function TeamPage() {
   }
 
   if (isErrorUsers) {
-    return <ErrorMessage title={(errorUsers as any)?.response?.data?.message || (errorUsers as Error).message || 'Failed to get users'} />;
+    return <ErrorMessage title={(errorUsers as any)?.response?.data?.message || (errorUsers as Error).message || "Failed to get users"} />;
   }
 
   return (
     <>
-      <Dialog open={open} onOpenChange={handleOpenChange}>
+      {/* Invite User Dialog */}
+      <Dialog open={dialogType === "invite"} onOpenChange={(isOpen) => !isOpen && handleCloseDialog()}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Invite User</DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleSubmitInvite(onSubmit)} className="flex flex-col justify-between items-end gap-4 w-full">
+          <form onSubmit={handleSubmit(onInviteSubmit)} className="flex flex-col justify-between items-end gap-4 w-full">
             <div className="grid gap-2 w-full">
               <Label htmlFor="email">Email</Label>
               <Controller
-                control={controlInvite}
+                control={control}
                 name="email"
-                render={({ field }) => (
-                  <Input placeholder="Email" {...field} />
-                )}
+                render={({ field }) => <Input placeholder="Email" id="email" {...field} />}
               />
-              {errorsInvite.email && <p className="text-sm text-red-500">{errorsInvite.email.message}</p>}
+              {errors.email && <p className="text-sm text-red-500">{errors.email.message}</p>}
             </div>
             <div className="grid gap-2 w-full">
               <Label htmlFor="role">Role</Label>
               <Controller
-                control={controlInvite}
+                control={control}
                 name="role"
                 render={({ field }) => (
-                  <Select
-                    value={field.value}
-                    onValueChange={field.onChange}
-                  >
-                    <SelectTrigger>
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger id="role">
                       <SelectValue placeholder="Select a role" />
                     </SelectTrigger>
                     <SelectContent>
@@ -341,42 +315,37 @@ export default function TeamPage() {
                   </Select>
                 )}
               />
-              {errorsInvite.role && <p className="text-sm text-red-500">{errorsInvite.role.message}</p>}
+              {errors.role && <p className="text-sm text-red-500">{errors.role.message}</p>}
             </div>
-            <Button type="submit" disabled={isInvitingUsers || !isValidInvite}>{isInvitingUsers ? <Spinner /> : "Invite"}</Button>
+            <Button type="submit" disabled={isInvitingUsers || !isValid}>{isInvitingUsers ? <Spinner /> : "Invite"}</Button>
           </form>
         </DialogContent>
       </Dialog>
 
-      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+      {/* Edit User Dialog */}
+      <Dialog open={dialogType === "edit"} onOpenChange={(isOpen) => !isOpen && handleCloseDialog()}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Edit User</DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleSubmitSelectedUser(onSubmitEdit)} className="flex flex-col justify-between items-end gap-4 w-full">
+          <form onSubmit={handleSubmit(onEditSubmit)} className="flex flex-col justify-between items-end gap-4 w-full">
             <div className="grid gap-2 w-full">
               <Label htmlFor="fullName">FullName</Label>
               <Controller
-                control={controlSelectedUser}
+                control={control}
                 name="fullName"
-                render={({ field }) => (
-                  <Input placeholder="FullName" {...field} />
-                )}
+                render={({ field }) => <Input placeholder="FullName" id="fullName" {...field} />}
               />
-              {errorsSelectedUser.fullName && <p className="text-sm text-red-500">{errorsSelectedUser.fullName.message}</p>}
+              {errors.fullName && <p className="text-sm text-red-500">{errors.fullName.message}</p>}
             </div>
             <div className="grid gap-2 w-full">
               <Label htmlFor="role">Role</Label>
               <Controller
-                control={controlSelectedUser}
+                control={control}
                 name="role"
-                defaultValue="employee"
                 render={({ field }) => (
-                  <Select
-                    value={String(field.value ?? "employee")}
-                    onValueChange={field.onChange}
-                  >
-                    <SelectTrigger>
+                  <Select value={String(field.value ?? "employee")} onValueChange={field.onChange}>
+                    <SelectTrigger id="role">
                       <SelectValue placeholder="Select a role" />
                     </SelectTrigger>
                     <SelectContent>
@@ -387,24 +356,18 @@ export default function TeamPage() {
                   </Select>
                 )}
               />
-              {errorsSelectedUser.role && <p className="text-sm text-red-500">{errorsSelectedUser.role.message}</p>}
+              {errors.role && <p className="text-sm text-red-500">{errors.role.message}</p>}
             </div>
             <div className="grid gap-2 w-full">
               <Label htmlFor="department">Department</Label>
               <Controller
-                control={controlSelectedUser}
+                control={control}
                 name="department"
                 render={({ field }) => {
-                  const rawValue = field.value && typeof field.value === "object"
-                    ? (field.value as any)._id
-                    : field.value;
-
+                  const rawValue = field.value && typeof field.value === "object" ? (field.value as any)._id : field.value;
                   return (
-                    <Select 
-                      value={String(rawValue ?? "")}
-                      onValueChange={(value) => field.onChange(value || null)}
-                    >
-                      <SelectTrigger className="w-full">
+                    <Select value={String(rawValue ?? "")} onValueChange={(value) => field.onChange(value || null)}>
+                      <SelectTrigger id="department" className="w-full">
                         <SelectValue placeholder="Select a department" />
                       </SelectTrigger>
                       <SelectContent>
@@ -418,27 +381,21 @@ export default function TeamPage() {
                   );
                 }}
               />
-              {errorsSelectedUser.department && <p className="text-sm text-red-500">{errorsSelectedUser.department.message}</p>}
+              {errors.department && <p className="text-sm text-red-500">{errors.department.message}</p>}
             </div>
             <div className="grid gap-2 w-full">
               <Label htmlFor="position">Position</Label>
               <Controller
-                control={controlSelectedUser}
+                control={control}
                 name="position"
-                render={({ field }) => {
-                  const rawValue = field.value ?? "";
-
-                  return (
-                    <Input placeholder="Position" value={rawValue} onChange={(e) => field.onChange(e.target.value)} />
-                  );
-                }}
+                render={({ field }) => <Input placeholder="Position" id="position" value={field.value ?? ""} onChange={(e) => field.onChange(e.target.value)} />}
               />
-              {errorsSelectedUser.position && <p className="text-sm text-red-500">{errorsSelectedUser.position.message}</p>}
+              {errors.position && <p className="text-sm text-red-500">{errors.position.message}</p>}
             </div>
             <div className="grid gap-2 w-full">
               <Label htmlFor="leader">Leader</Label>
               <Controller
-                control={controlSelectedUser}
+                control={control}
                 name="leader"
                 render={({ field }) => {
                   const currentLeaderId = typeof field.value === "string" ? field.value : "";
@@ -448,42 +405,29 @@ export default function TeamPage() {
                   return (
                     <DropdownMenu open={leaderDropdownOpen} onOpenChange={setLeaderDropdownOpen}>
                       <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="outline"
-                          role="combobox"
-                          className="w-full justify-between font-normal group"
-                        >
+                        <Button id="leader" variant="outline" role="combobox" className="w-full justify-between font-normal group">
                           {displayLabel}
                           <ChevronDownIcon className="pointer-events-none size-4 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
                         </Button>
                       </DropdownMenuTrigger>
-                      
                       <DropdownMenuContent className="p-0 w-[var(--radix-dropdown-menu-trigger-width)]" align="start">
                         <Command className="w-full p-0!" shouldFilter={false}>
-                          <CommandInput
-                            placeholder="Search users..."
-                            value={leaderSearch}
-                            onValueChange={handleLeaderSearchChange}
-                          />
+                          <CommandInput placeholder="Search users..." value={leaderSearch} onValueChange={handleLeaderSearchChange} />
                           <CommandList className="max-h-[100px] overflow-y-auto mt-2">
                             {isLoadingLeaders && (
                               <div className="flex justify-center items-center py-4">
                                 <Spinner className="size-4" />
                               </div>
                             )}
-
                             {!isLoadingLeaders && !isErrorLeaders && (
                               <>
                                 {leaders && leaders.length === 0 && (
-                                  <CommandItem disabled className="justify-center py-2 text-sm text-muted-foreground">
-                                    No users found.
-                                  </CommandItem>
+                                  <CommandItem disabled className="justify-center py-2 text-sm text-muted-foreground">No users found.</CommandItem>
                                 )}
-                                
                                 {leaders && leaders.map((user) => (
                                   <CommandItem
                                     key={user._id}
-                                    value={user.fullName} 
+                                    value={user.fullName}
                                     onSelect={() => {
                                       field.onChange(user._id);
                                       setSelectedLeaderName(user.fullName);
@@ -497,12 +441,7 @@ export default function TeamPage() {
                                 ))}
                               </>
                             )}
-
-                            {isErrorLeaders && (
-                              <CommandItem disabled className="text-center text-red-500">
-                                Failed to load users.
-                              </CommandItem>
-                            )}
+                            {isErrorLeaders && <CommandItem disabled className="text-center text-red-500">Failed to load users.</CommandItem>}
                           </CommandList>
                         </Command>
                       </DropdownMenuContent>
@@ -510,31 +449,31 @@ export default function TeamPage() {
                   );
                 }}
               />
-              {errorsSelectedUser.leader && <p className="text-sm text-red-500">{errorsSelectedUser.leader.message}</p>}
+              {errors.leader && <p className="text-sm text-red-500">{errors.leader.message}</p>}
             </div>
             <div className="grid gap-2 w-full">
               <Label htmlFor="birthDate">Birth Date</Label>
               <Controller
-                control={controlSelectedUser}
+                control={control}
                 name="birthDate"
                 render={({ field }) => (
                   <BaseDatePicker
+                    id="birthDate"
                     value={field.value}
-                    onChange={(date) => {
-                      field.onChange(date ? moment(date).format("YYYY-MM-DD") : null);
-                    }}
+                    onChange={(date) => field.onChange(date ? moment(date).format("YYYY-MM-DD") : null)}
                     placeholder="Select date"
                   />
                 )}
               />
-              {errorsSelectedUser.birthDate && <p className="text-sm text-red-500">{errorsSelectedUser.birthDate.message}</p>}
+              {errors.birthDate && <p className="text-sm text-red-500">{errors.birthDate.message}</p>}
             </div>
-            <Button type="submit" disabled={isPendingUpdateUser || !isDirtySelectedUser}>{isPendingUpdateUser ? <Spinner /> : "Update"}</Button>
+            <Button type="submit" disabled={isPendingUpdateUser || !isDirty}>{isPendingUpdateUser ? <Spinner /> : "Update"}</Button>
           </form>
         </DialogContent>
       </Dialog>
 
-      <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
+      {/* Delete User Dialog */}
+      <Dialog open={dialogType === "delete"} onOpenChange={(isOpen) => !isOpen && handleCloseDialog()}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Delete User</DialogTitle>
@@ -543,57 +482,43 @@ export default function TeamPage() {
             Are you sure you want to delete this user? This action cannot be undone.
           </DialogDescription>
           <DialogFooter>
-            <Button type="button" variant="outline" className="min-w-[70px]" onClick={() => setIsDeleteOpen(false)}>Cancel</Button>
-            <Button type="submit" variant="destructive" disabled={isPendingDeleteUser} onClick={() => onSubmitDelete(getValuesSelectedUser())}>
+            <Button type="button" variant="outline" className="min-w-[70px]" onClick={handleCloseDialog}>Cancel</Button>
+            <Button type="button" variant="destructive" disabled={isPendingDeleteUser} onClick={onDeleteSubmit}>
               {isPendingDeleteUser ? <Spinner /> : "Delete"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    
-      <main className="flex flex-1 flex-col gap-4">
-        <Card>
-          <CardHeader className="flex justify-between items-end flex-row">
-            <div>
-              <CardTitle className="text-2xl font-bold">Team</CardTitle>
-              <CardDescription>A comprehensive view of your reporting tree, leadership structure, and team members.</CardDescription>
-            </div>
-            {isAdminOrOwner && (
-              <Button onClick={() => setOpen(true)}>Invite</Button>
-            )}
-          </CardHeader>
-          <CardContent>
-            {isLoadingUsers && <div className="flex justify-center items-center min-h-[200px]"> <Spinner className="size-10" /> </div>}
-            
-            {!isLoadingUsers && users.length === 0 && 
-              <EmptyData description="No users found in your team" icon={<Users className="size-10 text-muted-foreground" />} />
-            }
-            
-            {!isLoadingUsers && users.length > 0 && (
-              <BaseTable 
-                columns={columns} 
-                data={users} 
-                columnLabels={columnDisplayLabels} 
-                columnVisibility={columnVisibility}
-                onColumnVisibilityChange={setColumnVisibility}
-                
-                // Controlled Search Configurations
-                showSearchField={!isErrorUsers}
-                searchValue={search}
-                onSearchChange={handleSearchChange}
-                searchPlaceholder="Searching..."
 
-                // Pagination Configurations
-                currentPage={page}
-                totalPages={pagination?.totalPages}
-                onPageChange={(newPage) => setPage(newPage)}
-
-            
-              />
-            )}
-          </CardContent>
-        </Card>
-      </main>
+      <Card>
+        <CardHeader className="flex justify-between items-end flex-row">
+          <div>
+            <CardTitle className="text-2xl font-bold">Team</CardTitle>
+            <CardDescription>A comprehensive view of your reporting tree, leadership structure, and team members.</CardDescription>
+          </div>
+          {isAdminOrOwner && <Button onClick={() => setDialogType("invite")} disabled={isLoadingUsers}>Invite</Button>}
+        </CardHeader>
+        <CardContent>
+          <BaseTable
+            columns={columns}
+            data={users}
+            columnLabels={columnDisplayLabels}
+            columnVisibility={columnVisibility}
+            onColumnVisibilityChange={setColumnVisibility}
+            showSearchField={!isErrorUsers}
+            searchValue={search}
+            onSearchChange={handleSearchChange}
+            searchPlaceholder="Searching..."
+            currentPage={page}
+            totalPages={pagination?.totalPages}
+            onPageChange={(newPage) => setPage(newPage)}
+            isLoading={isLoadingUsers}
+            isEmptyData={users && users?.length === 0}
+            emptyDataDescription="No users found in your team"
+            emptyDataIcon={<Users className="size-10 text-muted-foreground" />}
+          />
+        </CardContent>
+      </Card>
     </>
   );
 }

@@ -16,7 +16,7 @@ import {
   editUserSchema,
 } from "@/features/users/validator";
 import { Card } from "@/components/ui/card";
-import { useUpdateUser } from "@/features/users/hooks";
+import { useGetMe, useUpdateUser } from "@/features/users/hooks";
 import { Skeleton } from "@/components/ui/skeleton";
 import { UniversalUploader } from "../uploader/ImageUploader";
 import { InputGroup, InputGroupInput } from "@/components/ui/input-group";
@@ -26,10 +26,14 @@ import { useQueryClient } from "@tanstack/react-query";
 import { IUserWithProviders } from "@/app/settings/page";
 import moment from "moment";
 import { BaseDatePicker } from "../date-picker/BaseDatePicker";
+import { TimezoneDropdown } from "../dropdown/TimezoneDropdown";
+import { InfoIcon } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 
 export function AccountSettingsForm({ user, isLoading }: { user: IUserWithProviders, isLoading: boolean }) {
   const queryClient = useQueryClient();
+ 
   const { mutate: updateUserMutation, isPending: isPendingUpdateUser } = useUpdateUser();
 
   const [isUploaderOpen, setIsUploaderOpen] = useState(false);
@@ -51,16 +55,9 @@ export function AccountSettingsForm({ user, isLoading }: { user: IUserWithProvid
       avatar: "",
       nickName: "",
       birthDate: null,
+      timezone: "",
     },
   });
-
-  const initials = useMemo(() => {
-    return user?.fullName
-      ?.split(" ")
-      .map((n: string) => n[0]).slice(0, 2)
-      .join("")
-      .toUpperCase() ?? "";
-  }, [user]);
 
   const avatar = watchAccountSettings("avatar");
 
@@ -90,6 +87,7 @@ export function AccountSettingsForm({ user, isLoading }: { user: IUserWithProvid
           avatar: data.avatar,
           nickName: data.nickName,
           birthDate: data.birthDate ? data.birthDate : null,
+          timezone: data.timezone ?? "",
         });
         queryClient.invalidateQueries({ queryKey: ["me"] });
       },
@@ -104,6 +102,7 @@ export function AccountSettingsForm({ user, isLoading }: { user: IUserWithProvid
       avatar: user.avatar ?? "",
       nickName: user.nickName ?? "",
       birthDate: user.birthDate ? user.birthDate : null,
+      timezone: user.timezone ?? "",
     });
 
   }, [user, resetAccountSettings]);
@@ -229,6 +228,7 @@ export function AccountSettingsForm({ user, isLoading }: { user: IUserWithProvid
                       name="birthDate"
                       render={({ field }) => (
                         <BaseDatePicker
+                          id="birthDate"
                           value={field.value}
                           onChange={(date) => {
                             field.onChange(date ? moment(date).format("YYYY-MM-DD") : null);
@@ -307,6 +307,31 @@ export function AccountSettingsForm({ user, isLoading }: { user: IUserWithProvid
                   </TableCell>
                 </TableRow>
               }
+
+              <TableRow>
+                <TableCell>
+                  <Label className="whitespace-nowrap">
+                    Timezone
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <InfoIcon className="w-4 h-4" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Overrides the default company timezone. This ensures your check-in logs match your local time perfectly.</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </Label>
+                </TableCell>
+                <TableCell>
+                  <Controller
+                    control={control}
+                    name="timezone"
+                    render={({ field }) => (
+                      <TimezoneDropdown value={field.value ?? ""} onChange={field.onChange} />
+                    )}
+                  />
+                </TableCell>
+              </TableRow>
             </TableBody>    
           </Table>
         </form>

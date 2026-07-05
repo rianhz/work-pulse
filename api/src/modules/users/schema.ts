@@ -1,6 +1,8 @@
 
 import mongoose from "mongoose";
 import { IUser } from "./interfaces";
+import { baseDateFormat } from "../../helpers/date-format";
+import mongooseLeanVirtuals from "mongoose-lean-virtuals";
 
 const userSchema = new mongoose.Schema<IUser>(
   {
@@ -85,6 +87,12 @@ const userSchema = new mongoose.Schema<IUser>(
       default: "",
     },
 
+    timezone:{
+      type: String,
+      required: false,
+      default: "",
+    },
+
     refreshToken: {
       token: {
         type: String,
@@ -105,8 +113,24 @@ const userSchema = new mongoose.Schema<IUser>(
   },
   {
     timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
   }
 );
+
+userSchema.virtual("formattedBirthDate").get(function(this: Document & IUser & { birthDate: Date }) {
+  return this.birthDate ? baseDateFormat(this.birthDate) : null;
+});
+
+userSchema.virtual("formattedCreatedAt").get(function(this: Document & IUser & { createdAt: Date }) {
+  return this.createdAt ? baseDateFormat(this.createdAt) : null;
+});
+
+userSchema.virtual("formattedUpdatedAt").get(function(this: Document & IUser & { updatedAt: Date }) {
+  return this.updatedAt ? baseDateFormat(this.updatedAt) : null;
+});
+
+userSchema.plugin(mongooseLeanVirtuals);
 
 userSchema.index({
   email: 1,

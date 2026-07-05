@@ -14,7 +14,6 @@ export default async function AuthServerProvider({
         user = await getMe({
             Cookie: cookieStore.toString(),
         })
-
     } catch (error) {
 
         user = null;

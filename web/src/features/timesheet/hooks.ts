@@ -1,10 +1,17 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createTimesheet, deleteTimesheet, getTimesheet, getTimesheets, updateTimesheet } from "./api";
 import { ITimeSheet } from "./timesheet";
+import { toast } from "sonner";
 
 export const useCreateTimesheet = () => {
   return useMutation({
     mutationFn: createTimesheet,
+    onSuccess: () => {
+      toast.success("Timesheet created successfully");
+    },
+    onError: (error: any) => {
+      toast.error((error as any)?.response?.data?.message || error?.message);
+    },
   });
 };
 
@@ -25,6 +32,12 @@ export const useGetTimesheet = (id: string) => {
 export const useUpdateTimesheet = () => {
   return useMutation({
     mutationFn: ({ id, timesheet }: { id: string, timesheet: ITimeSheet }) => updateTimesheet(id, timesheet),
+    onSuccess: () => {
+      toast.success("Timesheet updated successfully");
+    },
+    onError: (error: any) => {
+      toast.error((error as any)?.response?.data?.message || error?.message);
+    },
   });
 };
 

@@ -17,7 +17,7 @@ export default function BaseLoggedInLayout({
       <div className="flex h-screen flex-1 flex-col overflow-auto scrollbar-thin scrollbar-thumb-default-200 scrollbar-track-default-100">
         <BaseLoggedInNavTop />
 
-        <main className="flex-1 p-4 w-full">
+        <main className="flex-1 pt-4 px-4 pb-20 w-full">
           {children}
         </main>
       </div>

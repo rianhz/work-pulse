@@ -1,5 +1,6 @@
 "use client";
 
+import { setTenant } from "@/store/reducers/tenantSlice";
 import { setUser } from "@/store/reducers/userSlice";
 import { useEffect } from "react";
 import { useDispatch } from "react-redux";
@@ -14,11 +15,14 @@ export default function AuthProvider({
 }) {
 
     const dispatch = useDispatch();
-
-    useEffect(() => {
+    const fetchTenant = async () => {
         if (initialUser) {
             dispatch(setUser(initialUser));
         }
+    }
+
+    useEffect(() => {
+        fetchTenant();
     }, [initialUser, dispatch]);
 
     return <>{children}</>;

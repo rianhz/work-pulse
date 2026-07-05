@@ -104,6 +104,7 @@
   --sidebar-accent-foreground: oklch(0.2 0.015 277);
   --sidebar-border: oklch(0.91 0.008 277);
   --sidebar-ring: oklch(0.52 0.19 277 / 30%);
+  --fc-today-bg-color: oklch(0.95 0.008 277);
 }
 
 .dark,
@@ -155,6 +156,7 @@
   --sidebar-accent-foreground: oklch(0.98 0.005 277);
   --sidebar-border: oklch(0.22 0.015 277 / 70%);
   --sidebar-ring: oklch(0.62 0.17 277 / 40%);
+  --fc-today-bg-color: oklch(0.22 0.015 277);
 }
 
 @layer base {
@@ -167,13 +169,6 @@
   html {
     @apply font-sans;
   }
-}
-
-.running-event {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-weight: 600;
 }
 
 .live-dot {
@@ -204,4 +199,25 @@
   margin: 0;
 }
 
+.fc .fc-event-main{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
 
+
+.fc .fc-event-start.fc-event-end .fc-event-main{
+  background-color: var(--primary);
+}
+
+.fc{
+  border-radius: var(--radius);
+}
+
+.fc .fc-day-today {
+  background-color: var(--fc-today-bg-color) !important;
+}
+
+.fc-scrollgrid-section-sticky .fc-scroller-harness .fc-scroller .fc-col-header colgroup{
+  background-color: var(--background) !important;
+}

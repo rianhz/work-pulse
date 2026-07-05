@@ -13,7 +13,7 @@ export interface IUser {
     birthDate: Date | null;
     department: string | null;
     position: string;
-
+    timezone: string;
     refreshToken: {
         token: string | null;
         expiresIn: number | null;

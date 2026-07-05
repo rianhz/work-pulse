@@ -25,20 +25,27 @@ import {
   CircleQuestionMark,
   LogOut,
   Users,
+  Briefcase,
 } from "lucide-react";
 import { useLogout } from "@/features/auth/hooks";
 import { Button } from "@/components/ui/button";
+import { useAppSelector } from "@/store/hooks/hooks";
+import { RootState } from "@/store";
 
 export function AppSidebar() {
   const pathname = usePathname();
-
+  const currentUserRole = useAppSelector((state: RootState) => state.currentUser.user?.role);
   const {mutate: logout} = useLogout();
+
+  const allowedProjectAccess = currentUserRole === "admin" || currentUserRole === "owner" || currentUserRole === "manager";
+  const allowedTimeSheetAccess = !(currentUserRole === "admin" || currentUserRole === "owner");
 
   const mainSideNavItems = [
     { title: "Dashboard", url: "/dashboard", icon: Home },
     { title: "Chats", url: "/chats", icon: MessageCircle },
-    { title: "Timesheet", url: "/timesheet", icon: Calendar },
+    ...(allowedTimeSheetAccess ? [{ title: "Timesheet", url: "/timesheet", icon: Calendar }] : []),
     { title: "Team", url: "/team", icon: Users },
+    ...(allowedProjectAccess ? [{ title: "Projects", url: "/projects", icon: Briefcase }] : []),
     { title: "Settings", url: "/settings", icon: Settings },
   ];
 

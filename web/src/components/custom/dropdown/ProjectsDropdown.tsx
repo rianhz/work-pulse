@@ -1,41 +1,35 @@
 import { DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 import { DropdownMenu } from "@/components/ui/dropdown-menu";
-import { useGetProjectsByBulkIds } from "@/features/projects/hooks";
-import { IProject } from "@/features/projects/project";
+import { useGetMeProjects } from "@/features/projects/hooks";
 import { FolderKanban, Loader2 } from "lucide-react";
-import { useEffect, useState } from "react";
-import { useSelector } from "react-redux";
-import { RootState } from "@/store";
+import { useMemo } from "react";
 
 export default function ProjectsDropdown({onChangeHanlder}: {onChangeHanlder: (project: { id: string; name: string; }) => void}) {
-  const userProjects = useSelector((state: RootState) => state.currentUser.user?.projects);
-  const { data: projectsOptions, mutate: getProjectsByBulkIds, isPending } = useGetProjectsByBulkIds();
+  const { data: projectsOptions, isPending: isGetMeProjectsPending } = useGetMeProjects();
 
-  useEffect(() => {
-    if (userProjects) {
-      getProjectsByBulkIds(userProjects);
-    }
-  }, []);
+  const projects = useMemo(() => {
+    return projectsOptions
+  }, [projectsOptions]);
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger disabled={isPending}>
+      <DropdownMenuTrigger disabled={isGetMeProjectsPending}>
         <FolderKanban className="cursor-pointer"/>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="min-w-80">
-        {isPending && (
+        {isGetMeProjectsPending && (
           <DropdownMenuItem disabled>
             <Loader2 className="animate-spin" />
           </DropdownMenuItem>
         )}
-        {!isPending && projectsOptions && projectsOptions.map(project => (
+        {!isGetMeProjectsPending && projects && projects.length > 0 && projects.map(project => (
           <DropdownMenuItem key={project._id} onSelect={() => onChangeHanlder({ id: project._id, name: project.name })} className="w-full truncate line-clamp-1">
             {project.name}
           </DropdownMenuItem>
         ))}
 
-        {!isPending && !projectsOptions && (
+        {!isGetMeProjectsPending && projects && projects.length === 0 && (
           <DropdownMenuItem disabled>
             No projects found
           </DropdownMenuItem>

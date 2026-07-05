@@ -4,11 +4,11 @@ import { asyncHandler } from "../../middleware/async-handler";
 import { HTTPSTATUS } from "../../utils/http-config";
 
 export const createTimesheetController = asyncHandler(async (req: Request, res: Response) => {
-    const { userId } = (req as any).user;
-    const { tenantId } = (req as any).user;
+    const authenticatedUser = (req as any).user;
     const { title, start, end, description, project, payAs } = req.body;
-    const timesheet = await createTimesheetService({ userId, tenantId, title, start, end, description, project, payAs });
-    res.status(HTTPSTATUS.CREATED).json({ success: true, data: timesheet });
+
+    await createTimesheetService(authenticatedUser, { userId: authenticatedUser.userId, tenantId: authenticatedUser.tenantId, title, start, end, description, project, payAs });
+    res.status(HTTPSTATUS.CREATED).json({ success: true, message: "Timesheet created successfully" });
 });
 
 export const getTimesheetsController = asyncHandler(async (req: Request, res: Response) => {

@@ -2,14 +2,12 @@
   --tiptap-card-bg-color: var(--white);
   --tiptap-card-border-color: var(--tt-gray-light-a-100);
   --tiptap-card-group-label-color: var(--tt-gray-light-a-800);
-  --background: oklch(1 0 0);
 }
 
 .dark {
   --tiptap-card-bg-color: var(--tt-gray-dark-50);
   --tiptap-card-border-color: var(--tt-gray-dark-a-100);
   --tiptap-card-group-label-color: var(--tt-gray-dark-a-800);
-  --background: oklch(0.145 0 0);
 }
 
 .tiptap-card {
@@ -18,7 +16,6 @@
 
   border-radius: calc(var(--padding) + var(--tt-radius-lg));
   box-shadow: var(--tt-shadow-elevated-md);
-  background-color: var(--background);
   border: 1px solid var(--tiptap-card-border-color);
   display: flex;
   flex-direction: column;
