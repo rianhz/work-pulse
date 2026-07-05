@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { ANNOUNCEMENT_TYPE_OFFICE, ANNOUNCEMENT_TYPE_USER } from "../../helpers/constants";
+import { ANNOUNCEMENT_TYPE_OFFICE, ANNOUNCEMENT_TYPE_USER } from "../../utils/constant";
 import { baseDateTimeFormat } from "../../helpers/date-format";
 import mongooseLeanVirtuals from "mongoose-lean-virtuals";
 import { IAnnouncement } from "./interfaces";
@@ -30,6 +30,12 @@ export const AnnouncementSchema = new mongoose.Schema({
     enum: [ANNOUNCEMENT_TYPE_OFFICE, ANNOUNCEMENT_TYPE_USER], 
     required: true, 
     default: ANNOUNCEMENT_TYPE_OFFICE 
+  },
+  status: { 
+    type: String, 
+    enum: ["active", "inactive", "deleted"], 
+    required: true, 
+    default: "active" 
   },
 }, { timestamps: true });
 

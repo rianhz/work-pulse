@@ -5,15 +5,22 @@ import { isHaveAccess } from "../../utils/casl";
 import { AuthUser } from "../authentication/interfaces";
 
 export const createProjectService = async (authenticatedUser: AuthUser, project: IProjectPayload): Promise<IProject> => {
-    await isHaveAccess(authenticatedUser, null, "Project", "create");
-    const payload = {
-        ...project,
-        createdBy: authenticatedUser.userId,
-        lastUpdatedBy: authenticatedUser.userId,
-    };
-    await ProjectModel.validate(payload);
-    const newProject = await ProjectModel.create(payload);
-    return newProject;
+    try {
+        await isHaveAccess(authenticatedUser, null, "Project", "manage");
+        const payload = {
+            ...project,
+            createdBy: authenticatedUser.userId,
+            lastUpdatedBy: authenticatedUser.userId,
+        };
+        await ProjectModel.validate(payload);
+        const newProject = await ProjectModel.create(payload);
+        return newProject;
+    } catch (error) {
+        if ((error as any).name === "ValidationError") {
+            throw new BadRequestException((error as any).message);
+        }
+        throw error;
+    }
 };
 
 export const getProjectsService = async (authenticatedUser: AuthUser, tenantId: string, options: { search: string, page: number, limit: number }): Promise<{ data: IProject[], total: number }> => {
