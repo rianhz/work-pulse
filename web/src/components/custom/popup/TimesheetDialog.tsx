@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import {
   Dialog,
@@ -10,7 +10,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
@@ -22,10 +21,9 @@ import { Badge } from "@/components/ui/badge";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { useCreateTimesheet, useUpdateTimesheet } from "@/features/timesheet/hooks";
-import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
-import { Loader2 } from "lucide-react";
-import { updateTimesheet } from "@/features/timesheet/api";
+import { ClockIcon, Loader2 } from "lucide-react";
+import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 
 interface Props {
   open: boolean;
@@ -54,11 +52,14 @@ export default function TimesheetDialog({
     payAs: "",
   });
 
+  const isValid = useMemo(() => {
+    return moment(event.start).isBefore(moment(event.end)) && event.title && event.project.id && event.payAs;
+  }, [event]);
+
   const save = async () => {
     if (timeSheetData._id) {
       updateTimesheet({ id: timeSheetData._id, timesheet: event }, {
         onSuccess: () => {
-          toast.success("Timesheet updated successfully");
           queryClient.invalidateQueries({ queryKey: ['timesheets'] });
           onOpenChange(false);
         },
@@ -67,7 +68,6 @@ export default function TimesheetDialog({
       const { _id, ...rest } = event;
       createTimesheet(event, {
         onSuccess: () => {
-          toast.success("Timesheet created successfully");
           queryClient.invalidateQueries({ queryKey: ['timesheets'] });
           onOpenChange(false);
         },
@@ -112,52 +112,61 @@ export default function TimesheetDialog({
           <div className="flex gap-2">
           
             <FieldGroup className="flex gap-2">
-              <Field>
+              <Field className="gap-1">
                 <FieldLabel htmlFor="time-picker-optional">Start</FieldLabel>
-                <Input
+                <InputGroup className="border text-black border-border appearance-none bg-background group focus-within:text-black">
+                  <InputGroupInput
                   type="time"
                   id="time-picker-start"
                   value={event.start ? moment(event.start).format("HH:mm") : ""}
-                  className="border text-black border-border appearance-none bg-background [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
+                  className="[&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
                   onChange={(e) => {
-                    const timeValue = e.target.value; // This yields a 24-hour format string "HH:mm" (e.g. "17:30")
+                    const timeValue = e.target.value;
                     
                     setEvent((prev) => ({
                       ...prev,
-                      // 💡 If your backend expects a full date-time string, you can merge the new time back into the date object:
                       start: moment(prev.start).set({
                         hour: parseInt(timeValue.split(":")[0]),
                         minute: parseInt(timeValue.split(":")[1]),
                       }).toISOString(), 
                       
-                      // 💡 Alternative: If your state just stores the plain time string ("17:30"), use this instead:
-                      // start: timeValue,
+                  
                     }));
                   }}
                 />
+                <InputGroupAddon align="inline-end" className="bg-transparent flex justify-center items-center">
+                  <ClockIcon className="size-4 text-muted-foreground transition-colors group-focus-within:text-black" />
+                </InputGroupAddon>
+              </InputGroup>
               </Field>
               
             </FieldGroup>
             <FieldGroup className="flex gap-2">
-              <Field>
+              <Field className="gap-1">
                 <FieldLabel htmlFor="time-picker-optional">End</FieldLabel>
-                <Input
-                  type="time"
-                  id="time-picker-end"
-                  value={event.end ? moment(event.end).format("HH:mm") : ""}
-                  className="border text-black border-border appearance-none bg-background [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
-                  onChange={(e) => {
-                    const timeValue = e.target.value; // This yields a 24-hour format string "HH:mm" (e.g. "17:30")
-                    
-                    setEvent((prev) => ({
-                      ...prev,
-                      end: moment(prev.end).set({
-                        hour: parseInt(timeValue.split(":")[0]),
-                        minute: parseInt(timeValue.split(":")[1]),
-                      }).toISOString(), 
-                    }));
-                  }}
-                />
+                <InputGroup className="border text-black border-border appearance-none bg-background group focus-within:text-black">
+
+                  <InputGroupInput
+                    type="time"
+                    id="time-picker-end"
+                    value={event.end ? moment(event.end).format("HH:mm") : ""}
+                    className="[&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
+                    onChange={(e) => {
+                      const timeValue = e.target.value;
+                      
+                      setEvent((prev) => ({
+                        ...prev,
+                        end: moment(prev.end).set({
+                          hour: parseInt(timeValue.split(":")[0]),
+                          minute: parseInt(timeValue.split(":")[1]),
+                        }).toISOString(), 
+                      }));
+                    }}
+                  />
+                  <InputGroupAddon align="inline-end" className="bg-transparent flex justify-center items-center">
+                    <ClockIcon className="size-4 text-muted-foreground transition-colors group-focus-within:text-black" />
+                  </InputGroupAddon>
+                </InputGroup>
               </Field>
             </FieldGroup>
 
@@ -194,12 +203,12 @@ export default function TimesheetDialog({
                 className="flex items-center gap-2"
               >
                 <div className="flex items-center gap-3">
-                  <RadioGroupItem value="debt" id="debt" />
-                  <Label htmlFor="debt">Debt</Label>
+                  <RadioGroupItem value="debt" id="debt" className="cursor-pointer" />
+                  <Label className="cursor-pointer" htmlFor="debt">Debt</Label>
                 </div>
                 <div className="flex items-center gap-3">
-                  <RadioGroupItem value="overtime" id="overtime" />
-                  <Label htmlFor="overtime">Overtime</Label>
+                  <RadioGroupItem value="overtime" id="overtime" className="cursor-pointer" />
+                  <Label className="cursor-pointer" htmlFor="overtime">Overtime</Label>
                 </div>
               </RadioGroup>
               <Badge variant="secondary">{event.project.name}</Badge>
@@ -213,7 +222,7 @@ export default function TimesheetDialog({
           <DialogFooter>
             <Button
               onClick={save}
-              disabled={isPending || isUpdating}
+              disabled={isPending || isUpdating || !isValid}
             >
               {isPending || isUpdating ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save"}
             </Button>

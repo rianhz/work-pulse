@@ -1,10 +1,21 @@
 import { TimesheetModel } from "./schema";
 import { ITimesheet } from "./interfaces";
-import { NotFoundException } from "../../utils/app-error";
+import { BadRequestException, NotFoundException } from "../../utils/app-error";
+import { isHaveAccess } from "../../utils/casl";
+import { AuthUser } from "../authentication/interfaces";
 
-export const createTimesheetService = async (timesheet: ITimesheet): Promise<ITimesheet> => {
-    const newTimesheet = await TimesheetModel.create(timesheet);
-    return newTimesheet;
+export const createTimesheetService = async (authenticatedUser: AuthUser, timesheet: ITimesheet): Promise<ITimesheet> => {
+    try {
+        await isHaveAccess(authenticatedUser, timesheet, "Timesheet", "create");
+        await TimesheetModel.validate(timesheet);
+        const newTimesheet = await TimesheetModel.create(timesheet);
+        return newTimesheet;
+    } catch (error: any) {
+        if(error.name === "ValidationError") {
+            throw new BadRequestException(error.message);
+        }
+        throw error;
+    }
 };
 
 export const getTimesheetsService = async (userId: string, tenantId: string): Promise<ITimesheet[]> => {

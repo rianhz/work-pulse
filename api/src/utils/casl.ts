@@ -26,8 +26,10 @@ export async function defineAbilitiesFor(user: AuthUser) {
 
     case "manager":
       can("manage", "Project", { tenantId: user.tenantId });
+      can("read", "Project", { participants: { $in: [user.userId] } });
       can("read", "User", { tenantId: user.tenantId });
       can("read", "Department", { tenantId: user.tenantId });
+      can("manage", "Timesheet", { userId: user.userId, tenantId: user.tenantId });
       break;
 
     case "employee":

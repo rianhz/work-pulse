@@ -16,7 +16,6 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { DepartmentSettingsForm } from "@/components/custom/forms/DepartmentSettingsForm";
 import { useAppSelector } from "@/store/hooks/hooks";
 import { NotAuthorised } from "@/components/custom/errors-and-empty/NotAuthorised";
-import { useEffect } from "react";
 
 export interface IUserWithProviders extends IUser {
   providers: ('password' | 'google')[];
