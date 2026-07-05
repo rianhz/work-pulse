@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { addProjectToUserService, getDirectReportsTreeService, getLoginTypesService, getMeProjectsService, getMeService, removeProjectFromUserService, searchUsersService, updateUserService } from './services';
+import { addProjectToUserService, getDirectReportsTreeService, getLoginTypesService, getMyProjectsService, getMeService, removeProjectFromUserService, searchUsersService, updateUserService } from './services';
 import { HTTPSTATUS } from '../../utils/http-config';
 import { asyncHandler } from '../../middleware/async-handler';
 
@@ -62,6 +62,6 @@ export const searchUsersController = asyncHandler(async (req: Request, res: Resp
 
 export const getMeProjectsController = asyncHandler(async (req: Request, res: Response) => {
     const authenticatedUser = (req as any).user;
-    const projects = await getMeProjectsService(authenticatedUser);
+    const projects = await getMyProjectsService(authenticatedUser);
     res.status(HTTPSTATUS.OK).json({ success: true, data: projects });
 });

@@ -1,7 +1,7 @@
 "use client";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CompanySettingsFormValues, companySettingsSchema } from "@/features/tenants/validator";
 import { Button } from "@/components/ui/button";
@@ -15,23 +15,24 @@ import { useQueryClient } from "@tanstack/react-query";
 import BaseAvatar from "../images/BaseImage";
 import { ITenant } from "@/features/tenants/tenant";
 import { useUpdateTenant } from "@/features/tenants/hooks";
+import { TimezoneDropdown } from "../dropdown/TimezoneDropdown";
 
-export function CompanySettingsForm({ tenantId, tenant, isLoading }: { tenantId: string, tenant: ITenant, isLoading: boolean }) {
+export function CompanySettingsForm({ tenantId, tenant, isLoading, onSaved }: { tenantId: string, tenant: ITenant, isLoading: boolean, onSaved: () => void }) {
   const [isUploaderOpen, setIsUploaderOpen] = useState(false);
   const queryClient = useQueryClient();
   const { mutate: updateTenant, isPending: isPendingUpdateTenant } = useUpdateTenant();
- 
   const tenantInitials = useMemo(() => {
     return tenant?.name.split(' ').map((name) => name[0]).join('').slice(0, 2).toUpperCase() || '';
   }, [tenant]);
 
-  const { register: registerCompany, watch: watchCompany, setValue: setValueCompany, getValues: getValuesCompany, handleSubmit: handleSubmitCompany, formState: { errors: errorsCompany, isDirty: isDirtyCompany, isSubmitting: isSubmittingCompany }, reset: resetCompany } = useForm<CompanySettingsFormValues>({
+  const { control: controlCompany, register: registerCompany, watch: watchCompany, setValue: setValueCompany, handleSubmit: handleSubmitCompany, formState: { errors: errorsCompany, isDirty: isDirtyCompany, isSubmitting: isSubmittingCompany }, reset: resetCompany } = useForm<CompanySettingsFormValues>({
     resolver: zodResolver(companySettingsSchema),
     defaultValues: {
       name: tenant?.name || '',
       slug: tenant?.slug || '',
       description: tenant?.description || '',
       logo: tenant?.logo || '',
+      timezone: tenant?.timezone || '',
     },
   });
 
@@ -56,8 +57,9 @@ export function CompanySettingsForm({ tenantId, tenant, isLoading }: { tenantId:
           slug: data.slug,
           description: data.description,
           logo: data.logo,
+          timezone: data.timezone,
         });
-        queryClient.invalidateQueries({ queryKey: ['tenant', tenantId] });
+        onSaved();
       },
     });
   };
@@ -69,6 +71,7 @@ export function CompanySettingsForm({ tenantId, tenant, isLoading }: { tenantId:
         slug: tenant?.slug || '',
         description: tenant?.description || '',
         logo: tenant?.logo || '',
+        timezone: tenant?.timezone || '',
       });
   }, [tenant, resetCompany]);
 
@@ -180,6 +183,20 @@ export function CompanySettingsForm({ tenantId, tenant, isLoading }: { tenantId:
                     </InputGroup>
                   </div>
                   {errorsCompany.description && isDirtyCompany && <p className="text-xs text-red-500">{errorsCompany.description.message}</p>}
+                </TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell>
+                  <Label className="whitespace-nowrap">Timezone</Label>
+                </TableCell>
+                <TableCell className="w-full">
+                  <Controller
+                    control={controlCompany}
+                    name="timezone"
+                    render={({ field }) => (
+                      <TimezoneDropdown value={field.value ?? ""} onChange={field.onChange} />
+                    )}
+                  />
                 </TableCell>
               </TableRow>
             </TableBody>

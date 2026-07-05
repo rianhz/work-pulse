@@ -180,7 +180,7 @@ export const searchUsersService = async (authenticatedUser: AuthUser, search: st
   return users;
 };
 
-export const getMeProjectsService = async (authenticatedUser: AuthUser): Promise<IProject[]> => {
+export const getMyProjectsService = async (authenticatedUser: AuthUser): Promise<IProject[]> => {
   await isHaveAccess(authenticatedUser, { participants: [authenticatedUser.userId] }, "Project", "read");
 
   const projects = await ProjectModel.find({

@@ -38,11 +38,12 @@ export function AppSidebar() {
   const {mutate: logout} = useLogout();
 
   const allowedProjectAccess = currentUserRole === "admin" || currentUserRole === "owner" || currentUserRole === "manager";
+  const allowedTimeSheetAccess = !(currentUserRole === "admin" || currentUserRole === "owner");
 
   const mainSideNavItems = [
     { title: "Dashboard", url: "/dashboard", icon: Home },
     { title: "Chats", url: "/chats", icon: MessageCircle },
-    { title: "Timesheet", url: "/timesheet", icon: Calendar },
+    ...(allowedTimeSheetAccess ? [{ title: "Timesheet", url: "/timesheet", icon: Calendar }] : []),
     { title: "Team", url: "/team", icon: Users },
     ...(allowedProjectAccess ? [{ title: "Projects", url: "/projects", icon: Briefcase }] : []),
     { title: "Settings", url: "/settings", icon: Settings },

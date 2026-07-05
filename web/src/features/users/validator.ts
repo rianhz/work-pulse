@@ -20,6 +20,7 @@ export const editUserSchema = z.object({
   leader: z.string().nullable().or(z.literal("")),
   avatar: z.string().optional(),
   nickName: z.string().optional(),
+  timezone: z.string().optional(),
 });
 
 export type EditUserFormValues = z.infer<typeof editUserSchema>;

@@ -26,8 +26,9 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { DropdownMenu, DropdownMenuItem, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { baseDateFormat, baseDateFormatFromNow, baseDateTimeFormat } from "@/helpers/date-format";
+import { baseDateFormat, baseDateFormatFromNow, baseDateTimeFormat } from "@/lib/date-format";
 import { NotAuthorised } from "@/components/custom/errors-and-empty/NotAuthorised";
+import { formatToLocalDate, formatToLocalDateTime, formatToLocalTime } from "@/lib/timezone-formatter";
 
 export default function ProjectsPage() {
   const queryClient = useQueryClient();
@@ -155,6 +156,8 @@ export default function ProjectsPage() {
     });
   };
 
+  const tenant = useSelector((state: RootState) => state.currentTenant.tenant);
+
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const columns = useMemo<ColumnDef<IProject, any>[]>(() => [
     {
@@ -228,10 +231,10 @@ export default function ProjectsPage() {
         return (
           <Tooltip>
             <TooltipTrigger asChild>
-              <span>{baseDateFormat(row.original.createdAt)}</span>
+              <span>{formatToLocalDate(row.original.createdAt, currentUser?.timezone || tenant?.timezone)}</span>
             </TooltipTrigger>
             <TooltipContent>
-              <p>Created on <strong>{baseDateTimeFormat(row.original.createdAt)}</strong> by <strong>{row.original.createdBy.nickName ?? row.original.createdBy.fullName}</strong></p>
+              <p>Created on <strong>{formatToLocalTime(row.original.createdAt, currentUser?.timezone || tenant?.timezone)}</strong> by <strong>{row.original.createdBy.nickName ?? row.original.createdBy.fullName}</strong></p>
             </TooltipContent>
           </Tooltip>
         )
@@ -249,10 +252,10 @@ export default function ProjectsPage() {
         return (
           <Tooltip>
             <TooltipTrigger asChild>
-              <span>{baseDateFormatFromNow(row.original.updatedAt)}</span>
+              <span>{formatToLocalDate(row.original.updatedAt, currentUser?.timezone || tenant?.timezone)}</span>
             </TooltipTrigger>
             <TooltipContent>
-              <p>Last updated on <strong>{baseDateTimeFormat(row.original.updatedAt)}</strong> by <strong>{row.original.lastUpdatedBy?.nickName ?? row.original.lastUpdatedBy?.fullName}</strong></p>
+              <p>Last updated on <strong>{formatToLocalTime(row.original.updatedAt, currentUser?.timezone || tenant?.timezone)}</strong> by <strong>{row.original.lastUpdatedBy?.nickName ?? row.original.lastUpdatedBy?.fullName}</strong></p>
             </TooltipContent>
           </Tooltip>
         )

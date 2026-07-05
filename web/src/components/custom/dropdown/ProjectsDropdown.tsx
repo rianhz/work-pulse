@@ -23,13 +23,13 @@ export default function ProjectsDropdown({onChangeHanlder}: {onChangeHanlder: (p
             <Loader2 className="animate-spin" />
           </DropdownMenuItem>
         )}
-        {!isGetMeProjectsPending && projects && projects.map(project => (
+        {!isGetMeProjectsPending && projects && projects.length > 0 && projects.map(project => (
           <DropdownMenuItem key={project._id} onSelect={() => onChangeHanlder({ id: project._id, name: project.name })} className="w-full truncate line-clamp-1">
             {project.name}
           </DropdownMenuItem>
         ))}
 
-        {!isGetMeProjectsPending && !projectsOptions && (
+        {!isGetMeProjectsPending && projects && projects.length === 0 && (
           <DropdownMenuItem disabled>
             No projects found
           </DropdownMenuItem>

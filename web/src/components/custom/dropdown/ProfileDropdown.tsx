@@ -14,6 +14,7 @@ import { RootState } from "@/store";
 export const ProfileDropdown = () => {
   const { mutate: logout } = useLogout();
   const user = useSelector((state: RootState) => state.currentUser.user);
+  const tenant = useSelector((state: RootState) => state.currentTenant.tenant);
   return (
     <DropdownMenu>
       <DropdownMenuTrigger className="cursor-pointer outline-none focus:outline-none rounded-full">

@@ -3,13 +3,23 @@ import { getMe, getMeProviders, getUsers, searchUsers, updateUser } from "./api"
 import { toast } from "sonner";
 import { IGetPaginatedResponse, IPaginationQueryOptions } from "@/global";
 import { IUser } from "./users";
+import { useDispatch } from "react-redux";
+import { setUser } from "@/store/reducers/userSlice";
+import { getTenantById } from "../tenants/api";
+import { setTenant } from "@/store/reducers/tenantSlice";
 
 export const useGetMe = () => {
+  const dispatch = useDispatch();
   return useQuery<any>({
     queryKey: ["me"],
     queryFn: async () => {
       try {
         const response = await getMe();
+        dispatch(setUser(response));
+        if (!response.tenantId) return;
+        const tenant = await getTenantById(response.tenantId);
+        if (!tenant) return;
+        dispatch(setTenant(tenant));
         return response;
       } catch (error) {
         throw error;

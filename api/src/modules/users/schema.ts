@@ -87,6 +87,12 @@ const userSchema = new mongoose.Schema<IUser>(
       default: "",
     },
 
+    timezone:{
+      type: String,
+      required: false,
+      default: "",
+    },
+
     refreshToken: {
       token: {
         type: String,
