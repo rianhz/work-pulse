@@ -16,6 +16,7 @@ export interface IUser {
   birthDate: string | null;
   department: IDepartment | null;
   position: string;
+  timezone: string;
   refreshToken: {
     token: string;
     expiresIn: number;

@@ -11,6 +11,7 @@ export interface ITenant {
   logo: string;
   createdAt: Date;
   updatedAt: Date;
+  timezone: string;
 }
 
 export interface IGetTenantByIdResponse extends IResponse {

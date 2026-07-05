@@ -16,6 +16,8 @@ import { Button } from "@/components/ui/button";
 import { SlidersHorizontal } from "lucide-react";
 import { InputGroup, InputGroupInput } from "@/components/ui/input-group";
 import { BasePagination } from "@/components/custom/pagination/BasePagination";
+import { Spinner } from "@/components/ui/spinner";
+import { EmptyData } from "../errors-and-empty/EmptyData";
 
 interface BaseTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -32,6 +34,11 @@ interface BaseTableProps<TData, TValue> {
   currentPage?: number;
   totalPages?: number;
   onPageChange?: (page: number) => void;
+
+  isLoading?: boolean;
+  isEmptyData?: boolean;
+  emptyDataDescription?: string;
+  emptyDataIcon?: React.ReactNode;
 }
 
 export function BaseTable<TData, TValue>({
@@ -47,6 +54,10 @@ export function BaseTable<TData, TValue>({
   currentPage,
   totalPages = 1,
   onPageChange,
+  isLoading = false,
+  isEmptyData = false,
+  emptyDataDescription = "No data found",
+  emptyDataIcon = <Table className="size-10 text-muted-foreground" />,
 }: BaseTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [internalVisibility, setInternalVisibility] = React.useState<VisibilityState>({});
@@ -76,14 +87,15 @@ export function BaseTable<TData, TValue>({
             <InputGroupInput 
               placeholder={searchPlaceholder} 
               value={searchValue} 
-              onChange={(e) => onSearchChange?.(e.target.value)} 
+              onChange={(e) => onSearchChange?.(e.target.value)}
+              disabled={isLoading}
             />
           </InputGroup>
         )}
         
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="ml-auto flex gap-2">
+            <Button variant="outline" className="ml-auto flex gap-2" disabled={isLoading}>
               <SlidersHorizontal className="h-4 w-4" />
               View
             </Button>
@@ -107,7 +119,9 @@ export function BaseTable<TData, TValue>({
       </div>
 
       <div className="rounded-md border overflow-x-auto relative">
-        <Table>
+        {isLoading && <div className="flex justify-center items-center min-h-[200px]"> <Spinner className="size-10" /> </div>}
+        {!isLoading && isEmptyData && <EmptyData description={emptyDataDescription} icon={emptyDataIcon} />}
+        {!isLoading && <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
@@ -152,7 +166,7 @@ export function BaseTable<TData, TValue>({
               </TableRow>
             ))}
           </TableBody>
-        </Table>
+        </Table>}
       </div>
 
       {currentPage !== undefined && onPageChange && totalPages > 1 && (

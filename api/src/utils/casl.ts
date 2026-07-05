@@ -10,7 +10,14 @@ export async function defineAbilitiesFor(user: AuthUser) {
 
   switch (user.role) {
     case "owner":
-      can("manage", "all", { tenantId: user.tenantId });
+      can("manage", "User", { tenantId: user.tenantId });
+      can("manage", "Project", { tenantId: user.tenantId });
+      can("manage", "Timesheet", { tenantId: user.tenantId });
+      can("manage", "Invitation", { tenantId: user.tenantId });
+      can("manage", "Department", { tenantId: user.tenantId });
+      can("manage", "Position", { tenantId: user.tenantId });
+
+      can(["read", "update"], "Tenant", { _id: user.tenantId }); 
       break;
 
     case "admin":
@@ -26,14 +33,16 @@ export async function defineAbilitiesFor(user: AuthUser) {
 
     case "manager":
       can("manage", "Project", { tenantId: user.tenantId });
+      can("read", "Project", { participants: { $in: [user.userId] } });
       can("read", "User", { tenantId: user.tenantId });
       can("read", "Department", { tenantId: user.tenantId });
+      can("manage", "Timesheet", { userId: user.userId, tenantId: user.tenantId });
       break;
 
     case "employee":
       can("read", "User", { _id: user.userId, tenantId: user.tenantId });
       can("update", "User", { _id: user.userId, tenantId: user.tenantId });
-      can("read", "Project", { tenantId: user.tenantId });
+      can("read", "Project", { participants: { $in: [user.userId] } });
       can("manage", "Timesheet", { userId: user.userId, tenantId: user.tenantId });
       can("read", "Department", { tenantId: user.tenantId });
       break;

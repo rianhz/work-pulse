@@ -6,5 +6,5 @@ export interface ITenant {
     description: string;
     plan: string;
     status: string;
-    projects: IProject[];
+    timezone: string;
 }
