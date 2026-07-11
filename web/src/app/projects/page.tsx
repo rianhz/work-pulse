@@ -391,8 +391,8 @@ export default function ProjectsPage() {
         </DialogContent>
       </Dialog>
 
-      <Card>
-        <CardHeader className="flex justify-between items-end flex-row">
+      <Card className="border-none pt-0 ring-0 shadow-none">
+        <CardHeader className="flex justify-between items-end flex-row px-0">
           <div>
             <CardTitle className="text-2xl font-bold">Projects</CardTitle>
             <CardDescription>Track, organize, and manage your workspace initiatives, project roles, and delivery lifecycles.</CardDescription>
@@ -401,7 +401,7 @@ export default function ProjectsPage() {
             <Button onClick={openCreateDialog} disabled={isLoadingProjects}>Create Project</Button>
           )}
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-0">
             <BaseTable
               columns={columns}
               data={projects}

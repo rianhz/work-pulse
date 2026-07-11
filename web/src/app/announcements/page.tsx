@@ -68,10 +68,6 @@ export default function AnnouncementsPage() {
     router.push(`/announcements/${row._id}?mode=edit`);
   }
 
-  const handleEditAnnouncement = (row: IAnnouncement) => {
-    router.push(`/announcements/${row._id}?mode=edit`);
-  }
-
   const handleDeleteAnnouncement = (row: IAnnouncement) => {
     setSelectedAnnouncement(row);
     setDeleteDialogOpen(true);
@@ -217,17 +213,17 @@ export default function AnnouncementsPage() {
           </div>
         </DialogContent>
       </Dialog>
-      <Card>
-        <CardHeader className="flex justify-between items-end flex-row">
+      <Card className="border-none pt-0 ring-0 shadow-none">
+        <CardHeader className="flex justify-between items-end flex-row px-0">
           <div>
             <CardTitle className="text-2xl font-bold">Announcements</CardTitle>
             <CardDescription>A comprehensive view of all announcements.</CardDescription>
           </div>
           <Button onClick={handleCreateAnnouncement} disabled={isPending || isLoading}>
-           {isPending ? <Spinner /> : "Create Announcement"}
+           {isPending ? <Spinner /> : "Create"}
           </Button>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-0">
           <BaseTable
             onRowClicked={handleRowClicked}
             columns={columns}
