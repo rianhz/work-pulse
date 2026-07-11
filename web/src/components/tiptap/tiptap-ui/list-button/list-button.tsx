@@ -8,25 +8,17 @@ import { parseShortcutKeys } from "@/lib/tiptap-utils"
 // --- Hooks ---
 import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
 
-// --- UI Primitives ---
-import type { ButtonProps } from "@/components/tiptap/tiptap-ui-primitive/button"
-import { Button } from "@/components/tiptap/tiptap-ui-primitive/button"
-import { Badge } from "@/components/tiptap/tiptap-ui-primitive/badge"
+// --- Shadcn UI Primitives ---
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 
 // --- Tiptap UI ---
 import type { ListType, UseListConfig } from "@/components/tiptap/tiptap-ui/list-button"
 import { LIST_SHORTCUT_KEYS, useList } from "@/components/tiptap/tiptap-ui/list-button"
 
 export interface ListButtonProps
-  extends Omit<ButtonProps, "type">, UseListConfig {
-  /**
-   * Optional text to display alongside the icon.
-   */
+  extends Omit<React.ComponentPropsWithoutRef<typeof Button>, "type">, UseListConfig {
   text?: string
-  /**
-   * Optional show shortcut keys in the button.
-   * @default false
-   */
   showShortcut?: boolean
 }
 
@@ -40,11 +32,6 @@ export function ListShortcutBadge({
   return <Badge>{parseShortcutKeys({ shortcutKeys })}</Badge>
 }
 
-/**
- * Button component for toggling lists in a Tiptap editor.
- *
- * For custom button implementations, use the `useList` hook instead.
- */
 export const ListButton = forwardRef<HTMLButtonElement, ListButtonProps>(
   (
     {
@@ -100,7 +87,6 @@ export const ListButton = forwardRef<HTMLButtonElement, ListButtonProps>(
         data-disabled={!canToggle}
         aria-label={label}
         aria-pressed={isActive}
-        tooltip={label}
         onClick={handleClick}
         {...buttonProps}
         ref={ref}

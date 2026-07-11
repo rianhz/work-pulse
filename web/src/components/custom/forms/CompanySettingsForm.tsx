@@ -12,7 +12,7 @@ import { UniversalUploader } from "../uploader/ImageUploader";
 import { InputGroup, InputGroupAddon, InputGroupInput, InputGroupTextarea } from "@/components/ui/input-group";
 import { Spinner } from "@/components/ui/spinner";
 import { useQueryClient } from "@tanstack/react-query";
-import BaseAvatar from "../images/BaseImage";
+import BaseAvatar from "../images/BaseAvatar";
 import { ITenant } from "@/features/tenants/tenant";
 import { useUpdateTenant } from "@/features/tenants/hooks";
 import { TimezoneDropdown } from "../dropdown/TimezoneDropdown";
@@ -105,18 +105,15 @@ export function CompanySettingsForm({ tenantId, tenant, isLoading, onSaved }: { 
                   <div className="flex justify-between gap-2">
                     <div className="flex items-center gap-2">
                       <div className="flex flex-col justify-center items-center gap-2">
-                        <div
-                          onClick={() => setIsUploaderOpen(true)}
-                          className="group relative w-[100px] h-[100px] overflow-hidden rounded-full border border-muted"
-                        >
-                        
-                          <BaseAvatar src={logo ?? ""} alt="Logo" className="w-[100px] h-[100px] rounded-full" fallbackInitials={tenantInitials} imageLoading="eager" />
-                          <div className="cursor-pointer absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-                            <span className="select-none px-1 text-center text-[10px] font-medium leading-tight text-white">
-                              Change
-                            </span>
-                          </div>
-                        </div>
+                       <BaseAvatar 
+                          src={logo ?? ""} 
+                          alt="Logo" 
+                          fallbackInitials={tenantInitials} 
+                          imageLoading="eager"
+                          isEditable={true}
+                          onUploadSuccess={handleUploadSucess}
+                          className="w-[100px] h-[100px] rounded-full"
+                        />
                       </div>
                       <div>
                         <p className="text-sm font-medium">Logo</p>

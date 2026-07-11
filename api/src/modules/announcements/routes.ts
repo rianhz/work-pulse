@@ -10,5 +10,5 @@ router.get("/:id", protectRoute, getAnnouncementByIdController);
 router.put("/:id", protectRoute, updateAnnouncementController);
 router.delete("/:id", protectRoute, deleteAnnouncementController);
 
-export default router;
+export const announcementsRoutes = router;
 

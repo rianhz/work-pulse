@@ -39,6 +39,7 @@ interface BaseTableProps<TData, TValue> {
   isEmptyData?: boolean;
   emptyDataDescription?: string;
   emptyDataIcon?: React.ReactNode;
+  onRowClicked?: (row: TData) => void;
 }
 
 export function BaseTable<TData, TValue>({
@@ -58,6 +59,7 @@ export function BaseTable<TData, TValue>({
   isEmptyData = false,
   emptyDataDescription = "No data found",
   emptyDataIcon = <Table className="size-10 text-muted-foreground" />,
+  onRowClicked,
 }: BaseTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [internalVisibility, setInternalVisibility] = React.useState<VisibilityState>({});
@@ -121,7 +123,7 @@ export function BaseTable<TData, TValue>({
       <div className="rounded-md border overflow-x-auto relative">
         {isLoading && <div className="flex justify-center items-center min-h-[200px]"> <Spinner className="size-10" /> </div>}
         {!isLoading && isEmptyData && <EmptyData description={emptyDataDescription} icon={emptyDataIcon} />}
-        {!isLoading && <Table>
+        {!isLoading && !isEmptyData && <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
@@ -147,7 +149,7 @@ export function BaseTable<TData, TValue>({
           </TableHeader>
           <TableBody>
             {table.getRowModel().rows.map((row) => (
-              <TableRow key={row.id}>
+              <TableRow key={row.id} onClick={() => onRowClicked?.(row.original)} className={onRowClicked ? "cursor-pointer" : ""}>
                 {row.getVisibleCells().map((cell) => {
                   const isActions = cell.column.id === "actions";
                   return (

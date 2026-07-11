@@ -2,8 +2,8 @@ import { mergeProps } from "@base-ui/react/merge-props"
 import { useRender } from "@base-ui/react/use-render"
 import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/tiptap-utils"
-import { Separator } from "@/components/tiptap/tiptap-ui-primitive/separator"
 import "./button-group.scss"
+import { Separator } from "@/components/ui/separator"
 
 const buttonGroupVariants = cva("tiptap-button-group", {
   variants: {

@@ -15,28 +15,17 @@ import {
   useImageUpload,
 } from "@/components/tiptap/tiptap-ui/image-upload-button"
 
-// --- UI Primitives ---
-import type { ButtonProps } from "@/components/tiptap/tiptap-ui-primitive/button"
-import { Button } from "@/components/tiptap/tiptap-ui-primitive/button"
-import { Badge } from "@/components/tiptap/tiptap-ui-primitive/badge"
+// --- Shadcn UI Primitives ---
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 
 type IconProps = React.SVGProps<SVGSVGElement>
 type IconComponent = ({ className, ...props }: IconProps) => React.ReactElement
 
 export interface ImageUploadButtonProps
-  extends Omit<ButtonProps, "type">, UseImageUploadConfig {
-  /**
-   * Optional text to display alongside the icon.
-   */
+  extends React.ComponentPropsWithoutRef<typeof Button>, UseImageUploadConfig {
   text?: string
-  /**
-   * Optional show shortcut keys in the button.
-   * @default false
-   */
   showShortcut?: boolean
-  /**
-   * Optional custom icon component to render instead of the default.
-   */
   icon?: React.MemoExoticComponent<IconComponent> | React.FC<IconProps>
 }
 
@@ -48,11 +37,6 @@ export function ImageShortcutBadge({
   return <Badge>{parseShortcutKeys({ shortcutKeys })}</Badge>
 }
 
-/**
- * Button component for uploading/inserting images in a Tiptap editor.
- *
- * For custom button implementations, use the `useImage` hook instead.
- */
 export const ImageUploadButton = forwardRef<
   HTMLButtonElement,
   ImageUploadButtonProps
@@ -112,7 +96,6 @@ export const ImageUploadButton = forwardRef<
         data-disabled={!canInsert}
         aria-label={label}
         aria-pressed={isActive}
-        tooltip={label}
         onClick={handleClick}
         {...buttonProps}
         ref={ref}

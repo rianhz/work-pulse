@@ -36,11 +36,11 @@ body,
   font-family: "DM Sans", sans-serif;
 }
 
-.simple-editor-wrapper {
+.base-editor-wrapper {
   overflow: auto;
 }
 
-.simple-editor-content {
+.base-editor-content {
   width: 100%;
   margin: 0 auto;
   height: 100%;
@@ -49,6 +49,6 @@ body,
   flex: 1;
 }
 
-.simple-editor-content .tiptap.ProseMirror.simple-editor {
+.base-editor-content .tiptap.ProseMirror.base-editor {
   flex: 1;
 }

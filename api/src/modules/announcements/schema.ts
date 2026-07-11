@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose, { Types } from "mongoose";
 import { ANNOUNCEMENT_TYPE_OFFICE, ANNOUNCEMENT_TYPE_USER } from "../../utils/constant";
 import { baseDateTimeFormat } from "../../helpers/date-format";
 import mongooseLeanVirtuals from "mongoose-lean-virtuals";
@@ -10,15 +10,20 @@ export const AnnouncementSchema = new mongoose.Schema({
     required: true, 
     default: "" 
   },
-  description: { 
+  thumbnail: { 
     type: String, 
-    required: true, 
+    required: false, 
     default: "" 
   },
-  imageUrl: { 
-    type: String, 
-    required: true, 
-    default: "" 
+  cover:{
+    type: String,
+    required: false,
+    default: ""
+  },
+  content: {
+    type: String,
+    required: false,
+    default: ""
   },
   tenantId: { 
     type: String, 
@@ -33,9 +38,21 @@ export const AnnouncementSchema = new mongoose.Schema({
   },
   status: { 
     type: String, 
-    enum: ["active", "inactive", "deleted"], 
+    enum: ["published", "draft", "archived", "deleted"], 
     required: true, 
-    default: "active" 
+    default: "draft" 
+  },
+  createdBy: { 
+    type: Types.ObjectId, 
+    ref: "User", 
+    required: false, 
+    default: null
+  },
+  lastUpdatedBy: { 
+    type: Types.ObjectId, 
+    ref: "User", 
+    required: false, 
+    default: null
   },
 }, { timestamps: true });
 

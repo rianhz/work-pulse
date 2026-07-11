@@ -8,7 +8,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { useDeleteUser, useGetUsers, useSearchUsers, useUpdateUser } from "@/features/users/hooks";
-import { ChevronDownIcon, MoreHorizontalIcon, Users, ArrowUpDown } from "lucide-react";
+import { ChevronDownIcon, MoreHorizontalIcon, Users, ArrowUpDown, Pencil, Trash } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -255,8 +255,8 @@ export default function TeamPage() {
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem className="cursor-pointer" onClick={() => handleSelectedUser(user, "edit")}>Edit</DropdownMenuItem>
-              <DropdownMenuItem className="cursor-pointer" onClick={() => handleSelectedUser(user, "delete")} variant="destructive">Delete</DropdownMenuItem>
+              <DropdownMenuItem className="cursor-pointer" onClick={() => handleSelectedUser(user, "edit")}> <Pencil className="size-4" /> Edit</DropdownMenuItem>
+              <DropdownMenuItem className="cursor-pointer" onClick={() => handleSelectedUser(user, "delete")} variant="destructive"> <Trash className="size-4" /> Delete</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         );
@@ -508,7 +508,7 @@ export default function TeamPage() {
             showSearchField={!isErrorUsers}
             searchValue={search}
             onSearchChange={handleSearchChange}
-            searchPlaceholder="Searching..."
+            searchPlaceholder="Search by name, email, or department..."
             currentPage={page}
             totalPages={pagination?.totalPages}
             onPageChange={(newPage) => setPage(newPage)}

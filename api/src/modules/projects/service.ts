@@ -5,22 +5,15 @@ import { isHaveAccess } from "../../utils/casl";
 import { AuthUser } from "../authentication/interfaces";
 
 export const createProjectService = async (authenticatedUser: AuthUser, project: IProjectPayload): Promise<IProject> => {
-    try {
-        await isHaveAccess(authenticatedUser, null, "Project", "manage");
-        const payload = {
-            ...project,
-            createdBy: authenticatedUser.userId,
-            lastUpdatedBy: authenticatedUser.userId,
-        };
-        await ProjectModel.validate(payload);
-        const newProject = await ProjectModel.create(payload);
-        return newProject;
-    } catch (error) {
-        if ((error as any).name === "ValidationError") {
-            throw new BadRequestException((error as any).message);
-        }
-        throw error;
-    }
+    await isHaveAccess(authenticatedUser, null, "Project", "manage");
+    const payload = {
+        ...project,
+        createdBy: authenticatedUser.userId,
+        lastUpdatedBy: authenticatedUser.userId,
+    };
+    await ProjectModel.validate(payload);
+    const newProject = await ProjectModel.create(payload);
+    return newProject;
 };
 
 export const getProjectsService = async (authenticatedUser: AuthUser, tenantId: string, options: { search: string, page: number, limit: number }): Promise<{ data: IProject[], total: number }> => {
@@ -79,7 +72,6 @@ export const getProjectsByBulkIdsService = async (authenticatedUser: AuthUser, i
 };
 
 export const updateProjectService = async (authenticatedUser: AuthUser, id: string, project: IProjectPayload): Promise<IProject> => {
-   try {
     await isHaveAccess(authenticatedUser, null, "Project", "update");
     await ProjectModel.validate(project);
     const updatedProject = await ProjectModel.findByIdAndUpdate(id, {...project, lastUpdatedBy: authenticatedUser.userId}, { new: true }).lean({
@@ -89,12 +81,6 @@ export const updateProjectService = async (authenticatedUser: AuthUser, id: stri
         throw new NotFoundException('Project not found');
     }
     return updatedProject;
-   } catch (error) {
-    if ((error as any).name === "ValidationError") {
-        throw new BadRequestException((error as any).message);
-    }
-    throw error;
-   }
 };
 
 export const deleteProjectService = async (authenticatedUser: AuthUser, id: string): Promise<IProject> => {

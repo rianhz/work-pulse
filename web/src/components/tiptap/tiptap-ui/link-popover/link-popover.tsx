@@ -17,69 +17,34 @@ import { TrashIcon } from "@/components/tiptap/tiptap-icons/trash-icon"
 import type { UseLinkPopoverConfig } from "@/components/tiptap/tiptap-ui/link-popover"
 import { useLinkPopover } from "@/components/tiptap/tiptap-ui/link-popover"
 
-// --- UI Primitives ---
-import type { ButtonProps } from "@/components/tiptap/tiptap-ui-primitive/button"
-import { Button } from "@/components/tiptap/tiptap-ui-primitive/button"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/tiptap/tiptap-ui-primitive/popover"
-import { Separator } from "@/components/tiptap/tiptap-ui-primitive/separator"
-import {
-  Card,
-  CardBody,
-  CardItemGroup,
-} from "@/components/tiptap/tiptap-ui-primitive/card"
-import { Input } from "@/components/tiptap/tiptap-ui-primitive/input"
+// --- Shadcn UI Primitives ---
+import { Button } from "@/components/ui/button"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Separator } from "@/components/ui/separator"
+import { Card, CardContent } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+
+// --- Tiptap Layout Primitives ---
 import { ButtonGroup } from "@/components/tiptap/tiptap-ui-primitive/button-group"
 
 import "./link-popover.scss"
 
 export interface LinkMainProps {
-  /**
-   * The URL to set for the link.
-   */
   url: string
-  /**
-   * Function to update the URL state.
-   */
   setUrl: React.Dispatch<React.SetStateAction<string | null>>
-  /**
-   * Function to set the link in the editor.
-   */
   setLink: () => void
-  /**
-   * Function to remove the link from the editor.
-   */
   removeLink: () => void
-  /**
-   * Function to open the link.
-   */
   openLink: () => void
-  /**
-   * Whether the link is currently active in the editor.
-   */
   isActive: boolean
 }
 
 export interface LinkPopoverProps
-  extends Omit<ButtonProps, "type">, UseLinkPopoverConfig {
-  /**
-   * Callback for when the popover opens or closes.
-   */
+  extends React.ComponentPropsWithoutRef<typeof Button>, UseLinkPopoverConfig {
   onOpenChange?: (isOpen: boolean) => void
-  /**
-   * Whether to automatically open the popover when a link is active.
-   * @default true
-   */
   autoOpenOnLinkActive?: boolean
 }
 
-/**
- * Link button component for triggering the link popover
- */
-export const LinkButton = forwardRef<HTMLButtonElement, ButtonProps>(
+export const LinkButton = forwardRef<HTMLButtonElement, React.ComponentPropsWithoutRef<typeof Button>>(
   ({ className, children, ...props }, ref) => {
     return (
       <Button
@@ -89,7 +54,6 @@ export const LinkButton = forwardRef<HTMLButtonElement, ButtonProps>(
         role="button"
         tabIndex={-1}
         aria-label="Link"
-        tooltip="Link"
         ref={ref}
         {...props}
       >
@@ -101,9 +65,6 @@ export const LinkButton = forwardRef<HTMLButtonElement, ButtonProps>(
 
 LinkButton.displayName = "LinkButton"
 
-/**
- * Main content component for the link popover
- */
 const LinkMain: React.FC<LinkMainProps> = ({
   url,
   setUrl,
@@ -122,17 +83,9 @@ const LinkMain: React.FC<LinkMainProps> = ({
   }
 
   return (
-    <Card
-      style={{
-        ...(isMobile ? { boxShadow: "none", border: 0 } : {}),
-      }}
-    >
-      <CardBody
-        style={{
-          ...(isMobile ? { padding: 0 } : {}),
-        }}
-      >
-        <CardItemGroup orientation="horizontal">
+    <Card className={isMobile ? "border-0 shadow-none" : ""}>
+      <CardContent className={isMobile ? "p-0" : "p-3"}>
+        <div className="flex flex-row items-center gap-2">
           <Input
             type="url"
             placeholder="Paste a link..."
@@ -143,7 +96,7 @@ const LinkMain: React.FC<LinkMainProps> = ({
             autoComplete="off"
             autoCorrect="off"
             autoCapitalize="off"
-            className="tiptap-link-input"
+            className="tiptap-link-input h-8"
           />
 
           <ButtonGroup>
@@ -153,47 +106,43 @@ const LinkMain: React.FC<LinkMainProps> = ({
               title="Apply link"
               disabled={!url && !isActive}
               variant="ghost"
+              size="sm"
             >
               <CornerDownLeftIcon className="tiptap-button-icon" />
             </Button>
           </ButtonGroup>
 
-          <Separator />
+          <Separator orientation="vertical" className="h-6" />
 
-          <ButtonGroup>
-            <ButtonGroup>
-              <Button
-                type="button"
-                onClick={openLink}
-                title="Open in new window"
-                disabled={!url && !isActive}
-                variant="ghost"
-              >
-                <ExternalLinkIcon className="tiptap-button-icon" />
-              </Button>
-            </ButtonGroup>
+          <div className="flex items-center gap-1">
+            <Button
+              type="button"
+              onClick={openLink}
+              title="Open in new window"
+              disabled={!url && !isActive}
+              variant="ghost"
+              size="sm"
+            >
+              <ExternalLinkIcon className="tiptap-button-icon" />
+            </Button>
 
-            <ButtonGroup>
-              <Button
-                type="button"
-                onClick={removeLink}
-                title="Remove link"
-                disabled={!url && !isActive}
-                variant="ghost"
-              >
-                <TrashIcon className="tiptap-button-icon" />
-              </Button>
-            </ButtonGroup>
-          </ButtonGroup>
-        </CardItemGroup>
-      </CardBody>
+            <Button
+              type="button"
+              onClick={removeLink}
+              title="Remove link"
+              disabled={!url && !isActive}
+              variant="ghost"
+              size="sm"
+            >
+              <TrashIcon className="tiptap-button-icon" />
+            </Button>
+          </div>
+        </div>
+      </CardContent>
     </Card>
   )
 }
 
-/**
- * Link content component for standalone use
- */
 export const LinkContent: React.FC<{
   editor?: Editor | null
 }> = ({ editor }) => {
@@ -204,11 +153,6 @@ export const LinkContent: React.FC<{
   return <LinkMain {...linkPopover} />
 }
 
-/**
- * Link popover component for Tiptap editors.
- *
- * For custom popover implementations, use the `useLinkPopover` hook instead.
- */
 export const LinkPopover = forwardRef<HTMLButtonElement, LinkPopoverProps>(
   (
     {
@@ -285,6 +229,7 @@ export const LinkPopover = forwardRef<HTMLButtonElement, LinkPopoverProps>(
             aria-label={label}
             aria-pressed={isActive}
             onClick={handleClick}
+            tooltip="Link"
             {...buttonProps}
             ref={ref}
           >
@@ -292,7 +237,7 @@ export const LinkPopover = forwardRef<HTMLButtonElement, LinkPopoverProps>(
           </LinkButton>
         </PopoverTrigger>
 
-        <PopoverContent>
+        <PopoverContent className="w-auto p-0">
           <LinkMain
             url={url}
             setUrl={setUrl}

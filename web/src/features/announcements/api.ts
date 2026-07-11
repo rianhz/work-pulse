@@ -1,8 +1,9 @@
+import { IGetPaginatedResponse, IPaginationQueryOptions } from "@/global";
 import { IAnnouncement } from "./announcements";
 import { api } from "@/lib/axios";
 
-export const getAnnouncements = async () => {
-  const response = await api.get("/announcements");
+export const getAnnouncements = async (options: IPaginationQueryOptions) => {
+  const response = await api.get<IGetPaginatedResponse<IAnnouncement[]>>("/announcements", { params: options });
   return response.data;
 };
 
@@ -11,7 +12,7 @@ export const getAnnouncementById = async (id: string) => {
   return response.data;
 };
 
-export const createAnnouncement = async (announcement: IAnnouncement) => {
+export const createAnnouncement = async (announcement: Partial<IAnnouncement>) => {
   const response = await api.post("/announcements", announcement);
   return response.data;
 };

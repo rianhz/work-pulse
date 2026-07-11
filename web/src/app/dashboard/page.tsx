@@ -11,7 +11,7 @@ export default function DashboardPage() {
   return (
     <main className="flex flex-1 flex-col">
         <h1 className="text-2xl font-bold">Good {getTimeOfDay()}, {user?.nickName || user?.fullName}</h1>
-        <p className="text-sm text-muted-foreground">It's {baseDateFormat(new Date(), 'dddd, MMMM D, YYYY')}. {todayIsWeekDay() ? "Don't forget to fill your timesheet for today." : "Enjoy your time off."}</p>
+        <p className="text-sm text-muted-foreground">It's {baseDateFormat(new Date(), 'dddd, MMMM D, YYYY')} — {todayIsWeekDay() ? "Don't forget to fill your timesheet for today." : "Enjoy your time off."}</p>
     </main>
   );
 }

@@ -5,17 +5,10 @@ import { isHaveAccess } from "../../utils/casl";
 import { AuthUser } from "../authentication/interfaces";
 
 export const createTimesheetService = async (authenticatedUser: AuthUser, timesheet: ITimesheet): Promise<ITimesheet> => {
-    try {
-        await isHaveAccess(authenticatedUser, timesheet, "Timesheet", "create");
-        await TimesheetModel.validate(timesheet);
-        const newTimesheet = await TimesheetModel.create(timesheet);
-        return newTimesheet;
-    } catch (error: any) {
-        if(error.name === "ValidationError") {
-            throw new BadRequestException(error.message);
-        }
-        throw error;
-    }
+    await isHaveAccess(authenticatedUser, timesheet, "Timesheet", "create");
+    await TimesheetModel.validate(timesheet);
+    const newTimesheet = await TimesheetModel.create(timesheet);
+    return newTimesheet;
 };
 
 export const getTimesheetsService = async (userId: string, tenantId: string): Promise<ITimesheet[]> => {

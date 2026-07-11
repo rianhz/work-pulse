@@ -15,21 +15,13 @@ import {
   useCodeBlock,
 } from "@/components/tiptap/tiptap-ui/code-block-button"
 
-// --- UI Primitives ---
-import type { ButtonProps } from "@/components/tiptap/tiptap-ui-primitive/button"
-import { Button } from "@/components/tiptap/tiptap-ui-primitive/button"
-import { Badge } from "@/components/tiptap/tiptap-ui-primitive/badge"
+// --- Shadcn UI Primitives ---
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 
 export interface CodeBlockButtonProps
-  extends Omit<ButtonProps, "type">, UseCodeBlockConfig {
-  /**
-   * Optional text to display alongside the icon.
-   */
+  extends React.ComponentPropsWithoutRef<typeof Button>, UseCodeBlockConfig {
   text?: string
-  /**
-   * Optional show shortcut keys in the button.
-   * @default false
-   */
   showShortcut?: boolean
 }
 
@@ -41,11 +33,6 @@ export function CodeBlockShortcutBadge({
   return <Badge>{parseShortcutKeys({ shortcutKeys })}</Badge>
 }
 
-/**
- * Button component for toggling code block in a Tiptap editor.
- *
- * For custom button implementations, use the `useCodeBlock` hook instead.
- */
 export const CodeBlockButton = forwardRef<
   HTMLButtonElement,
   CodeBlockButtonProps
@@ -102,8 +89,8 @@ export const CodeBlockButton = forwardRef<
         tabIndex={-1}
         aria-label={label}
         aria-pressed={isActive}
-        tooltip="Code Block"
         onClick={handleClick}
+        tooltip="Code Block"
         {...buttonProps}
         ref={ref}
       >

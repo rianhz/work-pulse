@@ -10,8 +10,8 @@ export interface IProject {
     status: "active" | "inactive" | "deleted";
     createdAt: Date;
     updatedAt: Date;
-    createdBy: Partial<IUser>;
-    lastUpdatedBy: Partial<IUser> | null;
+    createdBy: IUser;
+    lastUpdatedBy: IUser;
     formattedCreatedAt: string;
     formattedUpdatedAt: string;
 }
