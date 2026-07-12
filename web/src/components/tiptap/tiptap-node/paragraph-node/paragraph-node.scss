@@ -34,11 +34,23 @@
   caret-color: var(--tt-cursor-color);
 
   // Paragraph spacing
-  p:not(td p):not(th p) {
+  p:not(:first-child):not(td p):not(th p):not(:last-child) {
     font-size: 1rem;
     line-height: 1.6;
     font-weight: normal;
     margin-top: 20px;
+  }
+
+  p {
+    mark {
+      padding: 2px 4px;
+      border-radius: 4px;
+      margin-right: 4px;
+    }
+
+    s{
+      margin-right: 4px;
+    }
   }
 
   // Selection styles
@@ -54,7 +66,7 @@
 
   .selection {
     display: inline;
-    background-color: var(--tt-selection-color);
+    // background-color: var(--tt-selection-color);
   }
 
   // Selected node styles

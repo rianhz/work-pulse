@@ -20,7 +20,6 @@ import { useGetMe, useUpdateUser } from "@/features/users/hooks";
 import { Skeleton } from "@/components/ui/skeleton";
 import { UniversalUploader } from "../uploader/ImageUploader";
 import { InputGroup, InputGroupInput } from "@/components/ui/input-group";
-import { Spinner } from "@/components/ui/spinner";
 import BaseAvatar from "../images/BaseAvatar";
 import { useQueryClient } from "@tanstack/react-query";
 import { IUserWithProviders } from "@/app/settings/page";
@@ -163,8 +162,8 @@ export function AccountSettingsForm({ user, isLoading }: { user: IUserWithProvid
                     </div>
                     {isAccountSettingsDirty && (
                       <div className="flex flex-col gap-2">
-                        <Button type="submit" disabled={isPendingUpdateUser} onClick={() => onSubmitAccountSettings(getValuesAccountSettings())}>
-                          {isPendingUpdateUser ? <Spinner /> : 'Save Changes'}
+                        <Button type="submit" loading={isPendingUpdateUser} disabled={isPendingUpdateUser} onClick={() => onSubmitAccountSettings(getValuesAccountSettings())}>
+                          Save Changes
                         </Button>
                         <Button type="button" variant="outline" className="min-w-[70px]" onClick={() => resetAccountSettings({
                           fullName: user?.fullName ?? "",

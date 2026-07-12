@@ -1,9 +1,10 @@
 "use client";
 
-import { forwardRef, useMemo, useState } from "react";
+import { forwardRef, useEffect, useMemo, useState } from "react";
 
 // Hooks
 import { useTiptapEditor } from "@/hooks/use-tiptap-editor";
+import { useTextAlign } from "@/components/tiptap/tiptap-ui/text-align-dropdown/use-text-align";
 
 // Icons
 import { ChevronDownIcon } from "@/components/tiptap/tiptap-icons/chevron-down-icon";
@@ -12,8 +13,8 @@ import { AlignCenterIcon } from "@/components/tiptap/tiptap-icons/align-center-i
 import { AlignRightIcon } from "@/components/tiptap/tiptap-icons/align-right-icon";
 import { AlignJustifyIcon } from "@/components/tiptap/tiptap-icons/align-justify-icon";
 
-// Tiptap
-import { TextAlignButton, type TextAlign } from "@/components/tiptap/tiptap-ui/text-align-button";
+// Tiptap Types
+import type { TextAlign } from "@/components/tiptap/tiptap-ui/text-align-dropdown/use-text-align";
 
 // Shadcn
 import { Button } from "@/components/ui/button";
@@ -46,6 +47,38 @@ export interface TextAlignDropdownMenuProps
   modal?: boolean;
 }
 
+function TextAlignMenuItem({
+  align,
+  text,
+  editor,
+}: {
+  align: TextAlign;
+  text: string;
+  editor: any;
+}) {
+  const { isVisible, canAlign, handleTextAlign, Icon } = useTextAlign({
+    editor,
+    align,
+    hideWhenUnavailable: false,
+  });
+
+  if (!isVisible) return null;
+
+  return (
+    <DropdownMenuItem
+      disabled={!canAlign}
+      onClick={(e) => {
+        e.preventDefault();
+        handleTextAlign();
+      }}
+      className="flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm select-none focus:bg-accent focus:text-accent-foreground"
+    >
+      <Icon className="tiptap-button-icon" />
+      <span className="tiptap-button-text">{text}</span>
+    </DropdownMenuItem>
+  );
+}
+
 export const TextAlignDropdownMenu = forwardRef<
   HTMLButtonElement,
   TextAlignDropdownMenuProps
@@ -61,28 +94,49 @@ export const TextAlignDropdownMenu = forwardRef<
     ref
   ) => {
     const { editor } = useTiptapEditor(providedEditor);
-
     const [open, setOpen] = useState(false);
+    const [selectionTick, setSelectionTick] = useState(0);
+
+    useEffect(() => {
+      if (!editor) return;
+
+      const handleUpdate = () => {
+        setSelectionTick((prev) => prev + 1);
+      };
+
+      editor.on("selectionUpdate", handleUpdate);
+      editor.on("transaction", handleUpdate);
+
+      return () => {
+        editor.off("selectionUpdate", handleUpdate);
+        editor.off("transaction", handleUpdate);
+      };
+    }, [editor]);
 
     const activeAlign = useMemo(() => {
       if (!editor) return "left";
-
       if (editor.isActive({ textAlign: "center" })) return "center";
       if (editor.isActive({ textAlign: "right" })) return "right";
       if (editor.isActive({ textAlign: "justify" })) return "justify";
-
       return "left";
-    }, [editor, editor?.state]);
+    }, [editor, selectionTick]);
 
     const ActiveIcon = ICONS[activeAlign];
+    
+    // FIXED: Tiptap natively tracks if any custom alignment wrapper is present using string evaluation
+    const hasActiveAlignment = useMemo(() => {
+      if (!editor) return false;
+      return editor.isActive({ textAlign: "center" }) || 
+             editor.isActive({ textAlign: "right" }) || 
+             editor.isActive({ textAlign: "justify" });
+    }, [editor, selectionTick]);
 
     const canAlign =
       !!editor &&
       editor.isEditable &&
       editor.can().setTextAlign("left");
 
-    const isVisible =
-      !hideWhenUnavailable || !!editor;
+    const isVisible = !hideWhenUnavailable || !!editor;
 
     if (!isVisible) return null;
 
@@ -99,7 +153,11 @@ export const TextAlignDropdownMenu = forwardRef<
             variant="ghost"
             disabled={!canAlign}
             data-disabled={!canAlign}
-            tooltip="Text Align"
+            data-active-state={open || hasActiveAlignment ? "on" : "off"}
+            aria-pressed={open || hasActiveAlignment}
+            tabIndex={-1}
+            tooltip={open ? undefined : "Text Align"}
+            className={`${hasActiveAlignment ? "bg-muted text-muted-foreground" : ""}`}
             {...buttonProps}
           >
             {children ?? (
@@ -111,22 +169,22 @@ export const TextAlignDropdownMenu = forwardRef<
           </Button>
         </DropdownMenuTrigger>
 
-        <DropdownMenuContent align="start">
+        <DropdownMenuContent 
+          align="start" 
+          className="min-w-[120px]"
+          onCloseAutoFocus={(e) => e.preventDefault()}
+        >
           <DropdownMenuGroup>
             {ALIGNMENTS.map((align) => (
-              <DropdownMenuItem
+              <TextAlignMenuItem
                 key={align}
-                asChild
-              >
-                <TextAlignButton
-                  editor={editor}
-                  align={align}
-                  text={
-                    align.charAt(0).toUpperCase() +
-                    align.slice(1)
-                  }
-                />
-              </DropdownMenuItem>
+                align={align}
+                editor={editor}
+                text={
+                  align.charAt(0).toUpperCase() +
+                  align.slice(1)
+                }
+              />
             ))}
           </DropdownMenuGroup>
         </DropdownMenuContent>
@@ -135,7 +193,6 @@ export const TextAlignDropdownMenu = forwardRef<
   }
 );
 
-TextAlignDropdownMenu.displayName =
-  "TextAlignDropdownMenu";
+TextAlignDropdownMenu.displayName = "TextAlignDropdownMenu";
 
 export default TextAlignDropdownMenu;

@@ -184,18 +184,16 @@ export default function TeamPage() {
     {
       accessorKey: "fullName",
       header: ({ column }) => (
-        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")} className="px-0 h-8 hover:bg-transparent">
-          <span>Name</span>
-          <ArrowUpDown className="h-4 w-4" />
+        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")} className="px-0 h-8 hover:bg-transparent" icon={ArrowUpDown} iconPosition="right">
+          Name
         </Button>
       ),
     },
     {
       accessorKey: "email",
       header: ({ column }) => (
-        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")} className="px-0 h-8 hover:bg-transparent">
-          <span>Email</span>
-          <ArrowUpDown className="h-4 w-4" />
+        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")} className="px-0 h-8 hover:bg-transparent" icon={ArrowUpDown} iconPosition="right">
+          Email
         </Button>
       ),
     },
@@ -203,18 +201,16 @@ export default function TeamPage() {
       id: "leader",
       accessorFn: (row) => row.leader?.fullName || "",
       header: ({ column }) => (
-        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")} className="px-0 h-8 hover:bg-transparent">
-          <span>Leader</span>
-          <ArrowUpDown className="h-4 w-4" />
+        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")} className="px-0 h-8 hover:bg-transparent" icon={ArrowUpDown} iconPosition="right">
+          Leader
         </Button>
       ),
     },
     {
       accessorKey: "role",
       header: ({ column }) => (
-        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")} className="px-0 h-8 hover:bg-transparent">
-          <span>Role</span>
-          <ArrowUpDown className="h-4 w-4" />
+        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")} className="px-0 h-8 hover:bg-transparent" icon={ArrowUpDown} iconPosition="right">
+          Role
         </Button>
       ),
       cell: ({ row }) => {
@@ -226,18 +222,16 @@ export default function TeamPage() {
       id: "department",
       accessorFn: (row) => row.department?.name || "",
       header: ({ column }) => (
-        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")} className="px-0 h-8 hover:bg-transparent">
-          <span>Department</span>
-          <ArrowUpDown className="h-4 w-4" />
+        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")} className="px-0 h-8 hover:bg-transparent" icon={ArrowUpDown} iconPosition="right">
+          Department
         </Button>
       ),
     },
     {
       accessorKey: "position",
       header: ({ column }) => (
-        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")} className="px-0 h-8 hover:bg-transparent">
-          <span>Position</span>
-          <ArrowUpDown className="h-4 w-4" />
+        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")} className="px-0 h-8 hover:bg-transparent" icon={ArrowUpDown} iconPosition="right">
+          Position
         </Button>
       ),
     },
@@ -250,9 +244,9 @@ export default function TeamPage() {
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="p-1 hover:bg-muted rounded-md transition-colors">
-                <MoreHorizontalIcon className="cursor-pointer" />
-              </button>
+              <Button variant={'ghost'} className="p-1" icon={MoreHorizontalIcon} iconPosition="left" asChild={true}>
+                <span>View</span>
+              </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem className="cursor-pointer" onClick={() => handleSelectedUser(user, "edit")}> <Pencil className="size-4" /> Edit</DropdownMenuItem>
@@ -317,7 +311,7 @@ export default function TeamPage() {
               />
               {errors.role && <p className="text-sm text-red-500">{errors.role.message}</p>}
             </div>
-            <Button type="submit" disabled={isInvitingUsers || !isValid}>{isInvitingUsers ? <Spinner /> : "Invite"}</Button>
+            <Button type="submit" loading={isInvitingUsers} disabled={isInvitingUsers || !isValid}>Invite</Button>
           </form>
         </DialogContent>
       </Dialog>
@@ -405,9 +399,8 @@ export default function TeamPage() {
                   return (
                     <DropdownMenu open={leaderDropdownOpen} onOpenChange={setLeaderDropdownOpen}>
                       <DropdownMenuTrigger asChild>
-                        <Button id="leader" variant="outline" role="combobox" className="w-full justify-between font-normal group">
+                        <Button id="leader" variant="outline" role="combobox" className="w-full justify-between font-normal group" icon={ChevronDownIcon} iconClassName="pointer-events-none size-4 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" iconPosition="right">
                           {displayLabel}
-                          <ChevronDownIcon className="pointer-events-none size-4 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent className="p-0 w-[var(--radix-dropdown-menu-trigger-width)]" align="start">
@@ -467,7 +460,7 @@ export default function TeamPage() {
               />
               {errors.birthDate && <p className="text-sm text-red-500">{errors.birthDate.message}</p>}
             </div>
-            <Button type="submit" disabled={isPendingUpdateUser || !isDirty}>{isPendingUpdateUser ? <Spinner /> : "Update"}</Button>
+            <Button type="submit" loading={isPendingUpdateUser} disabled={isPendingUpdateUser || !isDirty}>Update</Button>
           </form>
         </DialogContent>
       </Dialog>
@@ -483,8 +476,8 @@ export default function TeamPage() {
           </DialogDescription>
           <DialogFooter>
             <Button type="button" variant="outline" className="min-w-[70px]" onClick={handleCloseDialog}>Cancel</Button>
-            <Button type="button" variant="destructive" disabled={isPendingDeleteUser} onClick={onDeleteSubmit}>
-              {isPendingDeleteUser ? <Spinner /> : "Delete"}
+            <Button type="button" variant="destructive" loading={isPendingDeleteUser} disabled={isPendingDeleteUser} onClick={onDeleteSubmit}>
+              Delete
             </Button>
           </DialogFooter>
         </DialogContent>

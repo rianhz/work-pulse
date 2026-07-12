@@ -3,9 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Spinner } from "@/components/ui/spinner";
 import { TableBody, TableCell, TableRow } from "@/components/ui/table";
-
 import { Table } from "@/components/ui/table";
 import { useChangePassword, useLogout, useRemoveGoogle, useRemovePassword } from "@/features/auth/hooks";
 import { UpdatePasswordFormValues, updatePasswordSchema } from "@/features/users/validator";
@@ -130,8 +128,8 @@ export function SecurityUserSettingsForm({ user, isLoading }: { user: IUserWithP
             )}
             <div className="flex items-center justify-end gap-2">
               <Button variant="outline" type="button" onClick={handleCloseChangePasswordDialog}>Cancel</Button>
-              <Button type="submit" variant="default" disabled={isSubmittingPassword || isPendingChangePassword}>
-                {isSubmittingPassword || isPendingChangePassword ? <Spinner /> : 'Save'}
+              <Button type="submit" variant="default" loading={isSubmittingPassword || isPendingChangePassword} disabled={isSubmittingPassword || isPendingChangePassword}>
+                Save
               </Button>
             </div>
           </form>
@@ -153,8 +151,8 @@ export function SecurityUserSettingsForm({ user, isLoading }: { user: IUserWithP
             {user.providers && user.providers.length > 1 ? (
               <>
                 <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
-                <Button variant="destructive" onClick={handleDisconnectConfirmed} disabled={isPendingRemovePassword || isPendingRemoveGoogle || isPendingLogout}>
-                  {isPendingRemovePassword || isPendingRemoveGoogle || isPendingLogout ? <Spinner /> : 'Disconnect'}
+                <Button variant="destructive" onClick={handleDisconnectConfirmed} loading={isPendingRemovePassword || isPendingRemoveGoogle || isPendingLogout} disabled={isPendingRemovePassword || isPendingRemoveGoogle || isPendingLogout}>
+                  Disconnect
                 </Button>
               </>
             ) : (

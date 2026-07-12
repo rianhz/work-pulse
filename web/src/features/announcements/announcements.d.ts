@@ -4,7 +4,6 @@ import { IUser } from "../users/users";
 
 export interface IAnnouncement extends IBaseEntity {
   title: string;
-  thumbnail: string;
   cover: string;
   content: string;
   type: typeof ANNOUNCEMENT_TYPE_OFFICE | typeof ANNOUNCEMENT_TYPE_USER;

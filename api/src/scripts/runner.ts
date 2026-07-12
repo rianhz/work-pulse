@@ -3,12 +3,14 @@ import mongoose from "mongoose";
 import dotenv from "dotenv";
 // import { usersMigrations } from "./migrations/usersMigrations";
 import { connectDatabase } from "../config/database";
-import { migratePositions } from "./migrations/positionsMigrations";
+import { thumbnailMigrations } from "./migrations/thumbnailAnnouncements";
+
 dotenv.config();
 
 const migrations = [
   // { name: "usersMigrations", execute: usersMigrations },
-  { name: "positionsMigrations", execute: migratePositions },
+  {name: "announcementMigrations", execute: thumbnailMigrations}
+
 ];
 
 async function runMigrations() {

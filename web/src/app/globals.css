@@ -2,7 +2,7 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";;
 
-/* @import "../styles/_variables.scss"; */
+@import "../styles/_variables.scss";
 @import "../styles/_keyframe-animations.scss";
 
 
@@ -50,6 +50,10 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+
+  --animate-slide-up-fixed: slideUpFixed 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  --animate-slide-down-fixed: slideDownFixed 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+
 }
 
 :root,
@@ -195,6 +199,29 @@
   }
 }
 
+@keyframes slideUpFixed {
+    0% { 
+      opacity: 0; 
+      transform: translateY(150%); 
+    }
+    100% { 
+      opacity: 1; 
+      transform: translateY(0); 
+    }
+  }
+
+  @keyframes slideDownFixed {
+    0% { 
+      opacity: 1; 
+      transform: translateY(0); 
+    }
+    100% { 
+      opacity: 0; 
+      transform: translateY(150%); 
+    }
+  }
+
+
 .fc .fc-scrollgrid-section-header.fc-scrollgrid-section-sticky > *{
   top: -24px;
 }
@@ -224,9 +251,4 @@
 
 .fc-scrollgrid-section-sticky .fc-scroller-harness .fc-scroller .fc-col-header colgroup{
   background-color: var(--background) !important;
-}
-
-.tiptap.ProseMirror.base-editor p mark {
-  padding: 2px 4px;
-  border-radius: 4px;
 }

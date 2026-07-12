@@ -8,11 +8,6 @@ import { ChevronDownIcon } from "@/components/tiptap/tiptap-icons/chevron-down-i
 // --- Hooks ---
 import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
 
-// --- Tiptap UI ---
-import { HeadingButton } from "@/components/tiptap/tiptap-ui/heading-button"
-import type { UseHeadingDropdownMenuConfig } from "@/components/tiptap/tiptap-ui/heading-dropdown-menu"
-import { useHeadingDropdownMenu } from "@/components/tiptap/tiptap-ui/heading-dropdown-menu"
-
 // --- Shadcn UI Primitives ---
 import { Button } from "@/components/ui/button"
 import {
@@ -23,10 +18,49 @@ import {
   DropdownMenuGroup,
 } from "@/components/ui/dropdown-menu"
 
+// --- Types ---
+import type { Level, UseHeadingDropdownMenuConfig } from "@/components/tiptap/tiptap-ui/heading-dropdown-menu"
+import { useHeading, useHeadingDropdownMenu } from "@/components/tiptap/tiptap-ui/heading-dropdown-menu"
+
 export interface HeadingDropdownMenuProps
   extends React.ComponentPropsWithoutRef<typeof Button>, UseHeadingDropdownMenuConfig {
   onOpenChange?: (isOpen: boolean) => void
   modal?: boolean
+}
+
+
+/**
+ * A clean internal item component to run the `useHeading` hook per level 
+ * without nesting a Button element or using `asChild`.
+ */
+function HeadingMenuItem({ 
+  level, 
+  editor 
+}: { 
+  level: Level; 
+  editor: any 
+}) {
+  const { isVisible, canToggle, handleToggle, Icon } = useHeading({
+    editor,
+    level,
+    hideWhenUnavailable: false,
+  })
+
+  if (!isVisible) return null
+
+  return (
+    <DropdownMenuItem
+      disabled={!canToggle}
+      onClick={(e) => {
+        e.preventDefault()
+        handleToggle()
+      }}
+      className="flex w-full items-center gap-2"
+    >
+      <Icon className="tiptap-button-icon" />
+      <span className="tiptap-button-text">Heading {level}</span>
+    </DropdownMenuItem>
+  )
 }
 
 export const HeadingDropdownMenu = forwardRef<
@@ -94,16 +128,14 @@ export const HeadingDropdownMenu = forwardRef<
           </Button>
         </DropdownMenuTrigger>
 
-        <DropdownMenuContent align="start">
-          <DropdownMenuGroup>
+        <DropdownMenuContent onCloseAutoFocus={(e) => e.preventDefault()}>
+          <DropdownMenuGroup className="min-w-20">
             {levels.map((level) => (
-              <DropdownMenuItem key={`heading-${level}`} asChild>
-                <HeadingButton
-                  editor={editor}
-                  level={level}
-                  text={`Heading ${level}`}
-                />
-              </DropdownMenuItem>
+              <HeadingMenuItem 
+                key={`heading-${level}`} 
+                level={level} 
+                editor={editor} 
+              />
             ))}
           </DropdownMenuGroup>
         </DropdownMenuContent>

@@ -36,6 +36,10 @@ body,
   font-family: "DM Sans", sans-serif;
 }
 
+.tiptap.ProseMirror > * {
+  overflow-wrap: anywhere;
+}
+
 .base-editor-wrapper {
   overflow: auto;
 }

@@ -5,6 +5,9 @@ import { EditorContent, EditorContext, useEditor } from "@tiptap/react"
 
 // --- Tiptap Core Extensions ---
 import { StarterKit } from "@tiptap/starter-kit"
+import { Heading } from "@tiptap/extension-heading"
+import { Document } from "@tiptap/extension-document"
+import { Text } from "@tiptap/extension-text"
 import { Image } from "@tiptap/extension-image"
 import { TaskItem, TaskList } from "@tiptap/extension-list"
 import { TextAlign } from "@tiptap/extension-text-align"
@@ -15,7 +18,6 @@ import { Superscript } from "@tiptap/extension-superscript"
 import { Selection } from "@tiptap/extensions"
 
 // --- UI Primitives ---
-import { Spacer } from "@/components/tiptap/tiptap-ui-primitive/spacer"
 import {
   Toolbar,
   ToolbarGroup,
@@ -64,6 +66,16 @@ import { handleImageUpload, MAX_FILE_SIZE } from "@/lib/tiptap-utils"
 import "@/components/tiptap/base/base-editor.scss"
 import { Button } from "@/components/ui/button"
 import { TextAlignDropdownMenu } from "../tiptap-ui/text-align-dropdown/text-align-dropdown"
+import { cn } from "@/lib/utils"
+
+interface BaseEditorProps {
+  initialContent?: string
+  onChange?: (content: string) => void
+  isEditable?: boolean
+  showToolbar?: boolean
+  className?: string
+  isTitle?: boolean
+}
 
 const MainToolbarContent = ({
   onHighlighterClick,
@@ -141,12 +153,47 @@ const MobileToolbarContent = ({
   </>
 )
 
-export function BaseEditor({initialContent, onChange, isEditable = true}: {initialContent?: string, onChange: (content: string) => void, isEditable?: boolean}) {
+export function BaseEditor({initialContent, onChange, isEditable = true, showToolbar = true, className, isTitle = false}: BaseEditorProps) {
   const isMobile = useIsBreakpoint()
   const [mobileView, setMobileView] = useState<"main" | "highlighter" | "link">(
     "main"
   )
   const toolbarRef = useRef<HTMLDivElement>(null)
+
+  const defaultExtensions = [
+  StarterKit.configure({
+    horizontalRule: false,
+    link: {
+      openOnClick: false,
+      enableClickSelection: true,
+    },
+  }),
+  HorizontalRule,
+  TextAlign.configure({ types: ["heading", "paragraph"] }),
+  TaskList,
+  TaskItem.configure({ nested: true }),
+  Highlight.configure({ multicolor: true }),
+  Image,
+  Typography,
+  Superscript,
+  Subscript,
+  Selection,
+  ImageUploadNode.configure({
+    accept: "image/*",
+    maxSize: MAX_FILE_SIZE,
+    limit: 3,
+    upload: handleImageUpload,
+    onError: (error) => console.error("Upload failed:", error),
+  }),
+]
+
+const titleExtensions = [
+  Document,
+  Heading.configure({
+    levels: [5],
+  }),
+  Text,
+]
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -159,35 +206,21 @@ export function BaseEditor({initialContent, onChange, isEditable = true}: {initi
         "aria-label": "Main content area, start typing to enter text.",
         class: "base-editor",
       },
+      handleKeyDown(view, event) {
+        if (isTitle && event.key === "Enter") {
+          event.preventDefault()
+          return true
+        }
+
+        return false
+      },
     },
-    extensions: [
-      StarterKit.configure({
-        horizontalRule: false,
-        link: {
-          openOnClick: false,
-          enableClickSelection: true,
-        },
-      }),
-      HorizontalRule,
-      TextAlign.configure({ types: ["heading", "paragraph"] }),
-      TaskList,
-      TaskItem.configure({ nested: true }),
-      Highlight.configure({ multicolor: true }),
-      Image,
-      Typography,
-      Superscript,
-      Subscript,
-      Selection,
-      ImageUploadNode.configure({
-        accept: "image/*",
-        maxSize: MAX_FILE_SIZE,
-        limit: 3,
-        upload: handleImageUpload,
-        onError: (error) => console.error("Upload failed:", error),
-      }),
-    ],
+   extensions: isTitle ? titleExtensions : defaultExtensions,
     onUpdate: ({ editor }) => {
-      onChange(editor.getHTML())
+      if (initialized.current) {
+        const html = editor.getHTML()
+        onChange?.(html)
+      }
     },
   })
 
@@ -203,16 +236,24 @@ export function BaseEditor({initialContent, onChange, isEditable = true}: {initi
     }
   }, [isMobile, mobileView])
 
-  useEffect(() => {
-    if (editor && initialContent !== undefined && editor.getHTML() !== initialContent) {
-      editor.commands.setContent(initialContent || '<p></p>')
-    }
-  }, [initialContent, editor])
+  const initialized = useRef(false)
+
+ useEffect(() => {
+  if (!editor) return
+
+  if (editor.getHTML() !== initialContent) {
+    editor.commands.setContent(initialContent || '<p></p>', {
+      emitUpdate: false, 
+    })
+  }
+  
+  initialized.current = true
+}, [editor, initialContent])
 
   return (
-    <div className="base-editor-wrapper">
+    <div className={cn("base-editor-wrapper", className)}>
       <EditorContext.Provider value={{ editor }}>
-        {isEditable && (
+        {isEditable && showToolbar && (
           <Toolbar ref={toolbarRef}>
             {mobileView === "main" ? (
               <MainToolbarContent
@@ -232,7 +273,7 @@ export function BaseEditor({initialContent, onChange, isEditable = true}: {initi
         <EditorContent
           editor={editor}
           role="presentation"
-          className="base-editor-content pt-2 min-h-48"
+          className="base-editor-content"
         />
       </EditorContext.Provider>
     </div>

@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import { DEFAULT_COVER_IMAGE } from "@/helpers/constants";
 
 interface BaseCoverProps {
   src?: string;
@@ -40,16 +41,13 @@ export function BaseCover({
   const [error, setError] = useState(false);
   const [isUploaderOpen, setIsUploaderOpen] = useState(false);
 
-  // Fallback fallback asset if provided src fails or is null
-  const defaultFallbackSrc = "/cover-default.svg";
+  const defaultFallbackSrc = DEFAULT_COVER_IMAGE;
   const displaySrc = !src || error ? defaultFallbackSrc : src;
 
   return (
     <>
-      {/* Container matching your dimensions: full width, default h-60, relative for Next.js fill */}
       <div className={`relative w-full h-60 overflow-hidden bg-muted group ${className}`}>
         
-        {/* Spinner Loader (Only active if we are processing a real custom asset) */}
         {loading && src && !error && (
           <div className="absolute inset-0 flex items-center justify-center bg-muted z-10">
             <Spinner />

@@ -18,8 +18,9 @@ export const createAnnouncementService = async (authenticatedUser: AuthUser, ann
   return newAnnouncement;
 };
 
-export const getAnnouncementsService = async (authenticatedUser: AuthUser, tenantId: string, options: QueryOptions):Promise<{ data: IAnnouncement[], total: number }> => {
+export const getAnnouncementsService = async (authenticatedUser: AuthUser, options: QueryOptions):Promise<{ data: IAnnouncement[], total: number }> => {
   const { search, page, limit } = options;
+  const tenantId = authenticatedUser.tenantId
   await isHaveAccess(authenticatedUser, null, "Announcement", "read");
 
   const skip = (page - 1) * limit;

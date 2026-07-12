@@ -1,9 +1,10 @@
 import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
 import { Slot } from "radix-ui"
-
 import { cn } from "@/lib/utils"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./tooltip"
+import { Spinner } from "@/components/ui/spinner" 
+import { Slottable } from "@radix-ui/react-slot"
 
 type ButtonProps =
   React.ComponentProps<"button"> &
@@ -11,6 +12,11 @@ type ButtonProps =
     asChild?: boolean
     tooltip?: React.ReactNode
     tooltipSide?: "top" | "right" | "bottom" | "left"
+    icon?: React.ComponentType<{ className?: string }>
+    iconPosition?: "left" | "right"
+    iconClassName?: string,
+    enableIconTransition?: boolean
+    loading?: boolean
   }
 
 const buttonVariants = cva(
@@ -31,10 +37,10 @@ const buttonVariants = cva(
       },
       size: {
         default:
-          "h-8 gap-1.5 px-3 has-data-[icon=inline-end]:pr-2.5 has-data-[icon=inline-start]:pl-2.5",
+          "h-8 gap-1 px-3 has-data-[icon=inline-end]:pr-2.5 has-data-[icon=inline-start]:pl-2.5",
         xs: "h-6 gap-1 px-2.5 text-xs has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2 [&_svg:not([class*='size-'])]:size-3",
         sm: "h-7 gap-1 px-3 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2",
-        lg: "h-9 gap-1.5 px-4 has-data-[icon=inline-end]:pr-3 has-data-[icon=inline-start]:pl-3",
+        lg: "h-9 gap-1 px-4 has-data-[icon=inline-end]:pr-3 has-data-[icon=inline-start]:pl-3",
         icon: "size-8",
         "icon-xs": "size-6 [&_svg:not([class*='size-'])]:size-3",
         "icon-sm": "size-7",
@@ -55,18 +61,43 @@ function Button({
   asChild = false,
   tooltip,
   tooltipSide = "top",
+  icon: Icon,
+  iconPosition = "left",
+  iconClassName,
+  enableIconTransition = false,
+  loading = false,
+  disabled,
+  children,
   ...props
 }: ButtonProps) {
   const Comp = asChild ? Slot.Root : "button"
+
+  const renderVisual = loading ? (
+    <Spinner className="animate-spin" />
+  ) : Icon ? (
+    <Icon 
+      className={cn(
+        enableIconTransition ? "transition-transform duration-300" : "transition-none",
+        enableIconTransition && iconPosition === "left" && "group-hover/button:-translate-x-0.5",
+        enableIconTransition && iconPosition === "right" && "group-hover/button:translate-x-0.5",
+        iconClassName
+      )} 
+    />
+  ) : null;
 
   const button = (
     <Comp
       data-slot="button"
       data-variant={variant}
       data-size={size}
+      disabled={disabled || loading}
       className={cn(buttonVariants({ variant, size, className }))}
       {...props}
-    />
+    >
+      {renderVisual && iconPosition === "left" && renderVisual}
+      <Slottable>{children}</Slottable>
+      {renderVisual && iconPosition === "right" && renderVisual}
+    </Comp>
   )
 
   if (!tooltip) {

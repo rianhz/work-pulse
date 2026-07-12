@@ -12,7 +12,6 @@ import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ProjectPayloadFormValues, projectPayloadSchema } from "@/features/projects/validator";
 import { Textarea } from "@/components/ui/textarea";
-import { Spinner } from "@/components/ui/spinner";
 import { useSearchUsers } from "@/features/users/hooks";
 import { GenericMultiSelect } from "@/components/custom/select/BaseSelect";
 import { useDebounce } from "@/hooks/use-debounce";
@@ -370,7 +369,7 @@ export default function ProjectsPage() {
 
             <div className="flex items-center justify-end gap-2 mt-4 w-full">
               <Button type="button" variant="outline" className="min-w-[70px]" onClick={() => setProjectDialogOpen(false)}>Cancel</Button>
-              <Button type="submit" disabled={isSubmitting || isLoadingCreateProject || isLoadingUpdateProject}>{isSubmitting || isLoadingCreateProject || isLoadingUpdateProject ? <Spinner className="size-4" /> : dialogMode === "create" ? "Create" : "Save"}</Button>
+              <Button type="submit" loading={isSubmitting || isLoadingCreateProject || isLoadingUpdateProject} disabled={isSubmitting || isLoadingCreateProject || isLoadingUpdateProject}>{dialogMode === "create" ? "Create" : "Save"}</Button>
             </div>
           </form>
         </DialogContent>
@@ -386,7 +385,7 @@ export default function ProjectsPage() {
           </DialogDescription>
           <div className="flex items-center justify-end gap-2 mt-4 w-full">
             <Button type="button" variant="outline" className="min-w-[70px]" onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
-            <Button type="button" variant="destructive" className="min-w-[70px]" onClick={handleDeleteConfirmed} disabled={isLoadingDeleteProject}>{isLoadingDeleteProject ? <Spinner className="size-4" /> : "Delete"}</Button>
+            <Button type="button" variant="destructive" className="min-w-[70px]" onClick={handleDeleteConfirmed} loading={isLoadingDeleteProject} disabled={isLoadingDeleteProject}>Delete</Button>
           </div>
         </DialogContent>
       </Dialog>
