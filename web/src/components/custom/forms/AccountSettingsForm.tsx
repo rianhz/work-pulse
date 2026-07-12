@@ -21,7 +21,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { UniversalUploader } from "../uploader/ImageUploader";
 import { InputGroup, InputGroupInput } from "@/components/ui/input-group";
 import { Spinner } from "@/components/ui/spinner";
-import BaseAvatar from "../images/BaseImage";
+import BaseAvatar from "../images/BaseAvatar";
 import { useQueryClient } from "@tanstack/react-query";
 import { IUserWithProviders } from "@/app/settings/page";
 import moment from "moment";
@@ -45,7 +45,7 @@ export function AccountSettingsForm({ user, isLoading }: { user: IUserWithProvid
     setValue: setValueAccountSettings,
     getValues: getValuesAccountSettings,
     watch: watchAccountSettings,
-    formState: { errors: errorsAccountSettings, isDirty: isAccountSettingsDirty, isSubmitting: isSubmittingAccountSettings },
+    formState: { errors: errorsAccountSettings, isDirty: isAccountSettingsDirty },
     reset: resetAccountSettings,
     formState: { dirtyFields: dirtyFieldsAccountSettings },
   } = useForm<EditUserFormValues>({
@@ -60,6 +60,9 @@ export function AccountSettingsForm({ user, isLoading }: { user: IUserWithProvid
   });
 
   const avatar = watchAccountSettings("avatar");
+  const initials = useMemo(() => {
+    return user.fullName?.split(" ").map((name) => name[0]).join("");
+  }, [user.fullName]);
 
   const handleUploadSuccess = (url: string) => {
     setValueAccountSettings("avatar", url, { shouldDirty: true });
@@ -139,18 +142,16 @@ export function AccountSettingsForm({ user, isLoading }: { user: IUserWithProvid
                   <div className="flex justify-between gap-2">
                     <div className="flex items-center gap-2">
                       <div className="flex flex-col justify-center items-center gap-2">
-                        <div
-                          onClick={() => setIsUploaderOpen(true)}
-                          className="group relative w-[100px] h-[100px] overflow-hidden rounded-full border border-muted"
-                        >
-                        
-                          <BaseAvatar src={avatar ?? ""} alt="Avatar" className="w-[100px] h-[100px] rounded-full" imageLoading="eager" />
-                          <div className="cursor-pointer absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-                            <span className="select-none px-1 text-center text-[10px] font-medium leading-tight text-white">
-                              Change
-                            </span>
-                          </div>
-                        </div>
+
+                        <BaseAvatar 
+                          src={avatar ?? ""} 
+                          alt="Avatar" 
+                          fallbackInitials={initials} 
+                          imageLoading="eager"
+                          isEditable={true}
+                          onUploadSuccess={handleUploadSuccess}
+                          className="w-[100px] h-[100px] rounded-full"
+                        />
                       </div>
                       <div>
                         <p className="text-sm font-medium">Profile Picture</p>

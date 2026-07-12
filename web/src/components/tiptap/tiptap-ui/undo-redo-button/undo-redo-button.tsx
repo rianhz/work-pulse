@@ -18,21 +18,13 @@ import {
   useUndoRedo,
 } from "@/components/tiptap/tiptap-ui/undo-redo-button"
 
-// --- UI Primitives ---
-import type { ButtonProps } from "@/components/tiptap/tiptap-ui-primitive/button"
-import { Button } from "@/components/tiptap/tiptap-ui-primitive/button"
-import { Badge } from "@/components/tiptap/tiptap-ui-primitive/badge"
+// --- Shadcn UI Primitives ---
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 
 export interface UndoRedoButtonProps
-  extends Omit<ButtonProps, "type">, UseUndoRedoConfig {
-  /**
-   * Optional text to display alongside the icon.
-   */
+  extends React.ComponentPropsWithoutRef<typeof Button>, UseUndoRedoConfig {
   text?: string
-  /**
-   * Optional show shortcut keys in the button.
-   * @default false
-   */
   showShortcut?: boolean
 }
 
@@ -46,15 +38,7 @@ export function HistoryShortcutBadge({
   return <Badge>{parseShortcutKeys({ shortcutKeys })}</Badge>
 }
 
-/**
- * Button component for triggering undo/redo actions in a Tiptap editor.
- *
- * For custom button implementations, use the `useHistory` hook instead.
- */
-export const UndoRedoButton = forwardRef<
-  HTMLButtonElement,
-  UndoRedoButtonProps
->(
+export const UndoRedoButton = forwardRef<HTMLButtonElement, UndoRedoButtonProps>(
   (
     {
       editor: providedEditor,
@@ -100,8 +84,8 @@ export const UndoRedoButton = forwardRef<
         role="button"
         tabIndex={-1}
         aria-label={label}
-        tooltip={label}
         onClick={handleClick}
+        tooltip={label}
         {...buttonProps}
         ref={ref}
       >
@@ -110,10 +94,7 @@ export const UndoRedoButton = forwardRef<
             <Icon className="tiptap-button-icon" />
             {text && <span className="tiptap-button-text">{text}</span>}
             {showShortcut && (
-              <HistoryShortcutBadge
-                action={action}
-                shortcutKeys={shortcutKeys}
-              />
+              <HistoryShortcutBadge action={action} shortcutKeys={shortcutKeys} />
             )}
           </>
         )}

@@ -26,6 +26,7 @@ import {
   LogOut,
   Users,
   Briefcase,
+  Megaphone,
 } from "lucide-react";
 import { useLogout } from "@/features/auth/hooks";
 import { Button } from "@/components/ui/button";
@@ -37,8 +38,11 @@ export function AppSidebar() {
   const currentUserRole = useAppSelector((state: RootState) => state.currentUser.user?.role);
   const {mutate: logout} = useLogout();
 
+  const isModerator = currentUserRole === "admin" || currentUserRole === "owner";
+
   const allowedProjectAccess = currentUserRole === "admin" || currentUserRole === "owner" || currentUserRole === "manager";
-  const allowedTimeSheetAccess = !(currentUserRole === "admin" || currentUserRole === "owner");
+  const allowedTimeSheetAccess = !isModerator;
+  const allowedAnnouncementsAccess = isModerator;
 
   const mainSideNavItems = [
     { title: "Dashboard", url: "/dashboard", icon: Home },
@@ -46,6 +50,7 @@ export function AppSidebar() {
     ...(allowedTimeSheetAccess ? [{ title: "Timesheet", url: "/timesheet", icon: Calendar }] : []),
     { title: "Team", url: "/team", icon: Users },
     ...(allowedProjectAccess ? [{ title: "Projects", url: "/projects", icon: Briefcase }] : []),
+    ...(allowedAnnouncementsAccess ? [{ title: "Announcements", url: "/announcements", icon: Megaphone }] : []),
     { title: "Settings", url: "/settings", icon: Settings },
   ];
 

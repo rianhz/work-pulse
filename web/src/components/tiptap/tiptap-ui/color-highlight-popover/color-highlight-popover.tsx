@@ -12,20 +12,14 @@ import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
 import { BanIcon } from "@/components/tiptap/tiptap-icons/ban-icon"
 import { HighlighterIcon } from "@/components/tiptap/tiptap-icons/highlighter-icon"
 
-// --- UI Primitives ---
-import type { ButtonProps } from "@/components/tiptap/tiptap-ui-primitive/button"
-import { Button } from "@/components/tiptap/tiptap-ui-primitive/button"
-import {
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-} from "@/components/tiptap/tiptap-ui-primitive/popover"
-import { Separator } from "@/components/tiptap/tiptap-ui-primitive/separator"
-import {
-  Card,
-  CardBody,
-  CardItemGroup,
-} from "@/components/tiptap/tiptap-ui-primitive/card"
+// --- Shadcn UI Primitives ---
+import { Button } from "@/components/ui/button"
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
+import { Separator } from "@/components/ui/separator"
+import { Card, CardContent } from "@/components/ui/card"
+
+// --- Tiptap Layout Primitives (Retained) ---
+import { ButtonGroup } from "@/components/tiptap/tiptap-ui-primitive/button-group"
 
 // --- Tiptap UI ---
 import type {
@@ -37,47 +31,27 @@ import {
   pickHighlightColorsByValue,
   useColorHighlight,
 } from "@/components/tiptap/tiptap-ui/color-highlight-button"
-import { ButtonGroup } from "@/components/tiptap/tiptap-ui-primitive/button-group"
 
 export interface ColorHighlightPopoverContentProps {
-  /**
-   * The Tiptap editor instance.
-   */
   editor?: Editor | null
-  /**
-   * Optional colors to use in the highlight popover.
-   * If not provided, defaults to a predefined set of colors.
-   */
   colors?: HighlightColor[]
-  /**
-   * When true, uses the actual color value (colorValue) instead of CSS variable (value).
-   * @default false
-   */
   useColorValue?: boolean
 }
 
 export interface ColorHighlightPopoverProps
   extends
-    Omit<ButtonProps, "type">,
+    React.ComponentPropsWithoutRef<typeof Button>,
     Pick<
       UseColorHighlightConfig,
       "editor" | "hideWhenUnavailable" | "onApplied"
     > {
-  /**
-   * Optional colors to use in the highlight popover.
-   * If not provided, defaults to a predefined set of colors.
-   */
   colors?: HighlightColor[]
-  /**
-   * When true, uses the actual color value (colorValue) instead of CSS variable (value).
-   * @default false
-   */
   useColorValue?: boolean
 }
 
 export const ColorHighlightPopoverButton = forwardRef<
   HTMLButtonElement,
-  ButtonProps
+  React.ComponentPropsWithoutRef<typeof Button>
 >(({ className, children, ...props }, ref) => (
   <Button
     type="button"
@@ -87,7 +61,6 @@ export const ColorHighlightPopoverButton = forwardRef<
     role="button"
     tabIndex={-1}
     aria-label="Highlight text"
-    tooltip="Highlight"
     ref={ref}
     {...props}
   >
@@ -137,10 +110,11 @@ export function ColorHighlightPopoverContent({
     <Card
       ref={containerRef}
       tabIndex={0}
-      style={isMobile ? { boxShadow: "none", border: 0 } : {}}
+      className={isMobile ? "border-0 shadow-none" : ""}
     >
-      <CardBody style={isMobile ? { padding: 0 } : {}}>
-        <CardItemGroup orientation="horizontal">
+      <CardContent className={isMobile ? "p-0" : "p-3"}>
+        {/* Replaced CardItemGroup with a simple flex layout */}
+        <div className="flex flex-row items-center gap-2">
           <ButtonGroup>
             {colors.map((color, index) => (
               <ButtonGroup key={color.value}>
@@ -149,7 +123,6 @@ export function ColorHighlightPopoverContent({
                   highlightColor={
                     useColorValue ? color.colorValue : color.value
                   }
-                  tooltip={color.label}
                   aria-label={`${color.label} highlight color`}
                   tabIndex={index === selectedIndex ? 0 : -1}
                   data-highlighted={selectedIndex === index}
@@ -158,12 +131,13 @@ export function ColorHighlightPopoverContent({
               </ButtonGroup>
             ))}
           </ButtonGroup>
-          <Separator />
+          
+          <Separator orientation="vertical" className="h-6" />
+          
           <ButtonGroup>
             <Button
               onClick={handleRemoveHighlight}
               aria-label="Remove highlight"
-              tooltip="Remove highlight"
               tabIndex={selectedIndex === colors.length ? 0 : -1}
               type="button"
               role="menuitem"
@@ -173,8 +147,8 @@ export function ColorHighlightPopoverContent({
               <BanIcon className="tiptap-button-icon" />
             </Button>
           </ButtonGroup>
-        </CardItemGroup>
-      </CardBody>
+        </div>
+      </CardContent>
     </Card>
   )
 }
@@ -219,7 +193,7 @@ export function ColorHighlightPopover({
           <Icon className="tiptap-button-icon" />
         </ColorHighlightPopoverButton>
       </PopoverTrigger>
-      <PopoverContent aria-label="Highlight colors">
+      <PopoverContent aria-label="Highlight colors" className="w-auto p-0">
         <ColorHighlightPopoverContent
           editor={editor}
           colors={colors}

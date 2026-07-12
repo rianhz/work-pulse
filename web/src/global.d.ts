@@ -2,6 +2,13 @@ export interface IBaseResponse {
   success: boolean;
   message: string;
 }
+
+export interface IBaseEntity {
+  _id: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export interface IResponse<T> extends IBaseResponse {
   data: T;
 }

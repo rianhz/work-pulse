@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import { IProject } from "./interfaces";
-import { baseDateFormat, baseDateTimeFormat } from "../../helpers/date-format";
+import { baseDateTimeFormat } from "../../helpers/date-format";
 import mongooseLeanVirtuals from 'mongoose-lean-virtuals';
 
 export const projectSchema = new mongoose.Schema<IProject>({

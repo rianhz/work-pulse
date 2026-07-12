@@ -12,21 +12,13 @@ import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
 import type { Mark, UseMarkConfig } from "@/components/tiptap/tiptap-ui/mark-button"
 import { MARK_SHORTCUT_KEYS, useMark } from "@/components/tiptap/tiptap-ui/mark-button"
 
-// --- UI Primitives ---
-import type { ButtonProps } from "@/components/tiptap/tiptap-ui-primitive/button"
-import { Button } from "@/components/tiptap/tiptap-ui-primitive/button"
-import { Badge } from "@/components/tiptap/tiptap-ui-primitive/badge"
+// --- Shadcn UI Primitives ---
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 
 export interface MarkButtonProps
-  extends Omit<ButtonProps, "type">, UseMarkConfig {
-  /**
-   * Optional text to display alongside the icon.
-   */
+  extends Omit<React.ComponentPropsWithoutRef<typeof Button>, "type">, UseMarkConfig {
   text?: string
-  /**
-   * Optional show shortcut keys in the button.
-   * @default false
-   */
   showShortcut?: boolean
 }
 
@@ -40,11 +32,6 @@ export function MarkShortcutBadge({
   return <Badge>{parseShortcutKeys({ shortcutKeys })}</Badge>
 }
 
-/**
- * Button component for toggling marks in a Tiptap editor.
- *
- * For custom button implementations, use the `useMark` hook instead.
- */
 export const MarkButton = forwardRef<HTMLButtonElement, MarkButtonProps>(
   (
     {
@@ -100,8 +87,8 @@ export const MarkButton = forwardRef<HTMLButtonElement, MarkButtonProps>(
         tabIndex={-1}
         aria-label={label}
         aria-pressed={isActive}
-        tooltip={label}
         onClick={handleClick}
+        tooltip={label}
         {...buttonProps}
         ref={ref}
       >

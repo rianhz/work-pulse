@@ -2,7 +2,7 @@ import moment from 'moment-timezone'
 
 export function formatToLocalDateTime(utcString: string | Date, userTimezone: string = "UTC") {
   if (!utcString || !userTimezone) return "";
-  return moment.utc(utcString).tz(userTimezone).format('DD MMM YYYY, hh:mm A')
+  return moment.utc(utcString).tz(userTimezone).format('DD MMM YYYY, HH:mm')
 }
 
 export function formatToLocalDate(utcString: string | Date, userTimezone: string = "UTC") {
@@ -12,5 +12,5 @@ export function formatToLocalDate(utcString: string | Date, userTimezone: string
 
 export function formatToLocalTime(utcString: string | Date, userTimezone: string = "UTC") {
   if (!utcString || !userTimezone) return "";
-  return moment.utc(utcString).tz(userTimezone).format('hh:mm A')
+  return moment.utc(utcString).tz(userTimezone).format('HH:mm')
 }

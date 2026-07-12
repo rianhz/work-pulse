@@ -34,7 +34,7 @@
   caret-color: var(--tt-cursor-color);
 
   // Paragraph spacing
-  p:not(:first-child):not(td p):not(th p) {
+  p:not(td p):not(th p) {
     font-size: 1rem;
     line-height: 1.6;
     font-weight: normal;

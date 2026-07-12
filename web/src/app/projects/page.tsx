@@ -18,7 +18,7 @@ import { GenericMultiSelect } from "@/components/custom/select/BaseSelect";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useCreateProject, useDeleteProject, useGetProjects, useUpdateProject } from "@/features/projects/hooks";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowUpDown, Briefcase, InfoIcon, MoreHorizontal, UsersIcon } from "lucide-react";
+import { ArrowUpDown, Briefcase, InfoIcon, MoreHorizontal, Pencil, Trash, UsersIcon } from "lucide-react";
 import { BaseTable } from "@/components/custom/table/BaseTable";
 import { Column, ColumnDef, VisibilityState } from "@tanstack/react-table";
 import { IProject } from "@/features/projects/project";
@@ -279,7 +279,7 @@ export default function ProjectsPage() {
                 className="cursor-pointer"
                 onClick={() => openEditDialog(row.original)}
               >
-                Edit
+                <Pencil className="size-4" /> Edit
               </DropdownMenuItem>
 
               <DropdownMenuItem
@@ -287,7 +287,7 @@ export default function ProjectsPage() {
                 onClick={() => openDeleteDialog(row.original)}
                 variant="destructive"
               >
-                Delete
+                <Trash className="size-4" /> Delete
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -391,8 +391,8 @@ export default function ProjectsPage() {
         </DialogContent>
       </Dialog>
 
-      <Card>
-        <CardHeader className="flex justify-between items-end flex-row">
+      <Card className="border-none pt-0 ring-0 shadow-none">
+        <CardHeader className="flex justify-between items-end flex-row px-0">
           <div>
             <CardTitle className="text-2xl font-bold">Projects</CardTitle>
             <CardDescription>Track, organize, and manage your workspace initiatives, project roles, and delivery lifecycles.</CardDescription>
@@ -401,7 +401,7 @@ export default function ProjectsPage() {
             <Button onClick={openCreateDialog} disabled={isLoadingProjects}>Create Project</Button>
           )}
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-0">
             <BaseTable
               columns={columns}
               data={projects}

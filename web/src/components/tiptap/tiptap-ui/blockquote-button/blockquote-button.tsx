@@ -15,21 +15,13 @@ import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
 // --- Lib ---
 import { parseShortcutKeys } from "@/lib/tiptap-utils"
 
-// --- UI Primitives ---
-import type { ButtonProps } from "@/components/tiptap/tiptap-ui-primitive/button"
-import { Button } from "@/components/tiptap/tiptap-ui-primitive/button"
-import { Badge } from "@/components/tiptap/tiptap-ui-primitive/badge"
+// --- Shadcn UI Primitives ---
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 
 export interface BlockquoteButtonProps
-  extends Omit<ButtonProps, "type">, UseBlockquoteConfig {
-  /**
-   * Optional text to display alongside the icon.
-   */
+  extends React.ComponentPropsWithoutRef<typeof Button>, UseBlockquoteConfig {
   text?: string
-  /**
-   * Optional show shortcut keys in the button.
-   * @default false
-   */
   showShortcut?: boolean
 }
 
@@ -41,11 +33,6 @@ export function BlockquoteShortcutBadge({
   return <Badge>{parseShortcutKeys({ shortcutKeys })}</Badge>
 }
 
-/**
- * Button component for toggling blockquote in a Tiptap editor.
- *
- * For custom button implementations, use the `useBlockquote` hook instead.
- */
 export const BlockquoteButton = forwardRef<
   HTMLButtonElement,
   BlockquoteButtonProps
@@ -102,8 +89,8 @@ export const BlockquoteButton = forwardRef<
         data-disabled={!canToggle}
         aria-label={label}
         aria-pressed={isActive}
-        tooltip="Blockquote"
         onClick={handleClick}
+        tooltip="Blockquote"
         {...buttonProps}
         ref={ref}
       >

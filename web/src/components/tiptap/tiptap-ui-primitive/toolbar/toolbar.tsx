@@ -1,7 +1,7 @@
 "use client"
 
 import { forwardRef, useCallback, useEffect, useRef, useState } from "react"
-import { Separator } from "@/components/tiptap/tiptap-ui-primitive/separator"
+import { Separator } from "@/components/ui/separator"
 import "@/components/tiptap/tiptap-ui-primitive/toolbar/toolbar.scss"
 import { cn } from "@/lib/tiptap-utils"
 import { useMenuNavigation } from "@/hooks/use-menu-navigation"

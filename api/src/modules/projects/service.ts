@@ -5,7 +5,7 @@ import { isHaveAccess } from "../../utils/casl";
 import { AuthUser } from "../authentication/interfaces";
 
 export const createProjectService = async (authenticatedUser: AuthUser, project: IProjectPayload): Promise<IProject> => {
-    await isHaveAccess(authenticatedUser, null, "Project", "create");
+    await isHaveAccess(authenticatedUser, null, "Project", "manage");
     const payload = {
         ...project,
         createdBy: authenticatedUser.userId,
@@ -72,7 +72,6 @@ export const getProjectsByBulkIdsService = async (authenticatedUser: AuthUser, i
 };
 
 export const updateProjectService = async (authenticatedUser: AuthUser, id: string, project: IProjectPayload): Promise<IProject> => {
-   try {
     await isHaveAccess(authenticatedUser, null, "Project", "update");
     await ProjectModel.validate(project);
     const updatedProject = await ProjectModel.findByIdAndUpdate(id, {...project, lastUpdatedBy: authenticatedUser.userId}, { new: true }).lean({
@@ -82,12 +81,6 @@ export const updateProjectService = async (authenticatedUser: AuthUser, id: stri
         throw new NotFoundException('Project not found');
     }
     return updatedProject;
-   } catch (error) {
-    if ((error as any).name === "ValidationError") {
-        throw new BadRequestException((error as any).message);
-    }
-    throw error;
-   }
 };
 
 export const deleteProjectService = async (authenticatedUser: AuthUser, id: string): Promise<IProject> => {

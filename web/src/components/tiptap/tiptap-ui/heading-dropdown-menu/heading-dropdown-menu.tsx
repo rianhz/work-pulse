@@ -13,34 +13,22 @@ import { HeadingButton } from "@/components/tiptap/tiptap-ui/heading-button"
 import type { UseHeadingDropdownMenuConfig } from "@/components/tiptap/tiptap-ui/heading-dropdown-menu"
 import { useHeadingDropdownMenu } from "@/components/tiptap/tiptap-ui/heading-dropdown-menu"
 
-// --- UI Primitives ---
-import type { ButtonProps } from "@/components/tiptap/tiptap-ui-primitive/button"
-import { Button } from "@/components/tiptap/tiptap-ui-primitive/button"
+// --- Shadcn UI Primitives ---
+import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuGroup,
-} from "@/components/tiptap/tiptap-ui-primitive/dropdown-menu"
+} from "@/components/ui/dropdown-menu"
 
 export interface HeadingDropdownMenuProps
-  extends Omit<ButtonProps, "type">, UseHeadingDropdownMenuConfig {
-  /**
-   * Callback for when the dropdown opens or closes
-   */
+  extends React.ComponentPropsWithoutRef<typeof Button>, UseHeadingDropdownMenuConfig {
   onOpenChange?: (isOpen: boolean) => void
-  /**
-   * Whether the dropdown should use a modal
-   */
   modal?: boolean
 }
 
-/**
- * Dropdown menu component for selecting heading levels in a Tiptap editor.
- *
- * For custom dropdown implementations, use the `useHeadingDropdownMenu` hook instead.
- */
 export const HeadingDropdownMenu = forwardRef<
   HTMLButtonElement,
   HeadingDropdownMenuProps
@@ -114,7 +102,6 @@ export const HeadingDropdownMenu = forwardRef<
                   editor={editor}
                   level={level}
                   text={`Heading ${level}`}
-                  showTooltip={false}
                 />
               </DropdownMenuItem>
             ))}

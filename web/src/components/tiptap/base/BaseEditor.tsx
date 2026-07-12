@@ -15,7 +15,6 @@ import { Superscript } from "@tiptap/extension-superscript"
 import { Selection } from "@tiptap/extensions"
 
 // --- UI Primitives ---
-import { Button } from "@/components/tiptap/tiptap-ui-primitive/button"
 import { Spacer } from "@/components/tiptap/tiptap-ui-primitive/spacer"
 import {
   Toolbar,
@@ -51,7 +50,6 @@ import {
   LinkButton,
 } from "@/components/tiptap/tiptap-ui/link-popover"
 import { MarkButton } from "@/components/tiptap/tiptap-ui/mark-button"
-import { TextAlignButton } from "@/components/tiptap/tiptap-ui/text-align-button"
 import { UndoRedoButton } from "@/components/tiptap/tiptap-ui/undo-redo-button"
 
 // --- Icons ---
@@ -61,12 +59,11 @@ import { LinkIcon } from "@/components/tiptap/tiptap-icons/link-icon"
 
 // --- Hooks ---
 import { useIsBreakpoint } from "@/hooks/use-is-breakpoint"
-import { useWindowSize } from "@/hooks/use-window-size"
-import { useCursorVisibility } from "@/hooks/use-cursor-visibility"
 
 import { handleImageUpload, MAX_FILE_SIZE } from "@/lib/tiptap-utils"
 import "@/components/tiptap/base/base-editor.scss"
-import content from "@/components/tiptap/base/data/content.json"
+import { Button } from "@/components/ui/button"
+import { TextAlignDropdownMenu } from "../tiptap-ui/text-align-dropdown/text-align-dropdown"
 
 const MainToolbarContent = ({
   onHighlighterClick,
@@ -79,17 +76,17 @@ const MainToolbarContent = ({
 }) => {
   return (
     <>
-      <Spacer />
-
       <ToolbarGroup>
         <UndoRedoButton action="undo" />
         <UndoRedoButton action="redo" />
       </ToolbarGroup>
 
-      <ToolbarSeparator />
+      <ToolbarGroup>
+        <TextAlignDropdownMenu />
+      </ToolbarGroup>
 
       <ToolbarGroup>
-        <HeadingDropdownMenu modal={false} levels={[1, 2, 3, 4]} />
+        <HeadingDropdownMenu modal={false} levels={[1, 2, 3, 4, 5]} />
         <ListDropdownMenu
           modal={false}
           types={["bulletList", "orderedList", "taskList"]}
@@ -97,8 +94,6 @@ const MainToolbarContent = ({
         <BlockquoteButton />
         <CodeBlockButton />
       </ToolbarGroup>
-
-      <ToolbarSeparator />
 
       <ToolbarGroup>
         <MarkButton type="bold" />
@@ -113,36 +108,6 @@ const MainToolbarContent = ({
         )}
         {!isMobile ? <LinkPopover /> : <LinkButton onClick={onLinkClick} />}
       </ToolbarGroup>
-
-      <ToolbarSeparator />
-
-      <ToolbarGroup>
-        <MarkButton type="superscript" />
-        <MarkButton type="subscript" />
-      </ToolbarGroup>
-
-      <ToolbarSeparator />
-
-      <ToolbarGroup>
-        <TextAlignButton align="left" />
-        <TextAlignButton align="center" />
-        <TextAlignButton align="right" />
-        <TextAlignButton align="justify" />
-      </ToolbarGroup>
-
-      {/* <ToolbarSeparator />
-
-      <ToolbarGroup>
-        <ImageUploadButton />
-      </ToolbarGroup> */}
-
-      {/* <Spacer />
-
-      {isMobile && <ToolbarSeparator />}
-
-      <ToolbarGroup>
-        <ThemeToggle />
-      </ToolbarGroup> */}
     </>
   )
 }
@@ -176,9 +141,8 @@ const MobileToolbarContent = ({
   </>
 )
 
-export function BaseEditor({initialContent, onChange}: {initialContent?: string, onChange: (content: string) => void}) {
+export function BaseEditor({initialContent, onChange, isEditable = true}: {initialContent?: string, onChange: (content: string) => void, isEditable?: boolean}) {
   const isMobile = useIsBreakpoint()
-  const { height } = useWindowSize()
   const [mobileView, setMobileView] = useState<"main" | "highlighter" | "link">(
     "main"
   )
@@ -186,13 +150,14 @@ export function BaseEditor({initialContent, onChange}: {initialContent?: string,
 
   const editor = useEditor({
     immediatelyRender: false,
+    editable: isEditable,
     editorProps: {
       attributes: {
         autocomplete: "off",
         autocorrect: "off",
         autocapitalize: "off",
         "aria-label": "Main content area, start typing to enter text.",
-        class: "simple-editor",
+        class: "base-editor",
       },
     },
     extensions: [
@@ -226,10 +191,11 @@ export function BaseEditor({initialContent, onChange}: {initialContent?: string,
     },
   })
 
-  const rect = useCursorVisibility({
-    editor,
-    overlayHeight: toolbarRef.current?.getBoundingClientRect().height ?? 0,
-  })
+  useEffect(() => {
+    if (editor) {
+      editor.setEditable(isEditable)
+    }
+  }, [isEditable, editor])
 
   useEffect(() => {
     if (!isMobile && mobileView !== "main") {
@@ -239,41 +205,34 @@ export function BaseEditor({initialContent, onChange}: {initialContent?: string,
 
   useEffect(() => {
     if (editor && initialContent !== undefined && editor.getHTML() !== initialContent) {
-      editor.commands.setContent(initialContent || content)
+      editor.commands.setContent(initialContent || '<p></p>')
     }
   }, [initialContent, editor])
 
   return (
-    <div className="simple-editor-wrapper">
+    <div className="base-editor-wrapper">
       <EditorContext.Provider value={{ editor }}>
-        <Toolbar
-          ref={toolbarRef}
-          style={{
-            ...(isMobile
-              ? {
-                  bottom: `calc(100% - ${height - rect.y}px)`,
-                }
-              : {}),
-          }}
-        >
-          {mobileView === "main" ? (
-            <MainToolbarContent
-              onHighlighterClick={() => setMobileView("highlighter")}
-              onLinkClick={() => setMobileView("link")}
-              isMobile={isMobile}
-            />
-          ) : (
-            <MobileToolbarContent
-              type={mobileView === "highlighter" ? "highlighter" : "link"}
-              onBack={() => setMobileView("main")}
-            />
-          )}
-        </Toolbar>
+        {isEditable && (
+          <Toolbar ref={toolbarRef}>
+            {mobileView === "main" ? (
+              <MainToolbarContent
+                onHighlighterClick={() => setMobileView("highlighter")}
+                onLinkClick={() => setMobileView("link")}
+                isMobile={isMobile}
+              />
+            ) : (
+              <MobileToolbarContent
+                type={mobileView === "highlighter" ? "highlighter" : "link"}
+                onBack={() => setMobileView("main")}
+              />
+            )}
+          </Toolbar>
+        )}
 
         <EditorContent
           editor={editor}
           role="presentation"
-          className="simple-editor-content pt-2"
+          className="base-editor-content pt-2 min-h-48"
         />
       </EditorContext.Provider>
     </div>

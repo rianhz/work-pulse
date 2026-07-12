@@ -21,3 +21,6 @@ export const REFRESH_COOKIE_OPTIONS = {
     maxAge: REFRESH_TOKEN_EXPIRES_IN * 1000,
     path: '/',
 };
+
+export const ANNOUNCEMENT_TYPE_OFFICE = "office-announcement" as const;
+export const ANNOUNCEMENT_TYPE_USER = "user-announcement" as const;

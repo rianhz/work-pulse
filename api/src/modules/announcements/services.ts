@@ -1,0 +1,64 @@
+import { isHaveAccess } from "../../utils/casl";
+import { AuthUser } from "../authentication/interfaces";
+import { QueryOptions } from "../global";
+import { IAnnouncement } from "./interfaces";
+import { AnnouncementModel } from "./schema";
+  
+export const createAnnouncementService = async (authenticatedUser: AuthUser, announcement: IAnnouncement) => {
+ await isHaveAccess(authenticatedUser, null, "Announcement", "manage");
+
+  const payload = {
+    ...announcement,
+    createdBy: authenticatedUser.userId,
+    lastUpdatedBy: authenticatedUser.userId,
+  }
+
+  await AnnouncementModel.validate(payload);
+  const newAnnouncement = await AnnouncementModel.create(payload);
+  return newAnnouncement;
+};
+
+export const getAnnouncementsService = async (authenticatedUser: AuthUser, tenantId: string, options: QueryOptions):Promise<{ data: IAnnouncement[], total: number }> => {
+  const { search, page, limit } = options;
+  await isHaveAccess(authenticatedUser, null, "Announcement", "read");
+
+  const skip = (page - 1) * limit;
+  const baseQuery: any = {
+    tenantId,
+    status: { $ne: "deleted" },
+  };  
+  if (search) {
+    baseQuery.title = { $regex: search, $options: "i" };
+  }
+  const announcements = await AnnouncementModel.find(baseQuery).select("-__v").populate("createdBy", "nickName fullName").populate("lastUpdatedBy", "nickName fullName").skip(skip).limit(limit).lean({
+    virtuals: true,
+  });
+  const total = await AnnouncementModel.countDocuments(baseQuery);
+  return { data: announcements as IAnnouncement[], total };
+};
+
+export const getAnnouncementByIdService = async (authenticatedUser: AuthUser, id: string) => {
+  await isHaveAccess(authenticatedUser, null, "Announcement", "read");
+
+  const announcement = await AnnouncementModel.findById(id);
+  return announcement;
+};
+
+export const updateAnnouncementService = async (authenticatedUser: AuthUser, id: string, announcement: IAnnouncement) => {
+  await isHaveAccess(authenticatedUser, null, "Announcement", "manage");
+
+  const payload = {
+    ...announcement,
+    lastUpdatedBy: authenticatedUser.userId,
+  }
+
+  const updatedAnnouncement = await AnnouncementModel.findByIdAndUpdate(id, payload, { new: true });
+  return updatedAnnouncement;
+};
+
+export const deleteAnnouncementService = async (authenticatedUser: AuthUser, id: string) => {
+  await isHaveAccess(authenticatedUser, null, "Announcement", "manage");
+  
+  const deletedAnnouncement = await AnnouncementModel.findByIdAndUpdate(id, { status: "deleted" }, { new: true });
+  return deletedAnnouncement;
+};

@@ -3,7 +3,7 @@ import { ForbiddenException } from "./app-error";
 import { AuthUser } from "../modules/authentication/interfaces";
 
 export type Actions = "manage" | "create" | "read" | "update" | "delete";
-export type Subjects = "User" | "Project" | "Timesheet" | "Tenant" | "Invitation" | "Department" | "Position" | "all";
+export type Subjects = "User" | "Project" | "Timesheet" | "Tenant" | "Invitation" | "Department" | "Position" | "Announcement" | "all";
 
 export async function defineAbilitiesFor(user: AuthUser) {
   const { can, build } = new AbilityBuilder(createMongoAbility);
@@ -18,6 +18,8 @@ export async function defineAbilitiesFor(user: AuthUser) {
       can("manage", "Position", { tenantId: user.tenantId });
 
       can(["read", "update"], "Tenant", { _id: user.tenantId }); 
+
+      can("manage", "Announcement", { tenantId: user.tenantId });
       break;
 
     case "admin":
@@ -29,6 +31,8 @@ export async function defineAbilitiesFor(user: AuthUser) {
       can("manage", "Position", { tenantId: user.tenantId });
       
       can(["read", "update"], "Tenant", { _id: user.tenantId }); 
+
+      can("manage", "Announcement", { tenantId: user.tenantId });
       break;
 
     case "manager":
@@ -37,6 +41,8 @@ export async function defineAbilitiesFor(user: AuthUser) {
       can("read", "User", { tenantId: user.tenantId });
       can("read", "Department", { tenantId: user.tenantId });
       can("manage", "Timesheet", { userId: user.userId, tenantId: user.tenantId });
+
+      can("read", "Announcement", { tenantId: user.tenantId });
       break;
 
     case "employee":
@@ -45,6 +51,8 @@ export async function defineAbilitiesFor(user: AuthUser) {
       can("read", "Project", { participants: { $in: [user.userId] } });
       can("manage", "Timesheet", { userId: user.userId, tenantId: user.tenantId });
       can("read", "Department", { tenantId: user.tenantId });
+
+      can("read", "Announcement", { tenantId: user.tenantId });
       break;
   }
 

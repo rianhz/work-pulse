@@ -1,7 +1,7 @@
 "use client";
 
 import { ErrorMessage } from "@/components/custom/errors-and-empty/ErrorsMessage";
-import BaseAvatar from "@/components/custom/images/BaseImage";
+import BaseAvatar from "@/components/custom/images/BaseAvatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";

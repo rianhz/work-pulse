@@ -15,24 +15,16 @@ import {
   useColorHighlight,
 } from "@/components/tiptap/tiptap-ui/color-highlight-button"
 
-// --- UI Primitives ---
-import type { ButtonProps } from "@/components/tiptap/tiptap-ui-primitive/button"
-import { Button } from "@/components/tiptap/tiptap-ui-primitive/button"
-import { Badge } from "@/components/tiptap/tiptap-ui-primitive/badge"
+// --- Shadcn UI Primitives ---
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 
 // --- Styles ---
 import "@/components/tiptap/tiptap-ui/color-highlight-button/color-highlight-button.scss"
 
 export interface ColorHighlightButtonProps
-  extends Omit<ButtonProps, "type">, UseColorHighlightConfig {
-  /**
-   * Optional text to display alongside the icon.
-   */
+  extends React.ComponentPropsWithoutRef<typeof Button>, UseColorHighlightConfig {
   text?: string
-  /**
-   * Optional show shortcut keys in the button.
-   * @default false
-   */
   showShortcut?: boolean
 }
 
@@ -44,33 +36,6 @@ export function ColorHighlightShortcutBadge({
   return <Badge>{parseShortcutKeys({ shortcutKeys })}</Badge>
 }
 
-/**
- * Button component for applying color highlights in a Tiptap editor.
- *
- * Supports two highlighting modes:
- * - "mark": Uses the highlight mark extension (default)
- * - "node": Uses the node background extension
- *
- * For custom button implementations, use the `useColorHighlight` hook instead.
- *
- * @example
- * ```tsx
- * // Mark-based highlighting (default)
- * <ColorHighlightButton highlightColor="yellow" />
- *
- * // Node-based background coloring
- * <ColorHighlightButton
- *   highlightColor="var(--tt-color-highlight-blue)"
- *   mode="node"
- * />
- *
- * // With custom callback
- * <ColorHighlightButton
- *   highlightColor="red"
- *   mode="mark"
- * />
- * ```
- */
 export const ColorHighlightButton = forwardRef<
   HTMLButtonElement,
   ColorHighlightButtonProps
@@ -143,7 +108,6 @@ export const ColorHighlightButton = forwardRef<
         data-disabled={!canColorHighlight}
         aria-label={label}
         aria-pressed={isActive}
-        tooltip={label}
         onClick={handleClick}
         style={buttonStyle}
         {...buttonProps}

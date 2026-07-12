@@ -11,50 +11,32 @@ import { ChevronDownIcon } from "@/components/tiptap/tiptap-icons/chevron-down-i
 
 // --- Tiptap UI ---
 import { ListButton, type ListType } from "@/components/tiptap/tiptap-ui/list-button"
-
 import { useListDropdownMenu } from "@/components/tiptap/tiptap-ui/list-dropdown-menu/use-list-dropdown-menu"
 
-// --- UI Primitives ---
-import type { ButtonProps } from "@/components/tiptap/tiptap-ui-primitive/button"
-import { Button } from "@/components/tiptap/tiptap-ui-primitive/button"
+// --- Shadcn UI Primitives ---
+import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuGroup,
-} from "@/components/tiptap/tiptap-ui-primitive/dropdown-menu"
+} from "@/components/ui/dropdown-menu"
 
-export interface ListDropdownMenuProps extends Omit<ButtonProps, "type"> {
-  /**
-   * The Tiptap editor instance.
-   */
+export interface ListDropdownMenuProps extends React.ComponentPropsWithoutRef<typeof Button> {
   editor?: Editor
-  /**
-   * The list types to display in the dropdown.
-   */
   types?: ListType[]
-  /**
-   * Whether the dropdown should be hidden when no list types are available
-   * @default false
-   */
   hideWhenUnavailable?: boolean
-  /**
-   * Callback for when the dropdown opens or closes
-   */
-  onOpenChange?: (isOpen: boolean) => void
-  /**
-   * Whether the dropdown should use a modal
-   */
   modal?: boolean
+  onOpenChange?: (open: boolean) => void
 }
 
 export function ListDropdownMenu({
   editor: providedEditor,
   types = ["bulletList", "orderedList", "taskList"],
   hideWhenUnavailable = false,
-  onOpenChange,
   modal = true,
+  onOpenChange,
   ...props
 }: ListDropdownMenuProps) {
   const { editor } = useTiptapEditor(providedEditor)
@@ -107,7 +89,7 @@ export function ListDropdownMenu({
                 editor={editor}
                 type={option.type}
                 text={option.label}
-                showTooltip={false}
+                showShortcut={false}
               />
             </DropdownMenuItem>
           ))}
