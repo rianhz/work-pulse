@@ -3,14 +3,13 @@ import BaseAvatar from "@/components/custom/images/BaseAvatar";
 import { BaseCover } from "@/components/custom/images/BaseCover";
 import { BaseEditor } from "@/components/tiptap/base/BaseEditor";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { IAnnouncement } from "@/features/announcements/announcements";
 import { useGetAnnouncementById, useUpdateAnnouncement } from "@/features/announcements/hooks";
-import { ANNOUNCEMENT_TYPE_OFFICE } from "@/helpers/constants";
+import { ANNOUNCEMENT_TYPE_OFFICE, DEFAULT_COVER_IMAGE, DEFAULT_THUMBNAIL_IMAGE } from "@/helpers/constants";
 import Image from "next/image";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AnnouncementFormValues, announcementSchema } from "@/features/announcements/validator";
@@ -18,6 +17,12 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Spinner } from "@/components/ui/spinner";
 import { useQueryClient } from "@tanstack/react-query";
+import { useAppSelector } from "@/store/hooks/hooks";
+import { RootState } from "@/store";
+import { NotAuthorised } from "@/components/custom/errors-and-empty/NotAuthorised";
+import { motion, AnimatePresence } from "framer-motion";
+import { cn } from "@/lib/utils";
+import { ChevronLeftIcon, SaveIcon } from "lucide-react";
 
 export default function AnnouncementDetailPage() {
   const queryClient = useQueryClient();
@@ -25,77 +30,54 @@ export default function AnnouncementDetailPage() {
   const { announcementId } = useParams();
   const mode = useSearchParams().get("mode");
   const isEditing = mode === "edit";
-  const { data: announcement, isLoading, isFetched } = useGetAnnouncementById(announcementId as string);
+
+  const currentUserRole = useAppSelector((state: RootState) => state.currentUser.user?.role);
+  const isMods = ["admin", "owner"];
+  const isAllowedToEdit = useMemo(() => isMods.includes(currentUserRole as string ?? ''), [currentUserRole]);
+
+  const { data: announcement, isLoading } = useGetAnnouncementById(announcementId as string);
   const { mutate: updateAnnouncement, isPending: isPendingUpdateAnnouncement } = useUpdateAnnouncement();
 
-  const [isVisible, setIsVisible] = useState(false);
-
-  const { control, handleSubmit, formState: { errors }, getValues, reset, formState: { isDirty }, watch,
-  setValue } = useForm<AnnouncementFormValues>({
+  const { control, handleSubmit, formState: { errors }, getValues, reset, formState: { isDirty }, watch, setValue } = useForm<AnnouncementFormValues>({
     resolver: zodResolver(announcementSchema),
-    defaultValues: {
+    values: useMemo(() => ({
       title: announcement?.title || '',
       content: announcement?.content || '',
-      thumbnail: announcement?.thumbnail || '',
       cover: announcement?.cover || '',
       type: announcement?.type || ANNOUNCEMENT_TYPE_OFFICE,
       status: announcement?.status || 'draft' as const,
-    },
+    }), [announcement])
   });
 
-  const currentStatus = watch("status")
-
-  const fallbackThumbnailImage = <Image src={'/thumbnail-default.svg'} alt="Avatar" className="w-[100px] h-[100px] rounded-full border border-1.5 border-border" width={100} height={100} />;
+  const cover = watch("cover");
 
   const handleSave = () => {
     const payload = getValues() as IAnnouncement;
-    console.log(payload);
     
     updateAnnouncement({ id: announcementId as string, announcement: payload }, {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ["announcements", announcementId] });
+        reset({
+          title: payload.title,
+          content: payload.content,
+          cover: payload.cover,
+          type: payload.type,
+          status: payload.status,
+        }, {
+          keepDirtyValues: false,
+        })
         toast.success("Announcement updated successfully");
       },
     });
   }
 
-  const handleToggleStatus = () => {
-    const currentFormStatus = getValues("status");
-    const newStatus = currentFormStatus === 'draft' ? 'published' : 'draft';
-    updateAnnouncement({ id: announcementId as string, announcement: {
-      status: newStatus,
-    } as IAnnouncement }, {
-      onSuccess: () => {
-        setValue("status", newStatus, { shouldDirty: false })
-        queryClient.invalidateQueries({ queryKey: ["announcements", announcementId] });
-        toast.success("Announcement published successfully");
-      },
-    });
-  }
-
   const handleTogglePreview = () => {
+    console.log("handleTogglePreview");
+    console.log(getValues());
     const params = new URLSearchParams(window.location.search);
-    params.set("mode", params.get("mode") === "edit" ? "preview" : "edit");
+    params.set("mode", params.get("mode") === "edit" ? "view" : "edit");
     router.push(`/announcements/${announcementId}?${params.toString()}`);
   }
-
-  useEffect(() => {
-    if (!isDirty) {
-      reset({
-        title: announcement?.title || '',
-        content: announcement?.content || '',
-        thumbnail: announcement?.thumbnail || '',
-        cover: announcement?.cover || '',
-        type: announcement?.type || ANNOUNCEMENT_TYPE_OFFICE,
-        status: announcement?.status || 'draft' as const,
-      });
-    }
-    if (isFetched) {
-      setTimeout(() => {
-        setIsVisible(true);
-      }, 1000);
-    }
-  }, [ announcement, reset, isFetched, isDirty ]);
 
   if (isLoading) {
     return (
@@ -107,72 +89,105 @@ export default function AnnouncementDetailPage() {
     );
   }
 
+  if (!isAllowedToEdit && isEditing) {
+    return <NotAuthorised />;
+  }
+
   return (
-    <form className="w-full relative pb-20">
+    <form className="w-full relative pb-20" onSubmit={handleSubmit(handleSave)}>
       <Card className="p-0">
         <CardHeader className="p-0">
           <CardTitle>
-            <div className="w-full h-60 rounded-t-lg relative">
-              <Controller 
-                control={control} 
-                name="cover" 
-                render={({ field: { onChange, value } }) => (
-                <BaseCover src={value} alt="Organization banner" isEditable={isEditing} folderName="company-banners" onUploadSuccess={(url) => onChange(url)} onDeleteSuccess={() => onChange('')} />
-              )} />
-              <div className="absolute bottom-0 left-0 p-2">
-                <Controller
-                  control={control}
-                  name="thumbnail"
+            <div className={cn("w-full rounded-t-lg relative", )}>
+              {cover && 
+                <Controller 
+                  control={control} 
+                  name="cover" 
                   render={({ field: { onChange, value } }) => (
-                    <BaseAvatar src={value} alt="Avatar" fallbackImage={fallbackThumbnailImage} className="w-[100px] h-[100px] rounded-full" imageLoading="eager" isEditable={isEditing} onUploadSuccess={(url) => onChange(url)} />
-                  )}
-                />
-              </div>
+                  <BaseCover src={value} alt="Organization banner" isEditable={isEditing} folderName="company-banners" onUploadSuccess={(url) => onChange(url)} onDeleteSuccess={() => onChange('')}  />
+                )} />
+              }
             </div>
-            <div className="w-full flex items-center gap-2 mt-4 py-2">
+            <div className="mt-4 flex justify-end px-2">
+              {!cover && isEditing && <Button variant="secondary" type="button" size="xs" onClick={() => setValue("cover", DEFAULT_COVER_IMAGE, { shouldDirty: true })}>
+                Set Cover
+              </Button>}
+              {isEditing && <Button variant="secondary" size="xs" onClick={handleTogglePreview} type="button">
+                Preview
+              </Button>}
+
+            </div>
+            <div className="w-full flex flex-col flex-start gap-2 p-2">
               <Controller
                 control={control}
                 name="title"
                 render={({ field: { onChange, value } }) => (
-                  <Input type="text" disabled={!isEditing} placeholder="Announcement title" className="h-20 bg-transparent border-none focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-border md:text-3xl disabled:opacity-100" value={value} onChange={(e) => onChange(e.target.value)} />
+                  <BaseEditor isEditable={isEditing} onChange={(content) => onChange(content)} initialContent={value || ''} showToolbar={false} className="w-full" isTitle={true} />
                 )}
               />
+              {errors.title && <p className="text-red-500 text-sm">{errors.title.message}</p>}
             </div>
           </CardTitle>
-          <CardContent>
+          <CardContent className="pb-8 px-2">
             <Controller
               control={control}
               name="content"
               render={({ field: { onChange, value } }) => (
-                <BaseEditor isEditable={isEditing} onChange={(content) => onChange(content)} initialContent={value || ''} />
+                <BaseEditor isEditable={isEditing} onChange={(content) => onChange(content)} initialContent={value || ''} className={`${isEditing ? "min-h-48" : ""}`} />
               )}
             />
+            {errors.content && <p className="text-red-500 text-sm">{errors.content.message}</p>}
           </CardContent>
         </CardHeader>
       </Card>
 
-    <div className={
-      `fixed bottom-6 left-[calc(50%+var(--sidebar-width)/2)] -translate-x-1/2 z-50
-      rounded-xl bg-card p-4 border border-border shadow-xl w-full max-w-2xl
-      transition-all duration-500 ease-out
-      ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}
-    `}>
-        <div className="flex justify-between items-center gap-1">
-          {isDirty && (
-            <Button variant="outline" type="submit" onClick={handleSubmit(handleSave)} disabled={isPendingUpdateAnnouncement}>
-              {isPendingUpdateAnnouncement ? <Spinner /> : 'Save'}
-            </Button>
-          )}
-          <div className="flex items-center gap-1 ml-auto">
-            <Button variant="secondary" onClick={handleTogglePreview} type="button">
-              {isEditing ? 'Preview' : 'Edit'}
-            </Button>
-            <Button onClick={handleToggleStatus} disabled={isPendingUpdateAnnouncement} type="button">
-              {isPendingUpdateAnnouncement ? <Spinner /> : currentStatus === 'draft' ? 'Publish' : 'Unpublish'}
-            </Button>
-          </div>
-        </div>
-    </div>
-  </form>
+      <AnimatePresence mode="wait">
+        {isAllowedToEdit && (
+          mode === "view" ? (
+            <motion.div
+              key="view-actions"
+              initial={{ opacity: 0, y: 30, x: "-50%" }}
+              animate={{ opacity: 1, y: 0, x: "-50%" }}
+              exit={{ opacity: 0, y: 30, x: "-50%" }}
+              transition={{ type: "spring", stiffness: 400, damping: 30 }}
+              className="fixed bottom-6 left-[calc(50%+var(--sidebar-width)/2)] z-50"
+            >
+              <Button 
+                variant="secondary" 
+                size="lg" 
+                onClick={handleTogglePreview} 
+                type="button" 
+                className="min-w-[90px]" 
+                icon={ChevronLeftIcon} 
+                iconPosition="left"
+              >
+                Back to edit
+              </Button>
+            </motion.div>
+          ) : isDirty && isEditing ? (
+            <motion.div
+              key="edit-actions"
+              initial={{ opacity: 0, y: 30, x: "-50%" }}
+              animate={{ opacity: 1, y: 0, x: "-50%" }}
+              exit={{ opacity: 0, y: 30, x: "-50%" }}
+              transition={{ type: "spring", stiffness: 400, damping: 30 }}
+              className="fixed bottom-6 left-[calc(50%+var(--sidebar-width)/2)] z-50"
+            >
+              <Button 
+                size="lg" 
+                type="submit" 
+                disabled={isPendingUpdateAnnouncement} 
+                loading={isPendingUpdateAnnouncement} 
+                className="min-w-[90px]" 
+                icon={SaveIcon} 
+                iconPosition="left"
+              >
+                Save
+              </Button>
+            </motion.div>
+          ) : null
+        )}
+      </AnimatePresence>
+    </form>
   );
 }

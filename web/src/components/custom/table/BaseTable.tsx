@@ -97,8 +97,7 @@ export function BaseTable<TData, TValue>({
         
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="ml-auto flex gap-2" disabled={isLoading}>
-              <SlidersHorizontal className="h-4 w-4" />
+            <Button variant="outline" className="ml-auto flex gap-2" disabled={isLoading} icon={SlidersHorizontal} iconPosition="left">
               View
             </Button>
           </DropdownMenuTrigger>

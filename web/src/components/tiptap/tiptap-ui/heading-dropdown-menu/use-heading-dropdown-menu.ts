@@ -16,7 +16,7 @@ import {
   isHeadingActive,
   canToggle,
   shouldShowButton,
-} from "@/components/tiptap/tiptap-ui/heading-button"
+} from "./use-heading"
 
 /**
  * Configuration for the heading dropdown menu functionality

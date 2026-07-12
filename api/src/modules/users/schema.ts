@@ -115,6 +115,7 @@ const userSchema = new mongoose.Schema<IUser>(
     timestamps: true,
     toJSON: { virtuals: true },
     toObject: { virtuals: true },
+    id: false,
   }
 );
 

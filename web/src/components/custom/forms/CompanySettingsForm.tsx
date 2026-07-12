@@ -9,8 +9,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
 import { UniversalUploader } from "../uploader/ImageUploader";
-import { InputGroup, InputGroupAddon, InputGroupInput, InputGroupTextarea } from "@/components/ui/input-group";
-import { Spinner } from "@/components/ui/spinner";
+import { InputGroup, InputGroupInput, InputGroupTextarea } from "@/components/ui/input-group";
 import { useQueryClient } from "@tanstack/react-query";
 import BaseAvatar from "../images/BaseAvatar";
 import { ITenant } from "@/features/tenants/tenant";
@@ -125,8 +124,8 @@ export function CompanySettingsForm({ tenantId, tenant, isLoading, onSaved }: { 
                     </div>
                     {isDirtyCompany && (
                       <div className="flex flex-col gap-2">
-                        <Button type="submit" disabled={isSubmittingCompany || isPendingUpdateTenant}>
-                          {isSubmittingCompany || isPendingUpdateTenant ? <Spinner /> : 'Save Changes'}
+                        <Button type="submit" loading={isSubmittingCompany || isPendingUpdateTenant} disabled={isSubmittingCompany || isPendingUpdateTenant}>
+                          Save Changes
                         </Button>
                         <Button type="button" variant="outline" className="min-w-[70px]" onClick={() => resetCompany({
                           name: tenant?.name ?? "",

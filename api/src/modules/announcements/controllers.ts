@@ -4,12 +4,11 @@ import { HTTPSTATUS } from "../../utils/http-config";
 
 export const createAnnouncementController = async (req: Request, res: Response) => {
   const authenticatedUser = (req as any).user;
-  const { title, description, type, thumbnail, cover, content } = req.body;
+  const { title, description, type, cover, content } = req.body;
   const payload = {
     title,
     description,
     type,
-    thumbnail,
     cover,
     content,
     tenantId: authenticatedUser.tenantId,
@@ -27,7 +26,7 @@ export const getAnnouncementsController = async (req: Request, res: Response) =>
   const search = req.query.search as string || "";
   const page = parseInt(req.query.page as string, 10) || 1;
   const limit = parseInt(req.query.limit as string, 10) || 10;
-  const { data, total } = await getAnnouncementsService(authenticatedUser, authenticatedUser.tenantId, { search, page, limit });
+  const { data, total } = await getAnnouncementsService(authenticatedUser, { search, page, limit });
   res.status(200).json({ success: true, data, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } });
 };
 
@@ -39,14 +38,13 @@ export const getAnnouncementByIdController = async (req: Request, res: Response)
 
 export const updateAnnouncementController = async (req: Request, res: Response) => {
   const authenticatedUser = (req as any).user;
-  const { title, description, type, status, thumbnail, cover, content } = req.body;
+  const { title, description, type, status, cover, content } = req.body;
   const payload = {
     title,
     description,
     type,
     tenantId: authenticatedUser.tenantId,
     status,
-    thumbnail,
     cover,
     content,
   }

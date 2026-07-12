@@ -12,12 +12,15 @@ import { tenantsRoutes } from './modules/tenants/routes';
 import { invitationRoutes } from './modules/invitation/routes';
 import { departmentRoutes } from './modules/departments/routes';
 import { announcementsRoutes } from './modules/announcements/routes';
+import { dashboardRoutes } from './modules/dashboard/routes';
+
 const app = express();
 
 app.use(cors(corsOptions));
 app.use(express.json());
 app.use(helmet())
 app.use(cookieParser());
+
 app.use('/auth', authRoutes);
 app.use('/users', usersRoutes);
 app.use('/tenants', tenantsRoutes);
@@ -26,6 +29,7 @@ app.use('/timesheets', timesheetRoutes);
 app.use('/invitations', invitationRoutes);
 app.use('/departments', departmentRoutes);
 app.use('/announcements', announcementsRoutes);
+app.use('/dashboard', dashboardRoutes);
 
 app.use(errorHandler);
 

@@ -142,7 +142,7 @@ export default function AcceptInvitationPage() {
               <Input id="confirmPassword" type="password" autoComplete="new-password" {...register("confirmPassword")} />
               {errors.confirmPassword && <p className="text-sm text-red-500">{errors.confirmPassword.message}</p>}
             </div>
-            <Button type="submit" className="w-full" disabled={isPendingAcceptInvitation || isPendingLoginPassword}>{isPendingAcceptInvitation || isPendingLoginPassword ? <Spinner /> : "Accept Invitation"}</Button>
+            <Button type="submit" className="w-full" loading={isPendingAcceptInvitation || isPendingLoginPassword} disabled={isPendingAcceptInvitation || isPendingLoginPassword}>Accept Invitation</Button>
           </form>
         </CardContent>
       </Card>

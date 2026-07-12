@@ -1,10 +1,10 @@
 "use client";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { getTimeOfDay, todayIsWeekDay } from "@/helpers/time-helper";
-import { baseDateFormat } from "@/lib/date-format";
+import { getTimeOfDay } from "@/helpers/time-helper";
 import { RootState } from "@/store";
 import { useSelector } from "react-redux";
+import DashboardLists from "@/components/custom/dashboard/DashboardLists";
 
 export default function DashboardPage() {
   const user = useSelector((state: RootState) => state.currentUser.user);
@@ -21,7 +21,7 @@ export default function DashboardPage() {
           </div>
         </CardHeader>
         <CardContent className="px-0">
-          
+          <DashboardLists />
         </CardContent>
       </Card>
     </>

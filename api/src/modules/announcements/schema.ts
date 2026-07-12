@@ -10,11 +10,6 @@ export const AnnouncementSchema = new mongoose.Schema({
     required: true, 
     default: "" 
   },
-  thumbnail: { 
-    type: String, 
-    required: false, 
-    default: "" 
-  },
   cover:{
     type: String,
     required: false,
@@ -54,7 +49,7 @@ export const AnnouncementSchema = new mongoose.Schema({
     required: false, 
     default: null
   },
-}, { timestamps: true });
+}, { timestamps: true, id: false });
 
 AnnouncementSchema.virtual("formattedCreatedAt").get(function(this: Document & IAnnouncement & { createdAt: Date }) {
     return this.createdAt ? baseDateTimeFormat(this.createdAt) : null;

@@ -19,11 +19,12 @@ export interface IGetPaginatedResponse<T> extends IBaseResponse {
     page: number;
     limit: number;
     totalPages: number;
+    hasNextPage: boolean;
   };
 }
 
 export interface IPaginationQueryOptions {
-  search: string;
-  page: number;
-  limit: number;
+  search?: string;
+  page?: number;
+  limit?: number;
 }

@@ -14,17 +14,15 @@ export const errorHandler: ErrorRequestHandler = (
     const requiredFields: string[] = [];
     const otherErrors: string[] = [];
 
-    // Separate missing required fields from other validation rules
     Object.keys(error.errors).forEach((key) => {
       const err = error.errors[key];
       if (err.kind === "required") {
-        requiredFields.push(key); // e.g., "thumbnail", "cover"
+        requiredFields.push(key);
       } else {
         otherErrors.push(err.message);
       }
     });
 
-    // Build a human-friendly readable message
     const dynamicMessages: string[] = [];
 
     if (requiredFields.length > 0) {
@@ -35,7 +33,6 @@ export const errorHandler: ErrorRequestHandler = (
       dynamicMessages.push(...otherErrors);
     }
 
-    // Join messages together if there are multiple types of errors
     const finalMessage = dynamicMessages.join(" | ");
 
     error = new BadRequestException(finalMessage);

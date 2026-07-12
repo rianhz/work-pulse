@@ -3,7 +3,6 @@ import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ITenant } from "@/features/tenants/tenant";
 import { useState } from "react";
-import { IDepartment } from "@/features/departments/departments";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -12,7 +11,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { DepartmentSchema, departmentSchema } from "@/features/departments/validator";
 import { Textarea } from "@/components/ui/textarea";
 import { useCreateDepartment, useDeleteDepartment, useDisableDepartment, useEnableDepartment, useGetDepartments, useUpdateDepartment } from "@/features/departments/hooks";
-import { Spinner } from "@/components/ui/spinner";
 import { DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { DropdownMenu } from "@/components/ui/dropdown-menu";
 import { Info, MoreHorizontalIcon } from "lucide-react";
@@ -164,7 +162,7 @@ export function DepartmentSettingsForm({ tenantId, tenant, isLoading }: { tenant
               <Textarea rows={3} className="max-h-[150px]" {...register("description")} />
               {errors.description && <p className="text-red-500">{errors.description.message}</p>}
             </div>
-            <Button type="submit" disabled={isPendingCreateDepartment}>{isPendingCreateDepartment ? <Spinner /> : 'Add'}</Button>
+            <Button type="submit" loading={isPendingCreateDepartment} disabled={isPendingCreateDepartment}>Add</Button>
           </form>
         </DialogContent>
       </Dialog>
@@ -186,7 +184,7 @@ export function DepartmentSettingsForm({ tenantId, tenant, isLoading }: { tenant
             </div>
             <div className="flex items-center gap-2">
               <Button type="button" variant="outline" className="min-w-[70px]" onClick={() => setIsEditOpen(false)}>Cancel</Button>
-              <Button type="submit" disabled={isPendingUpdateDepartment}>{isPendingUpdateDepartment ? <Spinner /> : 'Update'}</Button>
+              <Button type="submit" loading={isPendingUpdateDepartment} disabled={isPendingUpdateDepartment}>Update</Button>
             </div>
           </form>
         </DialogContent>
@@ -201,8 +199,8 @@ export function DepartmentSettingsForm({ tenantId, tenant, isLoading }: { tenant
           </DialogDescription>
           <DialogFooter>
             <Button type="button" variant="outline" className="min-w-[70px]" onClick={() => setIsDeleteOpen(false)}>Cancel</Button>
-            <Button type="submit" variant="destructive" disabled={isPendingDeleteDepartment} onClick={handleDeleteSubmit}>
-              {isPendingDeleteDepartment ? <Spinner /> : 'Delete'}
+            <Button type="submit" variant="destructive" loading={isPendingDeleteDepartment} disabled={isPendingDeleteDepartment} onClick={handleDeleteSubmit}>
+              Delete
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -218,11 +216,11 @@ export function DepartmentSettingsForm({ tenantId, tenant, isLoading }: { tenant
           <DialogFooter>
             <Button type="button" variant="outline" className="min-w-[70px]" onClick={() => setIsEnableDisableOpen((prev) => ({...prev, openDialog: false}))}>Cancel</Button>
             {isEnableDisableOpen.method === "disabled" ? (
-              <Button type="submit" variant="destructive" disabled={isPendingDisableDepartment} onClick={handleDisableSubmit}>
-                {isPendingDisableDepartment ? <Spinner /> : 'Disable'}
+              <Button type="submit" variant="destructive" loading={isPendingDisableDepartment} disabled={isPendingDisableDepartment} onClick={handleDisableSubmit}>
+                Disable
                 </Button>
             ) : (
-              <Button type="submit" variant="destructive" disabled={isPendingEnableDepartment} onClick={handleEnableSubmit}>{isPendingEnableDepartment ? <Spinner /> : 'Enable'}</Button>
+              <Button type="submit" variant="destructive" loading={isPendingEnableDepartment} disabled={isPendingEnableDepartment} onClick={handleEnableSubmit}>Enable</Button>
             )}
           </DialogFooter>
         </DialogContent>

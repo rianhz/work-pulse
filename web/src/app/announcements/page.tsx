@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogDescription, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Spinner } from "@/components/ui/spinner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { IAnnouncement } from "@/features/announcements/announcements";
 import { useCreateAnnouncement, useDeleteAnnouncement, useGetAnnouncements } from "@/features/announcements/hooks";
@@ -48,7 +47,6 @@ export default function AnnouncementsPage() {
       title: "Announcement title",
       type: ANNOUNCEMENT_TYPE_OFFICE,
       status: "draft" as const,
-      thumbnail: "",
       cover: "",
       content: "",
     }
@@ -105,7 +103,7 @@ export default function AnnouncementsPage() {
           <div 
             className="truncate max-w-[300px] block"
           >
-            {row.original.title}
+            {row.original.title.replace(/<[^>]*>?/g, '')}
           </div>
         );
       },
@@ -209,7 +207,7 @@ export default function AnnouncementsPage() {
           </DialogDescription>
           <div className="flex items-center justify-end gap-2 mt-4 w-full">
             <Button type="button" variant="outline" className="min-w-[70px]" onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
-            <Button type="button" variant="destructive" className="min-w-[70px]" onClick={handleDeleteConfirmed} disabled={isDeletingAnnouncement}>{isDeletingAnnouncement ? <Spinner className="size-4" /> : "Delete"}</Button>
+            <Button type="button" variant="destructive" className="min-w-[70px]" onClick={handleDeleteConfirmed} loading={isDeletingAnnouncement} disabled={isDeletingAnnouncement}>Delete</Button>
           </div>
         </DialogContent>
       </Dialog>
@@ -219,8 +217,8 @@ export default function AnnouncementsPage() {
             <CardTitle className="text-2xl font-bold">Announcements</CardTitle>
             <CardDescription>A comprehensive view of all announcements.</CardDescription>
           </div>
-          <Button onClick={handleCreateAnnouncement} disabled={isPending || isLoading}>
-           {isPending ? <Spinner /> : "Create"}
+          <Button onClick={handleCreateAnnouncement} loading={isPending} disabled={isPending || isLoading}>
+           Create
           </Button>
         </CardHeader>
         <CardContent className="px-0">

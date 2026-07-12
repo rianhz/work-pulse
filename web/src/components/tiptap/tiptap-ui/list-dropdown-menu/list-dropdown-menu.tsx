@@ -10,7 +10,6 @@ import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
 import { ChevronDownIcon } from "@/components/tiptap/tiptap-icons/chevron-down-icon"
 
 // --- Tiptap UI ---
-import { ListButton, type ListType } from "@/components/tiptap/tiptap-ui/list-button"
 import { useListDropdownMenu } from "@/components/tiptap/tiptap-ui/list-dropdown-menu/use-list-dropdown-menu"
 
 // --- Shadcn UI Primitives ---
@@ -22,6 +21,7 @@ import {
   DropdownMenuItem,
   DropdownMenuGroup,
 } from "@/components/ui/dropdown-menu"
+import { ListType, useList } from "./use-list"
 
 export interface ListDropdownMenuProps extends React.ComponentPropsWithoutRef<typeof Button> {
   editor?: Editor
@@ -29,6 +29,42 @@ export interface ListDropdownMenuProps extends React.ComponentPropsWithoutRef<ty
   hideWhenUnavailable?: boolean
   modal?: boolean
   onOpenChange?: (open: boolean) => void
+}
+
+/**
+ * A clean internal component to run the useList hook per type 
+ * without rendering a nested Button or breaking focus states.
+ */
+function ListMenuItem({
+  type,
+  label,
+  editor,
+}: {
+  type: ListType
+  label: string
+  editor: any
+}) {
+  const { isVisible, canToggle, handleToggle, Icon } = useList({
+    editor,
+    type,
+    hideWhenUnavailable: false,
+  })
+
+  if (!isVisible) return null
+
+  return (
+    <DropdownMenuItem
+      disabled={!canToggle}
+      onClick={(e) => {
+        e.preventDefault()
+        handleToggle()
+      }}
+      className="flex w-full items-center gap-2"
+    >
+      <Icon className="tiptap-button-icon" />
+      <span className="tiptap-button-text">{label}</span>
+    </DropdownMenuItem>
+  )
 }
 
 export function ListDropdownMenu({
@@ -42,6 +78,7 @@ export function ListDropdownMenu({
   const { editor } = useTiptapEditor(providedEditor)
   const [isOpen, setIsOpen] = useState(false)
 
+  // `Icon` here automatically responds dynamically to whichever list node is currently active
   const { filteredLists, canToggle, isActive, isVisible, Icon } =
     useListDropdownMenu({
       editor,
@@ -73,9 +110,11 @@ export function ListDropdownMenu({
           disabled={!canToggle}
           data-disabled={!canToggle}
           aria-label="List options"
-          tooltip="List"
+          // Tooltip hides when the menu is actively opened
+          tooltip={isOpen ? undefined : "List"}
           {...props}
         >
+          {/* Dynamically swapped active icon component */}
           <Icon className="tiptap-button-icon" />
           <ChevronDownIcon className="tiptap-button-dropdown-small" />
         </Button>
@@ -84,14 +123,12 @@ export function ListDropdownMenu({
       <DropdownMenuContent align="start">
         <DropdownMenuGroup>
           {filteredLists.map((option) => (
-            <DropdownMenuItem key={option.type} asChild>
-              <ListButton
-                editor={editor}
-                type={option.type}
-                text={option.label}
-                showShortcut={false}
-              />
-            </DropdownMenuItem>
+            <ListMenuItem
+              key={option.type}
+              type={option.type}
+              label={option.label}
+              editor={editor}
+            />
           ))}
         </DropdownMenuGroup>
       </DropdownMenuContent>

@@ -2,7 +2,6 @@ import { ANNOUNCEMENT_TYPE_OFFICE, ANNOUNCEMENT_TYPE_USER } from "../../utils/co
 
 export interface IAnnouncement {
   title: string;
-  thumbnail: string;
   cover: string;
   content: string;
   tenantId: string;
