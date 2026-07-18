@@ -38,6 +38,21 @@ export const getAnnouncementsService = async (authenticatedUser: AuthUser, optio
   return { data: announcements as IAnnouncement[], total };
 };
 
+export const getFeaturedAnnouncementsService = async (authenticatedUser: AuthUser):Promise<IAnnouncement[]> => {
+  const tenantId = authenticatedUser.tenantId
+  await isHaveAccess(authenticatedUser, null, "Announcement", "read");
+
+  const baseQuery: any = {
+    tenantId,
+    status: "published",
+    isFeatured: true,
+  };
+  const announcements = await AnnouncementModel.find(baseQuery).select("-__v").populate("createdBy", "nickName fullName").populate("lastUpdatedBy", "nickName fullName").lean({
+    virtuals: true,
+  });
+  return announcements as IAnnouncement[];
+};
+
 export const getAnnouncementByIdService = async (authenticatedUser: AuthUser, id: string) => {
   await isHaveAccess(authenticatedUser, null, "Announcement", "read");
 
@@ -51,6 +66,7 @@ export const updateAnnouncementService = async (authenticatedUser: AuthUser, id:
   const payload = {
     ...announcement,
     lastUpdatedBy: authenticatedUser.userId,
+    ...(announcement.status === "published" && !announcement.publishedAt ? { publishedAt: new Date() } : {}),
   }
 
   const updatedAnnouncement = await AnnouncementModel.findByIdAndUpdate(id, payload, { new: true });

@@ -4,13 +4,16 @@ import dotenv from "dotenv";
 // import { usersMigrations } from "./migrations/usersMigrations";
 import { connectDatabase } from "../config/database";
 import { thumbnailMigrations } from "./migrations/thumbnailAnnouncements";
+import { isFeaturedAnnouncements } from "./migrations/isFeaturedAnnouncements";
+import { datePublishedAnnouncements } from "./migrations/datePublishedAnnouncements";
 
 dotenv.config();
 
 const migrations = [
   // { name: "usersMigrations", execute: usersMigrations },
-  {name: "announcementMigrations", execute: thumbnailMigrations}
-
+  // {name: "announcementMigrations", execute: thumbnailMigrations},
+  // {name: "isFeaturedAnnouncements", execute: isFeaturedAnnouncements}
+  {name: "datePublishedAnnouncements", execute: datePublishedAnnouncements}
 ];
 
 async function runMigrations() {

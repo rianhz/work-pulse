@@ -37,6 +37,11 @@ export const AnnouncementSchema = new mongoose.Schema({
     required: true, 
     default: "draft" 
   },
+  isFeatured: {
+    type: Boolean,
+    required: false,
+    default: false
+  },
   createdBy: { 
     type: Types.ObjectId, 
     ref: "User", 
@@ -49,6 +54,11 @@ export const AnnouncementSchema = new mongoose.Schema({
     required: false, 
     default: null
   },
+  publishedAt: {
+    type: Date,
+    required: false,
+    default: null
+  },
 }, { timestamps: true, id: false });
 
 AnnouncementSchema.virtual("formattedCreatedAt").get(function(this: Document & IAnnouncement & { createdAt: Date }) {
@@ -57,6 +67,10 @@ AnnouncementSchema.virtual("formattedCreatedAt").get(function(this: Document & I
 
 AnnouncementSchema.virtual("formattedUpdatedAt").get(function(this: Document & IAnnouncement & { updatedAt: Date }) {
     return this.updatedAt ? baseDateTimeFormat(this.updatedAt) : null;
+});
+
+AnnouncementSchema.virtual("formattedPublishedAt").get(function(this: Document & IAnnouncement & { publishedAt: Date }) {
+    return this.publishedAt ? baseDateTimeFormat(this.publishedAt) : null;
 });
 
 AnnouncementSchema.plugin(mongooseLeanVirtuals);

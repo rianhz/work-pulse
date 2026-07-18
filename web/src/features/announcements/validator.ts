@@ -16,7 +16,6 @@ export const announcementSchema = z.object({
   }),
   cover: z.string().optional(),
   type: z.enum([ANNOUNCEMENT_TYPE_OFFICE, ANNOUNCEMENT_TYPE_USER]),
-  status: z.enum(["draft", "published", "archived", "deleted"]),
 });
 
 export type AnnouncementFormValues = z.infer<typeof announcementSchema>;

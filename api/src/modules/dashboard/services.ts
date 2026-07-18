@@ -19,7 +19,7 @@ export const getDashboardAnnouncementsService = async (authenticatedUser: AuthUs
   }
 
   const data = await AnnouncementModel.find(baseQuery)
-    .sort({ createdAt: -1 })
+    .sort({ publishedAt: -1 })
     .skip(skip)
     .populate("createdBy", "nickName fullName")
     .populate("lastUpdatedBy", "nickName fullName")

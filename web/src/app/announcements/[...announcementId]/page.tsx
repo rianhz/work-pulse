@@ -1,13 +1,11 @@
 "use client";
-import BaseAvatar from "@/components/custom/images/BaseAvatar";
 import { BaseCover } from "@/components/custom/images/BaseCover";
 import { BaseEditor } from "@/components/tiptap/base/BaseEditor";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { IAnnouncement } from "@/features/announcements/announcements";
 import { useGetAnnouncementById, useUpdateAnnouncement } from "@/features/announcements/hooks";
-import { ANNOUNCEMENT_TYPE_OFFICE, DEFAULT_COVER_IMAGE, DEFAULT_THUMBNAIL_IMAGE } from "@/helpers/constants";
-import Image from "next/image";
+import { ANNOUNCEMENT_TYPE_OFFICE, DEFAULT_COVER_IMAGE } from "@/helpers/constants";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
@@ -15,16 +13,18 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { AnnouncementFormValues, announcementSchema } from "@/features/announcements/validator";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Spinner } from "@/components/ui/spinner";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAppSelector } from "@/store/hooks/hooks";
 import { RootState } from "@/store";
 import { NotAuthorised } from "@/components/custom/errors-and-empty/NotAuthorised";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { ChevronLeftIcon, SaveIcon } from "lucide-react";
+import { SaveIcon } from "lucide-react";
+import EditConfirm from "@/components/custom/popup/EditConfirm";
+import { Badge, BadgeVariant } from "@/components/ui/badge";
 
 export default function AnnouncementDetailPage() {
+  const [showEditConfirmPopup, setShowEditConfirmPopup] = useState(false); 
   const queryClient = useQueryClient();
   const router = useRouter();
   const { announcementId } = useParams();
@@ -45,7 +45,6 @@ export default function AnnouncementDetailPage() {
       content: announcement?.content || '',
       cover: announcement?.cover || '',
       type: announcement?.type || ANNOUNCEMENT_TYPE_OFFICE,
-      status: announcement?.status || 'draft' as const,
     }), [announcement])
   });
 
@@ -54,7 +53,7 @@ export default function AnnouncementDetailPage() {
   const handleSave = () => {
     const payload = getValues() as IAnnouncement;
     
-    updateAnnouncement({ id: announcementId as string, announcement: payload }, {
+    updateAnnouncement({ id: announcementId as string, announcement: { ...payload, status: 'draft' } as IAnnouncement }, {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ["announcements", announcementId] });
         reset({
@@ -62,7 +61,6 @@ export default function AnnouncementDetailPage() {
           content: payload.content,
           cover: payload.cover,
           type: payload.type,
-          status: payload.status,
         }, {
           keepDirtyValues: false,
         })
@@ -72,12 +70,46 @@ export default function AnnouncementDetailPage() {
   }
 
   const handleTogglePreview = () => {
-    console.log("handleTogglePreview");
-    console.log(getValues());
     const params = new URLSearchParams(window.location.search);
     params.set("mode", params.get("mode") === "edit" ? "view" : "edit");
     router.push(`/announcements/${announcementId}?${params.toString()}`);
   }
+ 
+  const handleConfirmEdit = () => {
+    if(announcement?.status === 'draft') return;
+    updateAnnouncement({ id: announcementId as string, announcement: { status: 'draft' } as IAnnouncement }, {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["announcements", announcementId] });
+        setShowEditConfirmPopup(false);
+      },
+    });
+  }
+
+  const handleCancelEdit = () => {
+    setShowEditConfirmPopup(false);
+    
+    const params = new URLSearchParams(window.location.search);
+    params.set("mode", "view");
+    
+    router.replace(`/announcements/${announcementId}?${params.toString()}`);
+  };
+
+  useEffect(() => {
+    if (!announcementId) return;
+    if (!isEditing) return;
+
+    if (announcement?.status === 'published' && isAllowedToEdit) {
+      const skip = localStorage.getItem(`announcement-edit-dialog-hidden-${announcementId}`) === "true";
+
+      if (skip) {
+        setShowEditConfirmPopup(false);
+        return;
+      }
+
+      setShowEditConfirmPopup(true);
+    }
+    
+  }, [announcement, announcementId, isEditing]);
 
   if (isLoading) {
     return (
@@ -89,16 +121,31 @@ export default function AnnouncementDetailPage() {
     );
   }
 
-  if (!isAllowedToEdit && isEditing) {
-    return <NotAuthorised />;
-  }
 
   return (
+    <>
+    <EditConfirm
+      announcementId={announcementId as string}
+      open={showEditConfirmPopup}
+      setOpen={(isOpen) => {
+        if (!isOpen) {
+          handleCancelEdit();
+        }
+        setShowEditConfirmPopup(isOpen);
+      }}
+      confirm={handleConfirmEdit}
+      isLoading={isPendingUpdateAnnouncement}
+    />
     <form className="w-full relative pb-20" onSubmit={handleSubmit(handleSave)}>
-      <Card className="p-0">
+      {isEditing && 
+        <div className="flex justify-end flex-1">
+          <Badge variant={announcement?.status as BadgeVariant} className="text-xs ml-auto">{announcement && announcement?.status.charAt(0).toUpperCase() + announcement?.status.slice(1)}</Badge>
+        </div>
+      }
+      <Card className="p-0 mt-2">
         <CardHeader className="p-0">
           <CardTitle>
-            <div className={cn("w-full rounded-t-lg relative", )}>
+            <div className="w-full rounded-t-lg relative">
               {cover && 
                 <Controller 
                   control={control} 
@@ -108,11 +155,11 @@ export default function AnnouncementDetailPage() {
                 )} />
               }
             </div>
-            <div className="mt-4 flex justify-end px-2">
+            <div className="mt-2 flex justify-end px-2 items-center gap-2">
               {!cover && isEditing && <Button variant="secondary" type="button" size="xs" onClick={() => setValue("cover", DEFAULT_COVER_IMAGE, { shouldDirty: true })}>
                 Set Cover
               </Button>}
-              {isEditing && <Button variant="secondary" size="xs" onClick={handleTogglePreview} type="button">
+              {isEditing && <Button variant="outline" size="xs" onClick={handleTogglePreview} type="button">
                 Preview
               </Button>}
 
@@ -158,10 +205,8 @@ export default function AnnouncementDetailPage() {
                 onClick={handleTogglePreview} 
                 type="button" 
                 className="min-w-[90px]" 
-                icon={ChevronLeftIcon} 
-                iconPosition="left"
               >
-                Back to edit
+                Back editing
               </Button>
             </motion.div>
           ) : isDirty && isEditing ? (
@@ -189,5 +234,6 @@ export default function AnnouncementDetailPage() {
         )}
       </AnimatePresence>
     </form>
+    </>
   );
 }

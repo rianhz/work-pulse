@@ -4,26 +4,22 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { getTimeOfDay } from "@/helpers/time-helper";
 import { RootState } from "@/store";
 import { useSelector } from "react-redux";
-import DashboardLists from "@/components/custom/dashboard/DashboardLists";
+import DashboardMainContent from "@/components/custom/dashboard/DashboardMainContent";
+import DashboardRightContent from "@/components/custom/dashboard/DasboardRightContent";
 
 export default function DashboardPage() {
   const user = useSelector((state: RootState) => state.currentUser.user);
  
   return (
     <>
-      <Card className="border-none pt-0 ring-0 shadow-none">
-        <CardHeader className="flex justify-between items-end flex-row px-0">
-          <div>
-            <CardTitle>
-              <h1 className="text-2xl font-bold">Good {getTimeOfDay()}, {user?.nickName || user?.fullName}</h1>
-            </CardTitle>
-            <CardDescription>A comprehensive view of your reporting tree, leadership structure, and team members.</CardDescription>
-          </div>
-        </CardHeader>
-        <CardContent className="px-0">
-          <DashboardLists />
-        </CardContent>
-      </Card>
+      <div className="px-2">
+          <h1 className="text-2xl font-bold">Good {getTimeOfDay()}, {user?.nickName || user?.fullName}</h1>
+          <p className="text-sm text-muted-foreground">A comprehensive view of your reporting tree, leadership structure, and team members.</p>
+      </div>
+      <div className="flex gap-4">
+        <DashboardMainContent />
+        <DashboardRightContent />
+      </div>
     </>
   );
 }

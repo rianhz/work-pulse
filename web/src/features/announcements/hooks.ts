@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { createAnnouncement, deleteAnnouncement, getAnnouncementById, getAnnouncements, updateAnnouncement } from "./api";
+import { createAnnouncement, deleteAnnouncement, getAnnouncementById, getAnnouncements, getFeaturedAnnouncements, updateAnnouncement } from "./api";
 import { IAnnouncement } from "./announcements";
 import { toast } from "sonner";
 import { IPaginationQueryOptions } from "@/global";
@@ -8,6 +8,13 @@ export const useGetAnnouncements = (options: IPaginationQueryOptions) => {
   return useQuery({
     queryKey: ["announcements", options],
     queryFn: () => getAnnouncements(options),
+  });
+};
+
+export const useGetFeaturedAnnouncements = () => {
+  return useQuery({
+    queryKey: ["featured-announcements"],
+    queryFn: () => getFeaturedAnnouncements(),
   });
 };
 

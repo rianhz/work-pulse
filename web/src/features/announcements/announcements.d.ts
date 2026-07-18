@@ -7,8 +7,10 @@ export interface IAnnouncement extends IBaseEntity {
   cover: string;
   content: string;
   type: typeof ANNOUNCEMENT_TYPE_OFFICE | typeof ANNOUNCEMENT_TYPE_USER;
-  status: "published" | "draft" | "archived" | "deleted";
+  status: "published" | "unpublished" | "draft" | "archived" | "deleted";
   tenantId: string;
+  isFeatured: boolean;
   createdBy: IUser;
   lastUpdatedBy: IUser;
+  publishedAt: Date | null;
 }

@@ -7,4 +7,6 @@ export interface IAnnouncement {
   tenantId: string;
   type: typeof ANNOUNCEMENT_TYPE_OFFICE | typeof ANNOUNCEMENT_TYPE_USER;  
   status: "published" | "draft" | "archived" | "deleted";
+  isFeatured: boolean;
+  publishedAt?: Date;
 }
