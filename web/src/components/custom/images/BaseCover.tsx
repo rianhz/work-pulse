@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Activity, useState } from "react";
 import Image from "next/image";
 import { MoreHorizontalIcon } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
@@ -47,11 +47,11 @@ export function BaseCover({
   return (
     <>
       <div className={`relative w-full bg-muted group ${className}`}>
-        {loading && src && !error && (
+        <Activity mode={loading && src && !error ? "visible" : "hidden"}>
           <div className="absolute h-60 inset-0 flex items-center justify-center bg-muted z-10">
             <Spinner />
           </div>
-        )}
+        </Activity>
 
         <div className="relative w-full overflow-hidden rounded-md aspect-[16/9] md:aspect-[16/7] xl:aspect-[3/1]">
           <Image
@@ -70,7 +70,7 @@ export function BaseCover({
           />
         </div>
 
-        {isEditable && (
+        <Activity mode={isEditable ? "visible" : "hidden"}>
           <div className="absolute bottom-4 right-4 z-20">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -86,7 +86,7 @@ export function BaseCover({
                   Change
                 </DropdownMenuItem>
                 
-                {src && !error && (
+                <Activity mode={src && !error ? "visible" : "hidden"}>
                   <DropdownMenuItem 
                     className="cursor-pointer text-destructive focus:text-destructive" 
                     onClick={() => {
@@ -96,14 +96,14 @@ export function BaseCover({
                   >
                     Delete
                   </DropdownMenuItem>
-                )}
+                </Activity>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-        )}
+        </Activity>
       </div>
 
-      {isEditable && (
+      <Activity mode={isEditable ? "visible" : "hidden"}>
         <UniversalUploader
           variant="popup"
           isOpen={isUploaderOpen}
@@ -114,7 +114,7 @@ export function BaseCover({
             onUploadSuccess?.(url);
           }}
         />
-      )}
+      </Activity>
     </>
   );
 }

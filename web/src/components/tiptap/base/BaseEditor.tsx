@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { Activity, useEffect, useRef, useState } from "react"
 import { EditorContent, EditorContext, useEditor } from "@tiptap/react"
 
 // --- Tiptap Core Extensions ---
@@ -270,8 +270,9 @@ export function BaseEditor({
     : {};
 
   return (
-    <div className={cn("base-editor-wrapper", className)} data-clamped={isClamped ? "true" : "false"}>      <EditorContext.Provider value={{ editor }}>
-        {isEditable && showToolbar && (
+    <div className={cn("base-editor-wrapper", className)} data-clamped={isClamped ? "true" : "false"}>
+      <EditorContext.Provider value={{ editor }}>
+        <Activity mode={isEditable && showToolbar ? "visible" : "hidden"}>
           <Toolbar ref={toolbarRef}>
             {mobileView === "main" ? (
               <MainToolbarContent
@@ -286,7 +287,7 @@ export function BaseEditor({
               />
             )}
           </Toolbar>
-        )}
+        </Activity>
 
         <EditorContent
           editor={editor}

@@ -14,6 +14,7 @@ import { useGoogleLogin } from "@react-oauth/google";
 import { Separator } from "@/components/ui/separator";
 import { FcGoogle } from "react-icons/fc";
 import Link from "next/link";
+import { Activity } from "react";
 
 export default function RegisterForm() {
   const router = useRouter();
@@ -96,7 +97,9 @@ export default function RegisterForm() {
                         autoComplete="companyName"
                         {...register("companyName")}
                     />
-                    {errors.companyName && <p className="text-sm text-red-500">{errors.companyName.message}</p>}
+                    <Activity mode={errors.companyName ? "visible" : "hidden"}>
+                      <p className="text-sm text-red-500">{errors.companyName?.message}</p>
+                    </Activity>
                 </div>
                 <div className="grid gap-2">
                     <Label htmlFor="slug">Slug</Label>
@@ -107,7 +110,9 @@ export default function RegisterForm() {
                         autoComplete="slug"
                         {...register("slug")}
                     />
-                    {errors.slug && <p className="text-sm text-red-500">{errors.slug.message}</p>}
+                    <Activity mode={errors.slug ? "visible" : "hidden"}>
+                      <p className="text-sm text-red-500">{errors.slug?.message}</p>
+                    </Activity>
                 </div>
                 <Separator />
                 <div className="grid gap-2">
@@ -118,7 +123,9 @@ export default function RegisterForm() {
                         placeholder="John Doe"
                         {...register("fullName")}
                     />
-                    {errors.fullName && <p className="text-sm text-red-500">{errors.fullName.message}</p>}
+                    <Activity mode={errors.fullName ? "visible" : "hidden"}>
+                      <p className="text-sm text-red-500">{errors.fullName?.message}</p>
+                    </Activity>
                 </div>
                 <div className="grid gap-2">
                     <Label htmlFor="email">Email</Label>
@@ -129,19 +136,25 @@ export default function RegisterForm() {
                         autoComplete="new-password"
                         {...register("email")}
                     />
-                    {errors.email && <p className="text-sm text-red-500">{errors.email.message}</p>}
+                    <Activity mode={errors.email ? "visible" : "hidden"}>
+                      <p className="text-sm text-red-500">{errors.email?.message}</p>
+                    </Activity>
                 </div>
                 <div className="grid gap-2">
                     <div className="flex items-center">
                     <Label htmlFor="password">Password</Label>
                     </div>
                     <Input id="password" type="password" autoComplete="new-password" {...register("password")} />
-                    {errors.password && <p className="text-sm text-red-500">{errors.password.message}</p>}
+                    <Activity mode={errors.password ? "visible" : "hidden"}>
+                      <p className="text-sm text-red-500">{errors.password?.message}</p>
+                    </Activity>
                 </div>
                 <div className="grid gap-2">
                     <Label htmlFor="confirmPassword">Confirm Password</Label>
                     <Input id="confirmPassword" type="password" autoComplete="new-password" {...register("confirmPassword")} />
-                    {errors.confirmPassword && <p className="text-sm text-red-500">{errors.confirmPassword.message}</p>}
+                    <Activity mode={errors.confirmPassword ? "visible" : "hidden"}>
+                      <p className="text-sm text-red-500">{errors.confirmPassword?.message}</p>
+                    </Activity>
                 </div>
             </div>
             <div className="flex flex-col gap-2">

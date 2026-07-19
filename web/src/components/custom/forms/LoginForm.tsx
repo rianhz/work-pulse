@@ -13,6 +13,7 @@ import { useGoogleLogin } from "@react-oauth/google";
 import { FcGoogle } from "react-icons/fc";
 import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
+import { Activity } from "react";
 
 export default function LoginForm() {
   const {
@@ -60,7 +61,9 @@ export default function LoginForm() {
                     autoComplete="new-password"
                     {...register("email")}
                 />
-                {errors.email && <p className="text-xs text-red-500">{errors.email.message}</p>}
+                <Activity mode={errors.email ? "visible" : "hidden"}>
+                  <p className="text-xs text-red-500">{errors.email?.message}</p>
+                </Activity>
                 </div>
                 <div className="grid gap-2">
                 <div className="flex items-center">
@@ -68,7 +71,9 @@ export default function LoginForm() {
                     <Link className="ml-auto text-primary hover:underline" href="/forgot-password">Forgot password?</Link>
                 </div>
                 <Input id="password" type="password" placeholder="Example@123" autoComplete="new-password" {...register("password")} />
-                {errors.password && <p className="text-xs text-red-500">{errors.password.message}</p>}
+                <Activity mode={errors.password ? "visible" : "hidden"}>
+                  <p className="text-xs text-red-500">{errors.password?.message}</p>
+                </Activity>
                 </div>
             </div>
             <div className="flex flex-col gap-2">

@@ -84,7 +84,7 @@ export function BaseTable<TData, TValue>({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-4">
-        {showSearchField && (
+        <React.Activity mode={showSearchField ? "visible" : "hidden"}>
           <InputGroup className="max-w-lg">
             <InputGroupInput 
               placeholder={searchPlaceholder} 
@@ -93,7 +93,7 @@ export function BaseTable<TData, TValue>({
               disabled={isLoading}
             />
           </InputGroup>
-        )}
+        </React.Activity>
         
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -120,9 +120,14 @@ export function BaseTable<TData, TValue>({
       </div>
 
       <div className="rounded-md border overflow-x-auto relative">
-        {isLoading && <div className="flex justify-center items-center min-h-[200px]"> <Spinner className="size-10" /> </div>}
-        {!isLoading && isEmptyData && <EmptyData description={emptyDataDescription} icon={emptyDataIcon} />}
-        {!isLoading && !isEmptyData && <Table>
+        <React.Activity mode={isLoading ? "visible" : "hidden"}>
+          <div className="flex justify-center items-center min-h-[200px]"> <Spinner className="size-10" /> </div>
+        </React.Activity>
+        <React.Activity mode={!isLoading && isEmptyData ? "visible" : "hidden"}>
+          <EmptyData description={emptyDataDescription} icon={emptyDataIcon} />
+        </React.Activity>
+        <React.Activity mode={!isLoading && !isEmptyData ? "visible" : "hidden"}>
+          <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
@@ -167,18 +172,19 @@ export function BaseTable<TData, TValue>({
               </TableRow>
             ))}
           </TableBody>
-        </Table>}
+        </Table>
+        </React.Activity>
       </div>
 
-      {currentPage !== undefined && onPageChange && totalPages > 1 && (
+      <React.Activity mode={currentPage !== undefined && onPageChange && totalPages > 1 ? "visible" : "hidden"}>
         <div className="pt-2">
           <BasePagination 
-            currentPage={currentPage} 
+            currentPage={currentPage || 1} 
             totalPages={totalPages} 
-            onPageChange={onPageChange} 
+            onPageChange={onPageChange || (() => {})} 
           />
         </div>
-      )}
+      </React.Activity>
     </div>
   );
 }

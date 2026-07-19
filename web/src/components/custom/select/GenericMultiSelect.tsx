@@ -1,9 +1,8 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import { Activity, MouseEvent, useEffect, useRef, useState } from "react";
 import { X, Check } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Command, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Spinner } from "@/components/ui/spinner";
@@ -41,8 +40,8 @@ export function GenericMultiSelect<T extends GenericItem>({
   isError = false,
   isFetched = false,
 }: GenericMultiSelectProps<T>) {
-  const [open, setOpen] = React.useState(false);
-  const inputRef = React.useRef<HTMLInputElement>(null);
+  const [open, setOpen] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const [localLoading, setLocalLoading] = useState(false);
 
@@ -67,7 +66,7 @@ export function GenericMultiSelect<T extends GenericItem>({
     }
   }, [open]);
 
-  const handleUnselect = (itemToRemove: T, e: React.MouseEvent) => {
+  const handleUnselect = (itemToRemove: T, e: MouseEvent) => {
     e.stopPropagation();
     onChange(selectedItems.filter((item) => item._id !== itemToRemove._id));
   };
@@ -104,19 +103,18 @@ export function GenericMultiSelect<T extends GenericItem>({
           >
             <Command shouldFilter={false} className="w-full p-1">
               <CommandList>
-                {(localLoading || isLoading) && searchQuery.length > 0 && (
+                <Activity mode={(localLoading || isLoading) && searchQuery.length > 0 ? "visible" : "hidden"}>
                   <div className="flex justify-center items-center py-4">
                     <Spinner className="size-4" />
                   </div>
-                )}
+                </Activity>
 
-                {!localLoading && !isLoading && !isError && searchQuery.length > 0 && (
-                  <>
-                  {itemsList.length === 0 && (
+                <Activity mode={!localLoading && !isLoading && !isError && searchQuery.length > 0 ? "visible" : "hidden"}>
+                  <Activity mode={itemsList.length === 0 ? "visible" : "hidden"}>
                     <div className="text-center py-3 text-xs text-muted-foreground">
                       No records found.
                     </div>
-                  )}
+                  </Activity>
 
                   {itemsList.map((item,index) => {
                     const isSelected = selectedItems.some((s) => s._id === item._id);
@@ -128,26 +126,27 @@ export function GenericMultiSelect<T extends GenericItem>({
                         className="flex items-center justify-between cursor-pointer py-2 px-3 rounded-sm"
                       >
                         <span className="text-sm">{String(item[displayKey])}</span>
-                        {isSelected && <Check className="size-4 text-primary" />}
+                        <Activity mode={isSelected ? "visible" : "hidden"}>
+                          <Check className="size-4 text-primary" />
+                        </Activity>
                       </CommandItem>
                     );
                   })}
-                  </>
-                )}
+                </Activity>
 
-                {isError && (
+                <Activity mode={isError ? "visible" : "hidden"}>
                   <div className="text-center py-3 text-xs text-destructive">
                     Failed to load data.
                   </div>
-                )}
+                </Activity>
               </CommandList>
             </Command>
         </PopoverContent>
       </Popover>
 
       <div className="flex flex-wrap gap-1 max-w-[90%]">
-        {selectedItems.length > 0 &&
-          selectedItems.map((item) => (
+        <Activity mode={selectedItems.length > 0 ? "visible" : "hidden"}>
+          {selectedItems.map((item) => (
             <Badge
               key={item._id}
               variant="secondary"
@@ -163,6 +162,7 @@ export function GenericMultiSelect<T extends GenericItem>({
               </button>
             </Badge>
           ))}
+        </Activity>
       </div>
     </div>
   );

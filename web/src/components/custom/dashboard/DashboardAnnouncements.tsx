@@ -4,8 +4,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import AnnouncementCard from "../card/AnnouncementCard";
 import { useInView } from "react-intersection-observer";
 import { useGetDashboardAnnouncements } from "@/features/dashboard/hooks";
-import { useEffect, useMemo } from "react";
+import { Activity, useEffect, useMemo } from "react";
 import { Spinner } from "@/components/ui/spinner";
+import { EmptyData } from "../errors-and-empty/EmptyData";
 
 export default function DashboardAnnouncements() {
   const { ref, inView } = useInView({
@@ -26,9 +27,10 @@ export default function DashboardAnnouncements() {
       fetchNextPage();
     }
   }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
+
   return (
     <Card className="grid gap-4 mt-2 p-4">
-      {isLoading && (
+      <Activity mode={isLoading ? "visible" : "hidden"}>
         <div className="flex flex-col gap-2 p-2">
           {[...Array(limit)].map((_, i) => (
             <div key={`skeleton-${i}`}>
@@ -38,14 +40,22 @@ export default function DashboardAnnouncements() {
             </div>
           ))}
         </div>
-      )}
+      </Activity>
 
-      {announcements.map((item, index) => (
-        <AnnouncementCard key={`announcement-${index}`} announcement={item} lineClampBody={3} lineClampTitle={2} />
-      ))}
+      <Activity mode={!isLoading && announcements.length === 0 ? "visible" : "hidden"}>
+        <EmptyData title="No announcements found" description="No announcements found" />
+      </Activity>
+
+      <Activity mode={announcements.length > 0 ? "visible" : "hidden"}>
+        {announcements.map((item, index) => (
+          <AnnouncementCard key={`announcement-${index}`} announcement={item} lineClampBody={3} lineClampTitle={2} />
+        ))}
+      </Activity>
 
       <div ref={ref} className="h-12 w-full flex items-center justify-center">
-        {isFetchingNextPage && <Spinner className="size-6" />}
+        <Activity mode={isFetchingNextPage ? "visible" : "hidden"}>
+          <Spinner className="size-6" />
+        </Activity>
       </div>
     </Card>
   )

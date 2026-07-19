@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { Activity } from 'react'
 import { EmblaOptionsType } from 'embla-carousel'
 import useEmblaCarousel from 'embla-carousel-react'
 import { NextButton, PrevButton, usePrevNextButtons } from './BaseCarouselButton'
@@ -39,8 +39,7 @@ const EmblaCarousel = (props: PropType) => {
         </div>
       </div>
 
-      {showArrowButton && (
-        <>
+        <Activity mode={showArrowButton ? "visible" : "hidden"}>
           <PrevButton 
             onClick={onPrevButtonClick} 
             disabled={prevBtnDisabled} 
@@ -51,10 +50,9 @@ const EmblaCarousel = (props: PropType) => {
             disabled={nextBtnDisabled} 
             className="opacity-50 group-hover:opacity-100 transition-all duration-300 absolute right-4 top-1/2 -translate-y-1/2 z-10 bg-white/80 hover:bg-white p-2 rounded-full shadow-md transition-all disabled:opacity-40 disabled:cursor-not-allowed" 
           />
-        </>
-      )}
+        </Activity>
 
-      {showDotButton && (
+      <Activity mode={showDotButton ? "visible" : "hidden"}>
         <div className="embla__controls flex justify-center w-full gap-2 mt-2">
             {scrollSnaps.map((_, index) => (
               <DotButton
@@ -66,7 +64,7 @@ const EmblaCarousel = (props: PropType) => {
               />
             ))}
         </div>
-      )}
+      </Activity>
     </div>
   )
 }

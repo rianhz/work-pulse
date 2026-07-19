@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Activity, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -155,12 +155,12 @@ export function AccountSettingsForm({ user, isLoading }: { user: IUserWithProvid
                       <div>
                         <p className="text-sm font-medium">Profile Picture</p>
                         <p className="text-xs text-muted-foreground">Recommended size 100x100</p>
-                        {avatar && (
+                        <Activity mode={avatar ? "visible" : "hidden"}>
                           <Button type="button" variant="destructive" size='xs' className="min-w-[70px] mt-2" onClick={handleAvatarRemove}>Remove</Button>
-                        )}
+                        </Activity>
                       </div>
                     </div>
-                    {isAccountSettingsDirty && (
+                    <Activity mode={isAccountSettingsDirty ? "visible" : "hidden"}>
                       <div className="flex flex-col gap-2">
                         <Button type="submit" loading={isPendingUpdateUser} disabled={isPendingUpdateUser} onClick={() => onSubmitAccountSettings(getValuesAccountSettings())}>
                           Save Changes
@@ -174,7 +174,7 @@ export function AccountSettingsForm({ user, isLoading }: { user: IUserWithProvid
                           position: user?.position ?? "",
                         })}>Cancel</Button>
                       </div>
-                    )}
+                    </Activity>
                   </div>
                 </TableCell>
               </TableRow>
@@ -190,11 +190,11 @@ export function AccountSettingsForm({ user, isLoading }: { user: IUserWithProvid
                     <InputGroup>
                       <InputGroupInput type="text" {...registerAccountSettings("fullName")} />
                     </InputGroup>
-                    {errorsAccountSettings.fullName && (
+                    <Activity mode={errorsAccountSettings.fullName ? "visible" : "hidden"}>
                       <p className="text-xs text-red-500">
-                        {errorsAccountSettings.fullName.message}
+                        {errorsAccountSettings.fullName?.message}
                       </p>
-                    )}
+                    </Activity>
                 </TableCell>
               </TableRow>
 
@@ -208,11 +208,11 @@ export function AccountSettingsForm({ user, isLoading }: { user: IUserWithProvid
                     <InputGroup>
                       <InputGroupInput placeholder="What do you want to be called?" type="text" {...registerAccountSettings("nickName")} />
                     </InputGroup>
-                    {errorsAccountSettings.nickName && (
+                    <Activity mode={errorsAccountSettings.nickName ? "visible" : "hidden"}>
                       <p className="text-xs text-red-500">
-                        {errorsAccountSettings.nickName.message}
+                        {errorsAccountSettings.nickName?.message}
                       </p>
-                    )}
+                    </Activity>
                 </TableCell>
               </TableRow>
 
@@ -237,11 +237,11 @@ export function AccountSettingsForm({ user, isLoading }: { user: IUserWithProvid
                         />
                       )}
                     />
-                    {errorsAccountSettings.birthDate && (
+                    <Activity mode={errorsAccountSettings.birthDate ? "visible" : "hidden"}>
                       <p className="text-xs text-red-500">
-                        {errorsAccountSettings.birthDate.message}
+                        {errorsAccountSettings.birthDate?.message}
                       </p>
-                    )}
+                    </Activity>
                 </TableCell>
               </TableRow>
 
@@ -273,7 +273,7 @@ export function AccountSettingsForm({ user, isLoading }: { user: IUserWithProvid
                 </TableCell>
               </TableRow>
 
-              {user.department &&
+              <Activity mode={user.department ? "visible" : "hidden"}>
                 <TableRow>
                   <TableCell>
                     <Label className="whitespace-nowrap">
@@ -286,9 +286,9 @@ export function AccountSettingsForm({ user, isLoading }: { user: IUserWithProvid
                       </InputGroup>
                   </TableCell>
                 </TableRow>
-              } 
+              </Activity> 
 
-              {user.position &&
+              <Activity mode={user.position ? "visible" : "hidden"}>
                 <TableRow>
                   <TableCell>
                     <Label className="whitespace-nowrap">
@@ -299,14 +299,14 @@ export function AccountSettingsForm({ user, isLoading }: { user: IUserWithProvid
                       <InputGroup>
                         <InputGroupInput type="text" {...registerAccountSettings("position")} disabled />
                       </InputGroup>
-                      {errorsAccountSettings.position && (
+                      <Activity mode={errorsAccountSettings.position ? "visible" : "hidden"}>
                         <p className="text-xs text-red-500">
-                          {errorsAccountSettings.position.message}
+                          {errorsAccountSettings.position?.message}
                         </p>
-                      )}
+                      </Activity>
                   </TableCell>
                 </TableRow>
-              }
+              </Activity>
 
               <TableRow>
                 <TableCell>
