@@ -27,31 +27,26 @@ export default function DashboardAnnouncements() {
     }
   }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
   return (
-    <div className="grid gap-4 mt-2">
-        {isLoading && (
-          <div className="space-y-4">
-            {[...Array(limit)].map((_, i) => (
-              <Card key={`skeleton-${i}`}>
-                <CardHeader className="space-y-2">
-                  <Skeleton className="h-5 w-1/3" />
-                  <Skeleton className="h-3 w-1/4" />
-                </CardHeader>
-                <CardContent>
-                  <Skeleton className="h-4 w-full" />
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-
-        {announcements.map((item, index) => (
-          <AnnouncementCard key={`announcement-${index}`} announcement={item} lineClampBody={3} lineClampTitle={2} />
-        ))}
-
-        <div ref={ref} className="h-12 w-full flex items-center justify-center">
-          {isFetchingNextPage && <Spinner className="size-6" />}
+    <Card className="grid gap-4 mt-2 p-4">
+      {isLoading && (
+        <div className="flex flex-col gap-2 p-2">
+          {[...Array(limit)].map((_, i) => (
+            <div key={`skeleton-${i}`}>
+              <Skeleton className="h-5 w-1/3" />
+              <Skeleton className="h-3 w-1/4" />
+              <Skeleton className="h-4 w-full" />
+            </div>
+          ))}
         </div>
+      )}
 
+      {announcements.map((item, index) => (
+        <AnnouncementCard key={`announcement-${index}`} announcement={item} lineClampBody={3} lineClampTitle={2} />
+      ))}
+
+      <div ref={ref} className="h-12 w-full flex items-center justify-center">
+        {isFetchingNextPage && <Spinner className="size-6" />}
       </div>
+    </Card>
   )
 }

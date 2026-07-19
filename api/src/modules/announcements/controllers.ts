@@ -4,7 +4,7 @@ import { HTTPSTATUS } from "../../utils/http-config";
 
 export const createAnnouncementController = async (req: Request, res: Response) => {
   const authenticatedUser = (req as any).user;
-  const { title, description, type, cover, content } = req.body;
+  const { title, description, type, cover, content, labelColor, labelText } = req.body;
   const payload = {
     title,
     description,
@@ -45,7 +45,7 @@ export const getAnnouncementByIdController = async (req: Request, res: Response)
 
 export const updateAnnouncementController = async (req: Request, res: Response) => {
   const authenticatedUser = (req as any).user;
-  const { title, description, type, status, cover, content, isFeatured } = req.body;
+  const { title, description, type, status, cover, content, isFeatured, labelColor, labelText } = req.body;
   const payload = {
     title,
     description,
@@ -55,6 +55,8 @@ export const updateAnnouncementController = async (req: Request, res: Response) 
     cover,
     content,
     isFeatured,
+    labelColor,
+    labelText,
   }
   const announcement = await updateAnnouncementService(authenticatedUser, req.params.id as string, payload);
   res.status(200).json(announcement);

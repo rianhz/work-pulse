@@ -18,7 +18,7 @@ export default function BaseLoggedInNavTop() {
           <Button
             variant="ghost"
             size="icon"
-            className="md:hidden"
+            className="lg:hidden"
             onClick={toggleSidebar}
             aria-label="Toggle Menu"
           >

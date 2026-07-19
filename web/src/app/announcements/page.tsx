@@ -149,7 +149,9 @@ export default function AnnouncementsPage() {
     {
       accessorKey: "status",
       header: ({ column }) => (
-          <span>Status</span>
+          <div className="flex items-center justify-center">
+            <span>Status</span>
+          </div>
       ),
       cell: ({ row }) => {
         const status = row.original.status;

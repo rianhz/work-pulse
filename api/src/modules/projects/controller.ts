@@ -20,7 +20,7 @@ export const createProjectController = asyncHandler(async (req: Request, res: Re
         status,
     }
 
-    const project = await createProjectService(authenticatedUser, dto);
+    await createProjectService(authenticatedUser, dto);
     res.status(HTTPSTATUS.OK).json({ success: true, message: "Project created successfully" });
 });
 

@@ -198,7 +198,7 @@ export function BaseEditor({
   const titleExtensions = [
     Document,
     Heading.configure({
-      levels: [5],
+      levels: [4],
     }),
     Text,
   ]

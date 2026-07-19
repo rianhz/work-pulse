@@ -59,6 +59,22 @@ export const AnnouncementSchema = new mongoose.Schema({
     required: false,
     default: null
   },
+  publishedBy: { 
+    type: Types.ObjectId, 
+    ref: "User", 
+    required: false, 
+    default: null
+  },
+  labelColor: {
+    type: String,
+    required: false,
+    default: ""
+  },
+  labelText: {
+    type: String,
+    required: false,
+    default: ""
+  }
 }, { timestamps: true, id: false });
 
 AnnouncementSchema.virtual("formattedCreatedAt").get(function(this: Document & IAnnouncement & { createdAt: Date }) {

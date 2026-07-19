@@ -244,8 +244,7 @@ export default function TeamPage() {
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant={'ghost'} className="p-1" icon={MoreHorizontalIcon} iconPosition="left" asChild={true}>
-                <span>View</span>
+              <Button variant={'ghost'} className="p-1" icon={MoreHorizontalIcon} iconPosition="left">
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">

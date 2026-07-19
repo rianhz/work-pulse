@@ -9,32 +9,26 @@ export default function DashboardFeatured() {
     const { data: featuredAnnouncements, isLoading: isLoadingFeaturedAnnouncements } = useGetFeaturedAnnouncements();
 
   return (
-    <>
+    <Card className="p-4">
       {isLoadingFeaturedAnnouncements && (
-        <div className="space-y-4">
-          {[...Array(1)].map((_, i) => (
-            <Card key={`skeleton-${i}`}>
-              <CardHeader className="space-y-2">
-                <Skeleton className="h-5 w-1/3" />
-                <Skeleton className="h-3 w-1/4" />
-              </CardHeader>
-              <CardContent>
-                <Skeleton className="h-4 w-full" />
-              </CardContent>
-            </Card>
-          ))}
+        <div className="flex flex-col gap-2 p-2">
+            <div className="flex flex-col gap-2 w-full">
+              <Skeleton className="h-5 w-1/3" />
+              <Skeleton className="h-3 w-1/4" />
+              <Skeleton className="h-4 w-full" />
+            </div>
         </div>
       )}
 
       {featuredAnnouncements && featuredAnnouncements.length > 0 && (
         <EmblaCarousel options={{ loop: true, align: 'start' }} showArrowButton={false}>
           {featuredAnnouncements.map((item, index) => (
-            <div className="h-[240px]" key={`featured-announcement-${index}`}>
-              <AnnouncementCard announcement={item} isFeatured={true} className="h-full" lineClampBody={3} lineClampTitle={2} />
+            <div className="h-[210px]" key={`featured-announcement-${index}`}>
+              <AnnouncementCard announcement={item} isFeatured={true} className="h-full" lineClampBody={5} lineClampTitle={2} />
             </div>
           ))}
         </EmblaCarousel>
       )}
-    </>
+    </Card>
   )
 }

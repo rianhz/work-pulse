@@ -13,4 +13,7 @@ export interface IAnnouncement extends IBaseEntity {
   createdBy: IUser;
   lastUpdatedBy: IUser;
   publishedAt: Date | null;
+  publishedBy: IUser | null;
+  labelColor: string;
+  labelText: string;
 }

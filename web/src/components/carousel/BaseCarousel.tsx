@@ -32,7 +32,7 @@ const EmblaCarousel = (props: PropType) => {
       <div className="embla__viewport overflow-hidden w-full" ref={emblaRef}>
         <div className="embla__container flex">
           {React.Children.map(children, (child, index) => (
-            <div className="embla__slide min-w-0 flex-[0_0_100%] py-2 h-full" key={index}>
+            <div className="embla__slide min-w-0 flex-[0_0_100%] h-full" key={index}>
               {child}
             </div>
           ))}

@@ -72,7 +72,7 @@ export default function LoginForm() {
                 </div>
             </div>
             <div className="flex flex-col gap-2">
-              <Button type="submit" className="w-full mt-4" disabled={isPendingPassword}>
+              <Button type="submit" className="w-full mt-4" disabled={isPendingPassword} loading={isPendingPassword}>
                 Login
               </Button>
               <div className="flex items-center justify-center gap-2">
