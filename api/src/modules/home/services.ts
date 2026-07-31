@@ -3,7 +3,7 @@ import { AnnouncementModel } from "../announcements/schema";
 import { AuthUser } from "../authentication/interfaces";
 import { QueryOptions } from "../global";
 
-export const getDashboardAnnouncementsService = async (authenticatedUser: AuthUser, options: QueryOptions) => {
+export const getHomeAnnouncementsService = async (authenticatedUser: AuthUser, options: QueryOptions) => {
   const tenantId = authenticatedUser.tenantId
 
   const { search, page, limit } = options;

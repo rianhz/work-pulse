@@ -16,7 +16,7 @@ export default function AnnouncementCard({ announcement, isFeatured = false, cla
     <div className={`flex flex-col gap-1 cursor-pointer ${className}`} onClick={() => handleAnnouncementClick(announcement._id)}>
       <div className="flex items-center justify-between w-full gap-2">
        
-          <div className="flex items-center justify-between flex-1 gap-2">
+          <div className="flex items-center justify-between flex-1 gap-2 mb-3">
             <Activity mode={isFeatured ? "visible" : "hidden"}>
               <Badge variant="primaryForeground" className="text-sm flex"><SparklesIcon fill="currentColor" className="text-primary/90" /> Featured</Badge>
             </Activity>

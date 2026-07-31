@@ -19,7 +19,7 @@ export const useLogin = () => {
     onSuccess: async () => {
       const user = await getMe();
       dispatch(setUser(user));
-      router.push("/dashboard");
+      router.push("/home");
 
     },
 
@@ -37,7 +37,7 @@ export const useGoogleLoginMutation = () => {
     onSuccess: async () => {
       const user = await getMe();
       dispatch(setUser(user));
-      router.push("/dashboard");
+      router.push("/home");
     },
     onError: error => {
       toast.error((error as any)?.response?.data?.message || error?.message);

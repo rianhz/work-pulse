@@ -1,7 +1,7 @@
 import BaseLoggedInLayout from "@/components/layouts/BaseLoggedInLayout";
-import DashboardRightContent from "@/components/custom/dashboard/DasboardRightContent";
+import HomepageRightContent from "@/components/custom/homepage/HomepageRightContent";
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+export default function HomepageLayout({ children }: { children: React.ReactNode }) {
   return (
     <BaseLoggedInLayout>
       <div className="flex gap-4 w-full">
@@ -9,7 +9,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           {children}
         </div>
         <aside>
-          <DashboardRightContent />
+          <HomepageRightContent />
         </aside>
       </div>
     </BaseLoggedInLayout>

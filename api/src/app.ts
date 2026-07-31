@@ -12,7 +12,7 @@ import { tenantsRoutes } from './modules/tenants/routes';
 import { invitationRoutes } from './modules/invitation/routes';
 import { departmentRoutes } from './modules/departments/routes';
 import { announcementsRoutes } from './modules/announcements/routes';
-import { dashboardRoutes } from './modules/dashboard/routes';
+import { homeRoutes } from './modules/home/routes';
 
 const app = express();
 
@@ -29,7 +29,7 @@ app.use('/timesheets', timesheetRoutes);
 app.use('/invitations', invitationRoutes);
 app.use('/departments', departmentRoutes);
 app.use('/announcements', announcementsRoutes);
-app.use('/dashboard', dashboardRoutes);
+app.use('/home', homeRoutes);
 
 app.use(errorHandler);
 

@@ -1,21 +1,21 @@
 'use client';
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import AnnouncementCard from "../card/AnnouncementCard";
 import { useInView } from "react-intersection-observer";
-import { useGetDashboardAnnouncements } from "@/features/dashboard/hooks";
+import { useGetHomeAnnouncements } from "@/features/homepage/hooks";
 import { Activity, useEffect, useMemo } from "react";
 import { Spinner } from "@/components/ui/spinner";
 import { EmptyData } from "../errors-and-empty/EmptyData";
 
-export default function DashboardAnnouncements() {
+export default function HomeAnnouncements() {
   const { ref, inView } = useInView({
     threshold: 0.1,
   });
 
   const limit = 10;
 
-  const { data: dashboardAnnouncements, isLoading, isFetchingNextPage, fetchNextPage, hasNextPage } = useGetDashboardAnnouncements({ search: "", limit });
+  const { data: dashboardAnnouncements, isLoading, isFetchingNextPage, fetchNextPage, hasNextPage } = useGetHomeAnnouncements({ search: "", limit });
 
   const announcements = useMemo(() => 
     dashboardAnnouncements?.pages.flatMap((page) => page.data) || [], 
@@ -29,7 +29,7 @@ export default function DashboardAnnouncements() {
   }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   return (
-    <Card className="grid gap-4 mt-2 p-4">
+    <Card className="grid mt-2 p-4 space-y-8">
       <Activity mode={isLoading ? "visible" : "hidden"}>
         <div className="flex flex-col gap-2 p-2">
           {[...Array(limit)].map((_, i) => (

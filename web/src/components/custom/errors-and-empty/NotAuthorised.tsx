@@ -15,7 +15,7 @@ export function NotAuthorised() {
       </EmptyHeader>
       <EmptyContent className="flex-row justify-center gap-2">
         <Button asChild>
-          <Link href="/dashboard"><ArrowLeftIcon className="size-4" /> Go to Dashboard</Link>
+          <Link href="/home"><ArrowLeftIcon className="size-4" /> Go to Home</Link>
         </Button>
       </EmptyContent>
     </Empty>

@@ -1,12 +1,11 @@
 "use client";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import HomepageMainContent from "@/components/custom/homepage/HomepageMainContent";
 import { getTimeOfDay } from "@/helpers/time-helper";
 import { RootState } from "@/store";
 import { useSelector } from "react-redux";
-import DashboardMainContent from "@/components/custom/dashboard/DashboardMainContent";
 
-export default function DashboardPage() {
+export default function HomePage() {
   const user = useSelector((state: RootState) => state.currentUser.user);
  
   return (
@@ -18,7 +17,7 @@ export default function DashboardPage() {
       <div>
         <h3 className="text-lg font-bold">Announcements</h3>
         <div className="mt-4">
-          <DashboardMainContent />
+          <HomepageMainContent />
         </div>
       </div>
     </div>
