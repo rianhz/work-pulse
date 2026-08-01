@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Activity, useEffect, useMemo, useState } from "react";
 
 import {
   Dialog,
@@ -192,7 +192,7 @@ export default function TimesheetDialog({
             }))} />
           </div>
 
-          {event.project.id && (
+          <Activity mode={event.project.id ? "visible" : "hidden"}>
             <div className="w-full flex justify-end items-center gap-1">
               <RadioGroup 
                 value={event.payAs} 
@@ -213,7 +213,7 @@ export default function TimesheetDialog({
               </RadioGroup>
               <Badge variant="secondary">{event.project.name}</Badge>
             </div>
-          )}
+          </Activity>
 
           <div className="h-[220px] overflow-y-auto rounded-md border border-border p-2">
             <BaseEditor initialContent={event.description} onChange={handleDescriptionChange} />

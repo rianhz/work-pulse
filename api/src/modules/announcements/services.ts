@@ -4,7 +4,7 @@ import { QueryOptions } from "../global";
 import { IAnnouncement } from "./interfaces";
 import { AnnouncementModel } from "./schema";
   
-export const createAnnouncementService = async (authenticatedUser: AuthUser, announcement: IAnnouncement) => {
+export const createAnnouncementService = async (authenticatedUser: AuthUser, announcement: Partial<IAnnouncement>) => {
  await isHaveAccess(authenticatedUser, null, "Announcement", "manage");
 
   const payload = {
@@ -31,11 +31,42 @@ export const getAnnouncementsService = async (authenticatedUser: AuthUser, optio
   if (search) {
     baseQuery.title = { $regex: search, $options: "i" };
   }
-  const announcements = await AnnouncementModel.find(baseQuery).select("-__v").populate("createdBy", "nickName fullName").populate("lastUpdatedBy", "nickName fullName").skip(skip).limit(limit).lean({
-    virtuals: true,
-  });
+  const announcements = await AnnouncementModel
+    .find(baseQuery)
+    .sort({ publishedAt: -1 })
+    .select("-__v")
+    .populate("createdBy", "nickName fullName avatar")
+    .populate("lastUpdatedBy", "nickName fullName avatar")
+    .populate("publishedBy", "nickName fullName avatar")
+    .skip(skip)
+    .limit(limit)
+    .lean({
+      virtuals: true,
+    });
   const total = await AnnouncementModel.countDocuments(baseQuery);
   return { data: announcements as IAnnouncement[], total };
+};
+
+export const getFeaturedAnnouncementsService = async (authenticatedUser: AuthUser):Promise<IAnnouncement[]> => {
+  const tenantId = authenticatedUser.tenantId
+  await isHaveAccess(authenticatedUser, null, "Announcement", "read");
+
+  const baseQuery: any = {
+    tenantId,
+    status: "published",
+    isFeatured: true,
+  };
+  const announcements = await AnnouncementModel
+    .find(baseQuery)
+    .sort({ publishedAt: -1 })
+    .select("-__v")
+    .populate("createdBy", "nickName fullName avatar")
+    .populate("lastUpdatedBy", "nickName fullName avatar")
+    .populate("publishedBy", "nickName fullName avatar")
+    .lean({
+      virtuals: true,
+    });
+  return announcements as IAnnouncement[];
 };
 
 export const getAnnouncementByIdService = async (authenticatedUser: AuthUser, id: string) => {
@@ -45,12 +76,14 @@ export const getAnnouncementByIdService = async (authenticatedUser: AuthUser, id
   return announcement;
 };
 
-export const updateAnnouncementService = async (authenticatedUser: AuthUser, id: string, announcement: IAnnouncement) => {
+export const updateAnnouncementService = async (authenticatedUser: AuthUser, id: string, announcement: Partial<IAnnouncement>) => {
   await isHaveAccess(authenticatedUser, null, "Announcement", "manage");
 
   const payload = {
     ...announcement,
     lastUpdatedBy: authenticatedUser.userId,
+    ...(announcement.status === "published" && !announcement.publishedAt ? { publishedAt: new Date() } : {}),
+    ...(announcement.status === "published" && announcement.publishedBy ? { publishedBy: authenticatedUser.userId } : {}),
   }
 
   const updatedAnnouncement = await AnnouncementModel.findByIdAndUpdate(id, payload, { new: true });

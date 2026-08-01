@@ -1,14 +1,14 @@
 "use client";
 import { ErrorMessage } from "@/components/custom/errors-and-empty/ErrorsMessage";
 import { BaseTable } from "@/components/custom/table/BaseTable";
-import { Badge } from "@/components/ui/badge";
+import { Badge, BadgeVariant } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogDescription, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { IAnnouncement } from "@/features/announcements/announcements";
-import { useCreateAnnouncement, useDeleteAnnouncement, useGetAnnouncements } from "@/features/announcements/hooks";
+import { useCreateAnnouncement, useDeleteAnnouncement, useGetAnnouncements, useUpdateAnnouncement } from "@/features/announcements/hooks";
 import { ANNOUNCEMENT_TYPE_OFFICE } from "@/helpers/constants";
 import { useDebounce } from "@/hooks/use-debounce";
 import { formatToLocalDate, formatToLocalTime } from "@/lib/timezone-formatter";
@@ -16,7 +16,7 @@ import { RootState } from "@/store";
 import { useAppSelector } from "@/store/hooks/hooks";
 import { useQueryClient } from "@tanstack/react-query";
 import { ColumnDef, VisibilityState } from "@tanstack/react-table";
-import { ArrowUpDown, Bell, EllipsisVertical, Pencil, Trash } from "lucide-react";
+import { ArrowUpDown, Bell, EllipsisVertical, Eye, EyeOff, Pencil, Send, Star, StarOff, Trash } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
@@ -35,13 +35,15 @@ export default function AnnouncementsPage() {
   const { mutate: createAnnouncement, isPending } = useCreateAnnouncement();
   const { data: announcementsResponse, isLoading, isError, error: errorAnnouncements } = useGetAnnouncements({ search: debouncedSearch, page, limit: 10 });
   const { mutate: deleteAnnouncement, isPending: isDeletingAnnouncement } = useDeleteAnnouncement();
+  const { mutate: updateAnnouncement, isPending: isUpdatingAnnouncement } = useUpdateAnnouncement();
 
   const pagination = useMemo(() => announcementsResponse?.pagination, [announcementsResponse]);
   const announcements = useMemo(() => announcementsResponse?.data || [], [announcementsResponse]);
 
-  const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedAnnouncement, setSelectedAnnouncement] = useState<IAnnouncement | null>(null);
-  
+
+  const [dialogOpen, setDialogOpen] = useState<"publish" | "featured" | "delete" | null>(null);
+
   const handleCreateAnnouncement = () => {
     const payload = {
       title: "Announcement title",
@@ -66,16 +68,40 @@ export default function AnnouncementsPage() {
     router.push(`/announcements/${row._id}?mode=edit`);
   }
 
-  const handleDeleteAnnouncement = (row: IAnnouncement) => {
+  const handleShowDialog = (dialog: "publish" | "featured" | "delete", row: IAnnouncement) => {
     setSelectedAnnouncement(row);
-    setDeleteDialogOpen(true);
+    setDialogOpen(dialog);
+  }
+
+  const handleTooglePublishAnnouncement = () => {
+    if (selectedAnnouncement) {
+      updateAnnouncement({ id: selectedAnnouncement._id, announcement: { status: selectedAnnouncement?.status === "published" ? "draft" as const : "published" as const } as IAnnouncement }, {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ["announcements"] });
+          setSelectedAnnouncement(null);
+          setDialogOpen(null);
+        },
+      });
+    }
+  }
+
+  const handleToogleFeaturedAnnouncement = () => {
+    if (selectedAnnouncement) {
+      updateAnnouncement({ id: selectedAnnouncement._id, announcement: { isFeatured: !selectedAnnouncement?.isFeatured } as IAnnouncement }, {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ["announcements"] });
+          setSelectedAnnouncement(null);
+          setDialogOpen(null);
+        },
+      });
+    }
   }
 
   const handleDeleteConfirmed = () => {
     if (selectedAnnouncement) {
       deleteAnnouncement(selectedAnnouncement._id, {
         onSuccess: () => {
-          setDeleteDialogOpen(false);
+          setDialogOpen(null);
           setSelectedAnnouncement(null);
           queryClient.invalidateQueries({ queryKey: ["announcements"] });
         },
@@ -101,9 +127,21 @@ export default function AnnouncementsPage() {
       cell: ({ row }) => {
         return (
           <div 
-            className="truncate max-w-[300px] block"
+            className="flex items-center gap-0.5"
           >
-            {row.original.title.replace(/<[^>]*>?/g, '')}
+            <span className="truncate max-w-[300px] block">
+              {row.original.title.replace(/<[^>]*>?/g, '')}
+            </span> 
+            {row.original.isFeatured && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Star fill="currentColor" className="size-4 text-yellow-500" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Featured</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
           </div>
         );
       },
@@ -111,14 +149,13 @@ export default function AnnouncementsPage() {
     {
       accessorKey: "status",
       header: ({ column }) => (
-        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")} className="px-0 h-8 hover:bg-transparent">
-          <span>Status</span>
-          <ArrowUpDown className="h-4 w-4" />
-        </Button>
+          <div className="flex items-center justify-center">
+            <span>Status</span>
+          </div>
       ),
       cell: ({ row }) => {
         const status = row.original.status;
-        return <Badge variant={status === "published" ? "default" : "outline"}>{status.charAt(0).toUpperCase() + status.slice(1)}</Badge>;
+        return <Badge variant={status as BadgeVariant} className="w-full text-center">{status.charAt(0).toUpperCase() + status.slice(1)}</Badge>;
       },
     },
     {
@@ -175,13 +212,25 @@ export default function AnnouncementsPage() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              <DropdownMenuItem asChild className="cursor-pointer" onClick={(e) => { e.stopPropagation(); handleShowDialog("publish", row.original); }}>
+                <Button variant="ghost" iconPosition="left" className="w-full justify-start" icon={row.original.status === "published" ? EyeOff : Eye}>
+                  {row.original.status === "published" ? "Unpublish" : "Publish"}
+                </Button>
+              </DropdownMenuItem>
+              {row.original.status === "published" && (
+                <DropdownMenuItem asChild className="cursor-pointer" onClick={(e) => { e.stopPropagation(); handleShowDialog("featured", row.original); }}>
+                  <Button variant="ghost" iconPosition="left" className="w-full justify-start" icon={row.original.isFeatured ? StarOff : Star}>
+                    {row.original.isFeatured ? "Unfeature" : "Feature"}
+                  </Button>
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem asChild className="cursor-pointer" onClick={(e) => { e.stopPropagation(); }}>
                 <Link href={`/announcements/${row.original._id}?mode=edit`}>
                   <Pencil className="size-4" />
                   Edit
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem variant="destructive" onClick={(e) => { e.stopPropagation(); handleDeleteAnnouncement(row.original); }}>
+              <DropdownMenuItem variant="destructive" onClick={(e) => { e.stopPropagation(); handleShowDialog("delete", row.original); }}>
                 <Trash className="size-4" />
                 Delete
               </DropdownMenuItem>
@@ -197,7 +246,35 @@ export default function AnnouncementsPage() {
   }
   return (
     <>
-      <Dialog open={isDeleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+      <Dialog open={dialogOpen === "publish"} onOpenChange={() => setDialogOpen(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{selectedAnnouncement?.status === "published" ? "Unpublish" : "Publish"} Announcement</DialogTitle>
+          </DialogHeader>
+          <DialogDescription>
+            Are you sure you want to {selectedAnnouncement?.status === "published" ? "unpublish" : "publish"} this announcement?
+          </DialogDescription>
+          <div className="flex items-center justify-end gap-2 mt-4 w-full">
+            <Button type="button" variant="outline" className="min-w-[70px]" onClick={() => setDialogOpen(null)}>Cancel</Button>
+            <Button type="button" className="min-w-[70px]" onClick={handleTooglePublishAnnouncement} loading={isUpdatingAnnouncement} disabled={isUpdatingAnnouncement}>{selectedAnnouncement?.status === "published" ? "Unpublish" : "Publish"}</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={dialogOpen === "featured"} onOpenChange={() => setDialogOpen(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{selectedAnnouncement?.isFeatured ? "Unfeature" : "Feature"} Announcement</DialogTitle>
+          </DialogHeader>
+          <DialogDescription>
+            Are you sure you want to {selectedAnnouncement?.isFeatured ? "unfeature" : "feature"} this announcement?
+          </DialogDescription>
+          <div className="flex items-center justify-end gap-2 mt-4 w-full">
+            <Button type="button" variant="outline" className="min-w-[70px]" onClick={() => setDialogOpen(null)}>Cancel</Button>
+            <Button type="button" className="min-w-[70px]" onClick={handleToogleFeaturedAnnouncement} loading={isUpdatingAnnouncement} disabled={isUpdatingAnnouncement}>{selectedAnnouncement?.isFeatured ? "Unfeature" : "Feature"}</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={dialogOpen === "delete"} onOpenChange={() => setDialogOpen(null)}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Delete Announcement</DialogTitle>
@@ -206,7 +283,7 @@ export default function AnnouncementsPage() {
             Are you sure you want to delete this announcement?
           </DialogDescription>
           <div className="flex items-center justify-end gap-2 mt-4 w-full">
-            <Button type="button" variant="outline" className="min-w-[70px]" onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
+            <Button type="button" variant="outline" className="min-w-[70px]" onClick={() => setDialogOpen(null)}>Cancel</Button>
             <Button type="button" variant="destructive" className="min-w-[70px]" onClick={handleDeleteConfirmed} loading={isDeletingAnnouncement} disabled={isDeletingAnnouncement}>Delete</Button>
           </div>
         </DialogContent>

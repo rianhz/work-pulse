@@ -13,7 +13,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { ProjectPayloadFormValues, projectPayloadSchema } from "@/features/projects/validator";
 import { Textarea } from "@/components/ui/textarea";
 import { useSearchUsers } from "@/features/users/hooks";
-import { GenericMultiSelect } from "@/components/custom/select/BaseSelect";
+import { GenericMultiSelect } from "@/components/custom/select/GenericMultiSelect";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useCreateProject, useDeleteProject, useGetProjects, useUpdateProject } from "@/features/projects/hooks";
 import { useQueryClient } from "@tanstack/react-query";

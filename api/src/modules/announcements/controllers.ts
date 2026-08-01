@@ -1,10 +1,10 @@
 import { Request, Response } from "express";
-import { createAnnouncementService, getAnnouncementsService, deleteAnnouncementService, updateAnnouncementService, getAnnouncementByIdService } from "./services";
+import { createAnnouncementService, getAnnouncementsService, deleteAnnouncementService, updateAnnouncementService, getAnnouncementByIdService, getFeaturedAnnouncementsService } from "./services";
 import { HTTPSTATUS } from "../../utils/http-config";
 
 export const createAnnouncementController = async (req: Request, res: Response) => {
   const authenticatedUser = (req as any).user;
-  const { title, description, type, cover, content } = req.body;
+  const { title, description, type, cover, content, labelColor, labelText } = req.body;
   const payload = {
     title,
     description,
@@ -13,6 +13,7 @@ export const createAnnouncementController = async (req: Request, res: Response) 
     content,
     tenantId: authenticatedUser.tenantId,
     status: "draft" as "published" | "draft" | "archived" | "deleted",
+    isFeatured: false,
   }
   
   const newAnnouncement = await createAnnouncementService(authenticatedUser, payload);
@@ -30,6 +31,12 @@ export const getAnnouncementsController = async (req: Request, res: Response) =>
   res.status(200).json({ success: true, data, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } });
 };
 
+export const getFeaturedAnnouncementsController = async (req: Request, res: Response) => {
+  const authenticatedUser = (req as any).user;
+  const data = await getFeaturedAnnouncementsService(authenticatedUser);
+  res.status(200).json({ success: true, data });
+};
+
 export const getAnnouncementByIdController = async (req: Request, res: Response) => {
   const authenticatedUser = (req as any).user;
   const announcement = await getAnnouncementByIdService(authenticatedUser, req.params.id as string);
@@ -38,7 +45,7 @@ export const getAnnouncementByIdController = async (req: Request, res: Response)
 
 export const updateAnnouncementController = async (req: Request, res: Response) => {
   const authenticatedUser = (req as any).user;
-  const { title, description, type, status, cover, content } = req.body;
+  const { title, description, type, status, cover, content, isFeatured, labelColor, labelText } = req.body;
   const payload = {
     title,
     description,
@@ -47,6 +54,9 @@ export const updateAnnouncementController = async (req: Request, res: Response) 
     status,
     cover,
     content,
+    isFeatured,
+    labelColor,
+    labelText,
   }
   const announcement = await updateAnnouncementService(authenticatedUser, req.params.id as string, payload);
   res.status(200).json(announcement);

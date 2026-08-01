@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, Activity } from 'react';
 import { useDropzone } from 'react-dropzone';
 import {
   Dialog,
@@ -172,7 +172,7 @@ export function UniversalUploader({
             </p>
           </>
         )}
-        {isUploading && (
+        <Activity mode={isUploading ? "visible" : "hidden"}>
           <div className="space-y-2">
             <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
               <div
@@ -185,10 +185,10 @@ export function UniversalUploader({
               Uploading... {progress}%
             </p>
           </div>
-        )}
+        </Activity>
       </div>
 
-      {previewUrl && (
+      <Activity mode={previewUrl ? "visible" : "hidden"}>
         <div className="flex justify-end gap-2">
           <Button
             type="button"
@@ -207,7 +207,7 @@ export function UniversalUploader({
             {isUploading ? 'Uploading...' : 'Upload'}
           </Button>
         </div>
-      )}
+      </Activity>
     </div>
   );
 

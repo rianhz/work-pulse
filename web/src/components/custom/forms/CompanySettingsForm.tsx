@@ -5,7 +5,7 @@ import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CompanySettingsFormValues, companySettingsSchema } from "@/features/tenants/validator";
 import { Button } from "@/components/ui/button";
-import { useEffect, useMemo, useState } from "react";
+import { Activity, useEffect, useMemo, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
 import { UniversalUploader } from "../uploader/ImageUploader";
@@ -117,12 +117,12 @@ export function CompanySettingsForm({ tenantId, tenant, isLoading, onSaved }: { 
                       <div>
                         <p className="text-sm font-medium">Logo</p>
                         <p className="text-xs text-muted-foreground">Recommended size 100x100</p>
-                        {logo && (
+                        <Activity mode={logo ? "visible" : "hidden"}>
                           <Button type="button" variant="destructive" size='xs' className="min-w-[70px] mt-2" onClick={handleLogoRemove}>Remove</Button>
-                        )}
+                        </Activity>
                       </div>
                     </div>
-                    {isDirtyCompany && (
+                    <Activity mode={isDirtyCompany ? "visible" : "hidden"}>
                       <div className="flex flex-col gap-2">
                         <Button type="submit" loading={isSubmittingCompany || isPendingUpdateTenant} disabled={isSubmittingCompany || isPendingUpdateTenant}>
                           Save Changes
@@ -134,7 +134,7 @@ export function CompanySettingsForm({ tenantId, tenant, isLoading, onSaved }: { 
                           logo: tenant?.logo ?? "",
                         })}>Cancel</Button>
                       </div>
-                    )}
+                    </Activity>
                   </div>
                 </TableCell>
               </TableRow>
@@ -147,7 +147,9 @@ export function CompanySettingsForm({ tenantId, tenant, isLoading, onSaved }: { 
                       <InputGroup>
                         <InputGroupInput type="text" id="name" placeholder="Name" {...registerCompany("name")} />
                       </InputGroup>
-                      {errorsCompany.name && isDirtyCompany && <p className="text-xs text-red-500">{errorsCompany.name.message}</p>}
+                      <Activity mode={errorsCompany.name && isDirtyCompany ? "visible" : "hidden"}>
+                        <p className="text-xs text-red-500">{errorsCompany.name?.message}</p>
+                      </Activity>
                     </div>
                 </TableCell>
               </TableRow>
@@ -160,7 +162,9 @@ export function CompanySettingsForm({ tenantId, tenant, isLoading, onSaved }: { 
                       <InputGroup>
                         <InputGroupInput type="text" id="slug" placeholder="Slug" {...registerCompany("slug")} />
                       </InputGroup>
-                      {errorsCompany.slug && isDirtyCompany && <p className="text-xs text-red-500">{errorsCompany.slug.message}</p>}
+                      <Activity mode={errorsCompany.slug && isDirtyCompany ? "visible" : "hidden"}>
+                        <p className="text-xs text-red-500">{errorsCompany.slug?.message}</p>
+                      </Activity>
                     </div>
                 </TableCell>
               </TableRow>
@@ -178,7 +182,9 @@ export function CompanySettingsForm({ tenantId, tenant, isLoading, onSaved }: { 
                       />
                     </InputGroup>
                   </div>
-                  {errorsCompany.description && isDirtyCompany && <p className="text-xs text-red-500">{errorsCompany.description.message}</p>}
+                  <Activity mode={errorsCompany.description && isDirtyCompany ? "visible" : "hidden"}>
+                    <p className="text-xs text-red-500">{errorsCompany.description?.message}</p>
+                  </Activity>
                 </TableCell>
               </TableRow>
               <TableRow>

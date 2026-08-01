@@ -4,11 +4,11 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon",
+    "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
     "create-module": "node src/scripts/create-module.js",
-    "migrate": "npm run build && node dist/src/scripts/runner.js"
+    "migrate": "npm run build && node dist/src/scripts/scriptRunner.js"
   },
   "keywords": [],
   "author": "",

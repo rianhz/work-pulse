@@ -3,7 +3,7 @@ import { AnnouncementModel } from "../announcements/schema";
 import { AuthUser } from "../authentication/interfaces";
 import { QueryOptions } from "../global";
 
-export const getDashboardAnnouncementsService = async (authenticatedUser: AuthUser, options: QueryOptions) => {
+export const getHomeAnnouncementsService = async (authenticatedUser: AuthUser, options: QueryOptions) => {
   const tenantId = authenticatedUser.tenantId
 
   const { search, page, limit } = options;
@@ -19,10 +19,11 @@ export const getDashboardAnnouncementsService = async (authenticatedUser: AuthUs
   }
 
   const data = await AnnouncementModel.find(baseQuery)
-    .sort({ createdAt: -1 })
+    .sort({ publishedAt: -1 })
     .skip(skip)
-    .populate("createdBy", "nickName fullName")
-    .populate("lastUpdatedBy", "nickName fullName")
+    .populate("createdBy", "nickName fullName avatar")
+    .populate("lastUpdatedBy", "nickName fullName avatar")
+    .populate("publishedBy", "nickName fullName avatar")
     .select("-__v -tenantId")
     .limit(limit)
     .lean({ virtuals: true });

@@ -10,7 +10,7 @@ import { UpdatePasswordFormValues, updatePasswordSchema } from "@/features/users
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CircleCheck } from "lucide-react";
 import { useForm } from "react-hook-form";
-import { useState } from "react";
+import { Activity, useState } from "react";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 
@@ -103,29 +103,29 @@ export function SecurityUserSettingsForm({ user, isLoading }: { user: IUserWithP
               <Label htmlFor="currentPassword">Current Password</Label>
               <Input type="password" id="currentPassword" {...registerPassword("currentPassword")} />
             </div>
-            {errorsPassword.currentPassword && (
+            <Activity mode={errorsPassword.currentPassword ? "visible" : "hidden"}>
               <p className="text-xs text-red-500">
-                {errorsPassword.currentPassword.message}
+                {errorsPassword.currentPassword?.message}
               </p>
-            )}
+            </Activity>
             <div className="flex flex-col gap-2">
               <Label htmlFor="newPassword">New Password</Label>
               <Input type="password" id="newPassword" {...registerPassword("newPassword")} />
             </div>
-            {errorsPassword.newPassword && (
+            <Activity mode={errorsPassword.newPassword ? "visible" : "hidden"}>
               <p className="text-xs text-red-500">
-                {errorsPassword.newPassword.message}
+                {errorsPassword.newPassword?.message}
               </p>
-            )}
+            </Activity>
             <div className="flex flex-col gap-2">
               <Label htmlFor="confirmNewPassword">Confirm New Password</Label>
               <Input type="password" id="confirmNewPassword" {...registerPassword("confirmNewPassword")} />
             </div>
-            {errorsPassword.confirmNewPassword && (
+            <Activity mode={errorsPassword.confirmNewPassword ? "visible" : "hidden"}>
               <p className="text-xs text-red-500">
-                {errorsPassword.confirmNewPassword.message}
+                {errorsPassword.confirmNewPassword?.message}
               </p>
-            )}
+            </Activity>
             <div className="flex items-center justify-end gap-2">
               <Button variant="outline" type="button" onClick={handleCloseChangePasswordDialog}>Cancel</Button>
               <Button type="submit" variant="default" loading={isSubmittingPassword || isPendingChangePassword} disabled={isSubmittingPassword || isPendingChangePassword}>
@@ -139,7 +139,12 @@ export function SecurityUserSettingsForm({ user, isLoading }: { user: IUserWithP
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {user.providers && user.providers.length > 1 ? 'Are you sure?' : 'Alert'}
+              <Activity mode={user.providers && user.providers.length > 1 ? "visible" : "hidden"}>
+                Are you sure?
+              </Activity>
+              <Activity mode={user.providers && user.providers.length === 1 ? "visible" : "hidden"}>
+                Alert
+              </Activity>              
             </DialogTitle>
             <DialogDescription>
               {user.providers && user.providers.length > 1 ? `Once disconnected, you won't be able to use your {disconnectProvider === 'google' ? 'Google account' : 'password'} to access this account.
@@ -148,16 +153,15 @@ export function SecurityUserSettingsForm({ user, isLoading }: { user: IUserWithP
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            {user.providers && user.providers.length > 1 ? (
-              <>
+            <Activity mode={user.providers && user.providers.length > 1 ? "visible" : "hidden"}>
                 <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
                 <Button variant="destructive" onClick={handleDisconnectConfirmed} loading={isPendingRemovePassword || isPendingRemoveGoogle || isPendingLogout} disabled={isPendingRemovePassword || isPendingRemoveGoogle || isPendingLogout}>
                   Disconnect
                 </Button>
-              </>
-            ) : (
+            </Activity>
+            <Activity mode={user.providers && user.providers.length === 1 ? "visible" : "hidden"}>
               <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Close</Button>
-            )}
+            </Activity>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -166,16 +170,16 @@ export function SecurityUserSettingsForm({ user, isLoading }: { user: IUserWithP
           <TableBody>
             <TableRow>
               <TableCell colSpan={2} className="flex flex-col gap-2">
-                {user?.providers?.includes('google') && (
+                <Activity mode={user?.providers?.includes('google') ? "visible" : "hidden"}>
                   <div className="flex items-center justify-between gap-2">
                     <span className="flex items-center gap-2">
                       Google account <CircleCheck className="size-4 text-green-500" />
                     </span>
                     <Button type="button" variant="destructive" size='xs' onClick={() => handleDisconnectClicked('google')}>Disconnect</Button>
                   </div>
-                )}
+                </Activity>
 
-                {user?.providers?.includes('password') && (
+                <Activity mode={user?.providers?.includes('password') ? "visible" : "hidden"}>
                   <div className="flex items-center justify-between gap-2">
                     <span className="flex items-center gap-2">
                       Password <CircleCheck className="size-4 text-green-500" />
@@ -185,7 +189,7 @@ export function SecurityUserSettingsForm({ user, isLoading }: { user: IUserWithP
                       <Button type="button" variant="destructive" size='xs' onClick={() => handleDisconnectClicked('password')}>Disconnect</Button>
                     </div>
                   </div>
-                )}
+                </Activity>
 
               </TableCell>
             </TableRow>

@@ -1,14 +1,14 @@
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
-import { getDashboardAnnouncements } from "./api";
+import { getHomeAnnouncements } from "./api";
 import { IPaginationQueryOptions } from "@/global";
 
-export const useGetDashboardAnnouncements = (options: IPaginationQueryOptions) => {
+export const useGetHomeAnnouncements = (options: IPaginationQueryOptions) => {
   return useInfiniteQuery({
-    queryKey: ["dashboard", options],
+    queryKey: ["home", options],
     initialPageParam: 1, 
     
     queryFn: ({ pageParam = 1 }) => 
-      getDashboardAnnouncements({
+      getHomeAnnouncements({
         ...options,
         page: pageParam,
       }),

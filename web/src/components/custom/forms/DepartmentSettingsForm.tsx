@@ -2,7 +2,7 @@ import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ITenant } from "@/features/tenants/tenant";
-import { useState } from "react";
+import { Activity, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -155,12 +155,16 @@ export function DepartmentSettingsForm({ tenantId, tenant, isLoading }: { tenant
             <div className="flex w-full flex-col gap-2">
               <Label className="whitespace-nowrap" required>Name</Label>
               <Input type="text" {...register("name")} />
-              {errors.name && <p className="text-red-500">{errors.name.message}</p>}
+              <Activity mode={errors.name ? "visible" : "hidden"}>
+                <p className="text-red-500">{errors.name?.message}</p>
+              </Activity>
             </div>
             <div className="flex w-full flex-col gap-2">
               <Label className="whitespace-nowrap" optional>Description</Label>
               <Textarea rows={3} className="max-h-[150px]" {...register("description")} />
-              {errors.description && <p className="text-red-500">{errors.description.message}</p>}
+              <Activity mode={errors.description ? "visible" : "hidden"}>
+                <p className="text-red-500">{errors.description?.message}</p>
+              </Activity>
             </div>
             <Button type="submit" loading={isPendingCreateDepartment} disabled={isPendingCreateDepartment}>Add</Button>
           </form>
@@ -175,12 +179,16 @@ export function DepartmentSettingsForm({ tenantId, tenant, isLoading }: { tenant
             <div className="flex w-full flex-col gap-2">
               <Label className="whitespace-nowrap" required>Name</Label>
               <Input type="text" {...registerEdit("name")} />
-              {errorsEdit.name && <p className="text-red-500">{errorsEdit.name.message}</p>}
+              <Activity mode={errorsEdit.name ? "visible" : "hidden"}>
+                <p className="text-red-500">{errorsEdit.name?.message}</p>
+              </Activity>
             </div>
             <div className="flex w-full flex-col gap-2">
               <Label className="whitespace-nowrap" optional>Description</Label>
               <Textarea rows={3} className="max-h-[150px]" {...registerEdit("description")} />
-              {errorsEdit.description && <p className="text-red-500">{errorsEdit.description.message}</p>}
+              <Activity mode={errorsEdit.description ? "visible" : "hidden"}>
+                <p className="text-red-500">{errorsEdit.description?.message}</p>
+              </Activity>
             </div>
             <div className="flex items-center gap-2">
               <Button type="button" variant="outline" className="min-w-[70px]" onClick={() => setIsEditOpen(false)}>Cancel</Button>
@@ -239,7 +247,7 @@ export function DepartmentSettingsForm({ tenantId, tenant, isLoading }: { tenant
               <TableRow key={department._id}>
                 <TableCell className="flex items-center gap-2">
                   <span className="text-sm font-medium">{department.name}</span>
-                  {department.description && (
+                  <Activity mode={department.description ? "visible" : "hidden"}>
                     <HoverCard openDelay={10} closeDelay={100}>
                       <HoverCardTrigger asChild>
                         <Info size={16} />
@@ -248,7 +256,7 @@ export function DepartmentSettingsForm({ tenantId, tenant, isLoading }: { tenant
                         <div>{department.description}</div>
                       </HoverCardContent>
                     </HoverCard>
-                  )}
+                  </Activity>
 
                 </TableCell>
                 <TableCell>

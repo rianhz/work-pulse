@@ -40,8 +40,41 @@ body,
   overflow-wrap: anywhere;
 }
 
+/* Add this inside base-editor.scss */
+
 .base-editor-wrapper {
-  overflow: auto;
+
+  // Catch any line clamp class applied to the wrapper wrapper
+  &[class*="line-clamp-"] {
+    position: relative;
+    overflow: hidden;
+
+    // Look inside Tiptap's rendered block container
+    .base-editor {
+      display: -webkit-box !important;
+      -webkit-box-orient: vertical !important;
+      overflow: hidden !important;
+
+      // Inherit the exact number of lines from the Tailwind wrapper class
+      -webkit-line-clamp: inherit !important;
+      line-clamp: inherit !important;
+
+      // Clean up inner spacing so paragraphs don't push text out of the clamp window
+      p,
+      li,
+      h1,
+      h2,
+      h3,
+      h4,
+      h5,
+      h6 {
+        display: inline;
+        /* Forces multiple paragraphs to treat text as continuous stream */
+        margin: 0 !important;
+        /* Prevents block margins from swallowing line allowance */
+      }
+    }
+  }
 }
 
 .base-editor-content {

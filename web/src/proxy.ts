@@ -12,7 +12,7 @@ export function proxy(request: NextRequest) {
         request.nextUrl.pathname.startsWith("/signin") || request.nextUrl.pathname.startsWith("/signup")
 
     const isProtectedPage =
-        request.nextUrl.pathname.startsWith("/dashboard");
+        request.nextUrl.pathname.startsWith("/home");
 
     if (
         !accessToken &&
@@ -29,7 +29,7 @@ export function proxy(request: NextRequest) {
         isAuthPage
     ) {
         return NextResponse.redirect(
-            new URL("/dashboard", request.url)
+            new URL("/home", request.url)
         );
     }
 

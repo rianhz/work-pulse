@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react'
+import React, { useEffect, useState, useMemo, Activity } from 'react'
 import { useTimezoneSelect, allTimezones } from 'react-timezone-select'
 import { Check, ChevronDown } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -93,7 +93,9 @@ export function TimezoneDropdown({ value, onChange, className }: TimezoneDropdow
               )}
             >
               <span>{tz.label}</span>
-              {value === tz.value && <Check className="h-4 w-4 shrink-0 ml-2" />}
+              <Activity mode={value === tz.value ? "visible" : "hidden"}>
+                <Check className="h-4 w-4 shrink-0 ml-2" />
+              </Activity>
             </div>
           ))
         )}

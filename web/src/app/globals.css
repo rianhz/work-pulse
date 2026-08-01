@@ -2,8 +2,8 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";;
 
-@import "../styles/_variables.scss";
-@import "../styles/_keyframe-animations.scss";
+/* @import "../styles/_variables.scss"; */
+/* @import "../styles/_keyframe-animations.scss"; */
 
 
 @custom-variant dark (&:is(.dark *));
@@ -251,4 +251,90 @@
 
 .fc-scrollgrid-section-sticky .fc-scroller-harness .fc-scroller .fc-col-header colgroup{
   background-color: var(--background) !important;
+}
+
+
+/* Base Layout */
+.embla {
+  max-width: 100%;
+  margin: auto;
+  position: relative;
+  --slide-spacing: 1rem;
+  --slide-size: 100%; /* Change to 33.33% if you want to show 3 cards at once */
+}
+
+.embla__viewport {
+  overflow: hidden;
+  width: 100%;
+}
+
+.embla__container {
+  display: flex;
+  touch-action: pan-y pinch-zoom;
+}
+
+.embla__slide {
+  transform: translate3d(0, 0, 0);
+  flex: 0 0 var(--slide-size);
+  min-width: 0;
+}
+
+/* Controls & Buttons Styling */
+.embla__controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.embla__buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.embla__button {
+  background: #ffffff;
+  border: 1px solid #ccc;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #333;
+}
+
+.embla__button:disabled,
+.embla__button--disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.embla__button__svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Dots Styling */
+.embla__dots {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.embla__dot {
+  background: #ddd;
+  border: 0;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.embla__dot--selected {
+  background: #333;
+}
+
+.react-colorful__pointer {
+  width: 24px !important;
+  height: 24px !important;
 }

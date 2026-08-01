@@ -4,7 +4,7 @@ import FullCalendar from "@fullcalendar/react";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from "@fullcalendar/interaction";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Activity, useEffect, useMemo, useRef, useState } from "react";
 import TimesheetDialog from "../popup/TimesheetDialog";
 import { Button } from "@/components/ui/button";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
@@ -200,11 +200,13 @@ export default function TimesheetCalendar() {
 
             return (
               <div className="flex items-center gap-2 font-bold flex-1 px-2">
-                {isRunning && (
+                <Activity mode={isRunning ? "visible" : "hidden"}>
                   <span className="live-dot" />
-                )}
+                </Activity>
                 <span className={`truncate-2 max-w-[220px] md:max-w-[370px] lg:max-w-[450px] xl:max-w-[800px] ${duration >= 90 ? "line-clamp-2" : "line-clamp-1"}`}>{arg.event.title}</span> 
-                {isUpdating && arg.event.id === updatingEventId && <Spinner className="size-4 animate-spin" /> }
+                <Activity mode={isUpdating && arg.event.id === updatingEventId ? "visible" : "hidden"}>
+                  <Spinner className="size-4 animate-spin" />
+                </Activity>
               </div>
             );
           }}
