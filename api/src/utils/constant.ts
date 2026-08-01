@@ -22,5 +22,20 @@ export const REFRESH_COOKIE_OPTIONS = {
     path: '/',
 };
 
+export const LEAVE_TYPE_ANNUAL_LEAVE = "annual_leave" as const;
+export const LEAVE_TYPE_SICK_LEAVE = "sick_leave" as const;
+export const LEAVE_TYPE_MATERNITY_LEAVE = "maternity_leave" as const;
+export const LEAVE_TYPE_PATERNITY_LEAVE = "paternity_leave" as const;
+export const LEAVE_TYPE_PERIOD_LEAVE = "period_leave" as const;
+export const LEAVE_TYPE_MARRIAGE_LEAVE = "marriage_leave" as const;
+export const LEAVE_TYPE_UNPAID_LEAVE = "unpaid_leave" as const;
+export const LEAVE_TYPE_HOURS_ADJUSTMENT = "hours_adjustment" as const;
+
+export const STATUS_PENDING = "pending" as const;
+export const STATUS_APPROVED = "approved" as const;
+export const STATUS_REJECTED = "rejected" as const;
+export const STATUS_CANCELLED = "cancelled" as const;
+
 export const ANNOUNCEMENT_TYPE_OFFICE = "office-announcement" as const;
 export const ANNOUNCEMENT_TYPE_USER = "user-announcement" as const;
+

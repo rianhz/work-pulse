@@ -31,6 +31,9 @@
   --color-input: var(--input);
   --color-border: var(--border);
   --color-destructive: var(--destructive);
+  --color-success: var(--success);
+  --color-pending: var(--pending);
+  --color-cancelled: var(--cancelled);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
   --color-muted-foreground: var(--muted-foreground);
@@ -59,7 +62,7 @@
 :root,
 [data-theme="light"] {
   /* Fresh, bright off-white background with a hint of coolness */
-  --background: oklch(0.99 0.003 277);
+  --background: oklch(96.706% 0.00712 268.595);
   --foreground: oklch(0.12 0.012 277);
   
   /* Very clean, crisp white cards */
@@ -84,6 +87,9 @@
   
   /* Vibrant, premium Rose/Red for destructive actions */
   --destructive: oklch(0.58 0.19 20);
+  --success: oklch(76.342% 0.19032 146.539);
+  --pending: oklch(73.339% 0.15465 116.278);
+  --cancelled: oklch(51.151% 0.02089 245.723);
   
   /* Softer, more cohesive borders */
   --border: oklch(0.91 0.008 277);
@@ -100,7 +106,7 @@
   --radius: 0.75rem; /* Slightly rounder for a modern look */
   
   /* Clean, light sidebar contrast */
-  --sidebar: oklch(0.98 0.005 277);
+  --sidebar: oklch(99.703% 0.00011 271.152);
   --sidebar-foreground: oklch(0.15 0.01 277);
   --sidebar-primary: oklch(0.52 0.19 277);
   --sidebar-primary-foreground: oklch(0.99 0.005 277);
@@ -137,7 +143,10 @@
   --accent-foreground: oklch(0.98 0.005 277);
   
   /* Highly visible dark-mode destructive red */
-  --destructive: oklch(0.55 0.18 24);
+  --destructive: oklch(0.58 0.19 24);
+  --success: oklch(76.342% 0.19032 146.539);
+  --pending: oklch(68.18% 0.15417 117.007);
+  --cancelled: oklch(0.93 0.015 250);
   
   /* Tinted semi-transparent premium borders */
   --border: oklch(0.28 0.015 277 / 60%);
@@ -200,26 +209,26 @@
 }
 
 @keyframes slideUpFixed {
-    0% { 
-      opacity: 0; 
-      transform: translateY(150%); 
-    }
-    100% { 
-      opacity: 1; 
-      transform: translateY(0); 
-    }
+  0% { 
+    opacity: 0; 
+    transform: translateY(150%); 
   }
+  100% { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
+}
 
-  @keyframes slideDownFixed {
-    0% { 
-      opacity: 1; 
-      transform: translateY(0); 
-    }
-    100% { 
-      opacity: 0; 
-      transform: translateY(150%); 
-    }
+@keyframes slideDownFixed {
+  0% { 
+    opacity: 1; 
+    transform: translateY(0); 
   }
+  100% { 
+    opacity: 0; 
+    transform: translateY(150%); 
+  }
+}
 
 
 .fc .fc-scrollgrid-section-header.fc-scrollgrid-section-sticky > *{

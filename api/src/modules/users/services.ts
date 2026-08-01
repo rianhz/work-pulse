@@ -1,53 +1,56 @@
-import { UserModel } from './schema';
-import { IUser } from './interfaces';
 import { ForbiddenException, NotFoundException } from '../../utils/app-error';
-import { getIdentityService } from '../idp/service';
+import { isHaveAccess } from '../../utils/casl';
 import { AuthUser } from '../authentication/interfaces';
 import { QueryOptions } from '../global';
-import { isHaveAccess } from '../../utils/casl';
-import { ProjectModel } from '../projects/schema';
+import { getIdentityService } from '../idp/service';
 import { IProject } from '../projects/interfaces';
+import { ProjectModel } from '../projects/schema';
+import { IUser } from './interfaces';
+import { UserModel } from './schema';
 
 export const getMeService = async (userId: string): Promise<IUser> => {
-    const user = await UserModel.findById(userId).populate("department", "name").select("-refreshToken").select("-__v").select("-createdAt").select("-updatedAt").lean({
-      virtuals: true,
-    });
-    if (!user) throw new NotFoundException('User not found');
-    return user;
+  const user = await UserModel.findById(userId)
+    .populate("department", "name")
+    .select("-refreshToken -__v -createdAt -updatedAt")
+    .lean({ virtuals: true });
+
+  if (!user) throw new NotFoundException('User not found');
+  return user as unknown as IUser;
 };
 
 export const getLoginTypesService = async (userId: string): Promise<('password' | 'google')[]> => {
-    const identities = await getIdentityService(userId);
-    if (!identities) throw new NotFoundException('Identity not found');
-    return identities.map((item) => item.provider);
+  const identities = await getIdentityService(userId);
+  if (!identities) throw new NotFoundException('Identity not found');
+  return identities.map((item) => item.provider);
 };
 
-export const addProjectToUserService = async (authenticatedUser: AuthUser, userId: string, projectId: string): Promise<boolean> => {
-    await isHaveAccess(authenticatedUser, { id: userId }, "User", "update");
+export const updateUserService = async (
+  authenticatedUser: AuthUser, 
+  userId: string, 
+  payload: Partial<IUser>
+): Promise<IUser> => {
+  const existingUser = await UserModel.findOne({ 
+    _id: userId, 
+    tenantId: authenticatedUser.tenantId 
+  }).lean();
 
-    const user = await UserModel.findById(userId);
-    if (!user) throw new NotFoundException('User not found');
-    
-    await UserModel.findByIdAndUpdate(userId, { $push: { projects: projectId } });
-    return true;
-};
+  if (!existingUser) throw new NotFoundException('User not found');
 
-export const removeProjectFromUserService = async (authenticatedUser: AuthUser, userId: string, projectId: string): Promise<boolean> => {
-    await isHaveAccess(authenticatedUser, { id: userId }, "User", "update");
+  // Verify access BEFORE updating the record
+  await isHaveAccess(authenticatedUser, "User", "update", {
+    ...existingUser,
+    userId: existingUser._id.toString()
+  });
 
-    const user = await UserModel.findById(userId);
-    if (!user) throw new NotFoundException('User not found');
-    
-    await UserModel.findByIdAndUpdate(userId, { $pull: { projects: projectId } });
-    return true;
-};
+  const updatedUser = await UserModel.findByIdAndUpdate(
+    userId, 
+    { $set: payload }, 
+    { new: true }
+  ).lean();
 
-export const updateUserService = async (authenticatedUser: AuthUser, userId: string, payload: Partial<IUser>): Promise<IUser> => {
-  const user = await UserModel.findByIdAndUpdate(userId, payload, { new: true });
-  if (!user) throw new NotFoundException('User not found');
+  if (!updatedUser) throw new NotFoundException('User update failed');
 
-  await isHaveAccess(authenticatedUser, user, "User", "update");
-  return user;
+  return updatedUser as unknown as IUser;
 };
 
 export const getDirectReportsTreeService = async (
@@ -57,7 +60,10 @@ export const getDirectReportsTreeService = async (
   const { userId, role, tenantId } = currentUser;
   const { search, page, limit } = options;
 
-  await isHaveAccess(currentUser, null, "User", "read");
+  await isHaveAccess(currentUser, "User", "read", {
+    userId,
+    tenantId
+  });
 
   const skip = (page - 1) * limit;
   const baseQuery: any = {
@@ -65,6 +71,7 @@ export const getDirectReportsTreeService = async (
     status: { $ne: "deleted" },
     role: { $ne: "owner" }
   };  
+
   if (search) {
     baseQuery.$or = [
       { fullName: { $regex: search, $options: "i" } },
@@ -74,82 +81,45 @@ export const getDirectReportsTreeService = async (
 
   switch (role) {
     case "owner":
-      baseQuery._id = { $ne: userId };
-      break;
     case "admin":
       baseQuery._id = { $ne: userId };
       break;
 
-    case "employee": {
-  const me = await UserModel.findById(userId).select("leader");
-  if (!me) {
-    throw new NotFoundException("User not found.");
-  }
+    case "employee":
+    case "manager": {
+      const me = await UserModel.findById(userId).select("leader").lean();
+      if (!me) {
+        throw new NotFoundException("User not found.");
+      }
 
-  // Base list starts with themselves
-  let employeeIds = [userId];
-  let currentSearchIds = [userId];
+      let accessibleUserIds = [userId];
+      let currentSearchIds = [userId];
 
-  // Look UPWARD: If this Employee has a leader, include that leader
-  if (me.leader) {
-    employeeIds.push(me.leader.toString());
-  }
+      // Look UPWARD: include direct leader
+      if (me.leader) {
+        accessibleUserIds.push(me.leader.toString());
+      }
 
-  // Look DOWNWARD: Recursive loop to find all descendants (subordinates)
-  while (currentSearchIds.length > 0) {
-    const nextLevelReports = await UserModel.find({
-      tenantId,
-      leader: { $in: currentSearchIds },
-      status: { $ne: "deleted" },
-    }).select("_id");
+      // Look DOWNWARD: recursive check for direct and nested subordinates
+      while (currentSearchIds.length > 0) {
+        const nextTierReports = await UserModel.find({
+          tenantId,
+          leader: { $in: currentSearchIds },
+          status: { $ne: "deleted" },
+        }).select("_id").lean();
 
-    if (nextLevelReports.length > 0) {
-      const nextLevelIds = nextLevelReports.map(u => u._id.toString());
-      employeeIds.push(...nextLevelIds);
-      currentSearchIds = nextLevelIds;
-    } else {
-      currentSearchIds = [];
+        if (nextTierReports.length > 0) {
+          const nextTierIds = nextTierReports.map(u => u._id.toString());
+          accessibleUserIds.push(...nextTierIds);
+          currentSearchIds = nextTierIds;
+        } else {
+          currentSearchIds = [];
+        }
+      }
+
+      baseQuery._id = { $in: [...new Set(accessibleUserIds)] };
+      break;
     }
-  }
-
-  baseQuery._id = { $in: [...new Set(employeeIds)] };
-  break;
-}
-
-case "manager": {
-  const me = await UserModel.findById(userId).select("leader");
-  if (!me) {
-    throw new NotFoundException("User not found.");
-  }
-
-  // Base list starts with the Manager's own ID
-  let accessibleUserIds = [userId];
-  let currentSearchIds = [userId];
-
-  // Look UPWARD: Even though they are a manager, if they report to a higher manager, include them!
-  if (me.leader) {
-    accessibleUserIds.push(me.leader.toString());
-  }
-
-  while (currentSearchIds.length > 0) {
-    const nextTierReports = await UserModel.find({
-      tenantId,
-      leader: { $in: currentSearchIds },
-      status: { $ne: "deleted" },
-    }).select("_id");
-
-    if (nextTierReports.length > 0) {
-      const nextTierIds = nextTierReports.map(u => u._id.toString());
-      accessibleUserIds.push(...nextTierIds);
-      currentSearchIds = nextTierIds;
-    } else {
-      currentSearchIds = [];
-    }
-  }
-
-  baseQuery._id = { $in: [...new Set(accessibleUserIds)] };
-  break;
-}
     default:
       throw new ForbiddenException("Invalid role mapping.");
   }
@@ -158,36 +128,94 @@ case "manager": {
     UserModel.find(baseQuery)
       .populate("leader", "fullName")
       .populate("department", "name")
-      .select("-refreshToken")
-      .select("-__v")
+      .select("-refreshToken -__v")
       .sort({ fullName: 1 })
       .collation({ locale: "en", numericOrdering: true })
       .skip(skip)
       .limit(limit)
-      .lean({
-        virtuals: true,
-      }),
+      .lean({ virtuals: true }),
     UserModel.countDocuments(baseQuery)
   ]);
 
-  return { users, total };
+  return { users: users as unknown as IUser[], total };
 };  
 
-export const searchUsersService = async (authenticatedUser: AuthUser, search: string): Promise<IUser[]> => {
-  await isHaveAccess(authenticatedUser, null, "User", "read");
+export const searchUsersService = async (
+  authenticatedUser: AuthUser, 
+  search: string
+): Promise<IUser[]> => {
+  await isHaveAccess(authenticatedUser, "User", "read", {
+    userId: authenticatedUser.userId,
+    tenantId: authenticatedUser.tenantId
+  });
 
-  const users = await UserModel.find({ fullName: { $regex: search, $options: "i" } }).select("_id fullName email");
-  return users;
+  const users = await UserModel.find({ 
+    tenantId: authenticatedUser.tenantId,
+    fullName: { $regex: search, $options: "i" },
+    status: { $ne: "deleted" }
+  })
+  .select("_id fullName email")
+  .lean();
+
+  return users as unknown as IUser[];
 };
 
-export const getMyProjectsService = async (authenticatedUser: AuthUser): Promise<IProject[]> => {
-  await isHaveAccess(authenticatedUser, { participants: [authenticatedUser.userId] }, "Project", "read");
+export const getMyProjectsService = async (
+  authenticatedUser: AuthUser
+): Promise<IProject[]> => {
+  await isHaveAccess(authenticatedUser, "Project", "read", {
+    participants: [authenticatedUser.userId],
+    tenantId: authenticatedUser.tenantId
+  });
 
   const projects = await ProjectModel.find({
+    tenantId: authenticatedUser.tenantId,
     participants: authenticatedUser.userId,
   })
   .select("name")
   .lean({ virtuals: false });
-  if (!projects) throw new NotFoundException('Projects not found');
-  return projects;
+
+  return (projects || []) as unknown as IProject[];
+};
+
+export const addProjectToUserService = async (
+  authenticatedUser: AuthUser, 
+  userId: string, 
+  projectId: string
+): Promise<boolean> => {
+  // Check if user has permission to manage projects within the tenant
+  await isHaveAccess(authenticatedUser, "Project", "manage", {
+    tenantId: authenticatedUser.tenantId
+  });
+
+  const targetUser = await UserModel.findOne({ 
+    _id: userId, 
+    tenantId: authenticatedUser.tenantId 
+  }).lean();
+
+  if (!targetUser) throw new NotFoundException('User not found');
+
+  await UserModel.findByIdAndUpdate(userId, { $addToSet: { projects: projectId } });
+  return true;
+};
+
+export const removeProjectFromUserService = async (
+  authenticatedUser: AuthUser, 
+  userId: string, 
+  projectId: string
+): Promise<boolean> => {
+  // Check if user has permission to manage projects within the tenant
+  await isHaveAccess(authenticatedUser, "Project", "manage", {
+    tenantId: authenticatedUser.tenantId
+  });
+
+  const targetUser = await UserModel.findOne({ 
+    _id: userId, 
+    tenantId: authenticatedUser.tenantId 
+  }).lean();
+
+  if (!targetUser) throw new NotFoundException('User not found');
+
+  await UserModel.findByIdAndUpdate(userId, { $pull: { projects: projectId } });
+  return true;
 };

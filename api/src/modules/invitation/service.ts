@@ -19,7 +19,7 @@ export const inviteUsersService = async (
   const { emails, role } = payload;
   const { tenantId } = authenticatedUser;
 
-  await isHaveAccess(authenticatedUser, null, "Invitation", "create");
+  await isHaveAccess(authenticatedUser, "Invitation", "create");
 
   if (authenticatedUser.role !== "owner" && role === "admin") {
     throw new ForbiddenException("You are not authorized to invite users with the 'owner' role.");

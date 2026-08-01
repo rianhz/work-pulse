@@ -77,7 +77,7 @@ export function AppSidebar() {
       url: "#",
       icon: CalendarOff,
       children: [
-        { title: "Request", url: "/request-leave" },
+        { title: "Request", url: "/leave-request" },
         { title: "History", url: "/leave-history" },
       ],
     },
@@ -91,7 +91,7 @@ export function AppSidebar() {
   const { isMobile, open } = useSidebar();
 
   return (
-    <Sidebar variant="sidebar" collapsible={!isMobile ? "none" : "offcanvas"}>
+    <Sidebar variant="sidebar" collapsible={!isMobile ? "none" : "offcanvas"} className="bg-sidebar">
       <SidebarHeader>
         <div className="flex justify-center items-center py-2">
           <h1 className={`font-bold ${open ? "text-2xl" : "text-xl"}`}>WP</h1>
@@ -119,7 +119,7 @@ export function AppSidebar() {
                     >
                       <SidebarMenuItem>
                         <CollapsibleTrigger asChild>
-                          <SidebarMenuButton>
+                          <SidebarMenuButton className="cursor-pointer">
                             {item.icon && <item.icon className="h-4 w-4" />}
                             <span>{item.title}</span>
                             <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />

@@ -1,3 +1,4 @@
+import { NotFoundException } from "../../utils/app-error";
 import { isHaveAccess } from "../../utils/casl";
 import { AuthUser } from "../authentication/interfaces";
 import { QueryOptions } from "../global";
@@ -5,7 +6,7 @@ import { IAnnouncement } from "./interfaces";
 import { AnnouncementModel } from "./schema";
   
 export const createAnnouncementService = async (authenticatedUser: AuthUser, announcement: Partial<IAnnouncement>) => {
- await isHaveAccess(authenticatedUser, null, "Announcement", "manage");
+ await isHaveAccess(authenticatedUser, "Announcement", "manage");
 
   const payload = {
     ...announcement,
@@ -21,7 +22,7 @@ export const createAnnouncementService = async (authenticatedUser: AuthUser, ann
 export const getAnnouncementsService = async (authenticatedUser: AuthUser, options: QueryOptions):Promise<{ data: IAnnouncement[], total: number }> => {
   const { search, page, limit } = options;
   const tenantId = authenticatedUser.tenantId
-  await isHaveAccess(authenticatedUser, null, "Announcement", "read");
+  await isHaveAccess(authenticatedUser, "Announcement", "read");
 
   const skip = (page - 1) * limit;
   const baseQuery: any = {
@@ -49,7 +50,7 @@ export const getAnnouncementsService = async (authenticatedUser: AuthUser, optio
 
 export const getFeaturedAnnouncementsService = async (authenticatedUser: AuthUser):Promise<IAnnouncement[]> => {
   const tenantId = authenticatedUser.tenantId
-  await isHaveAccess(authenticatedUser, null, "Announcement", "read");
+  await isHaveAccess(authenticatedUser, "Announcement", "read");
 
   const baseQuery: any = {
     tenantId,
@@ -70,29 +71,35 @@ export const getFeaturedAnnouncementsService = async (authenticatedUser: AuthUse
 };
 
 export const getAnnouncementByIdService = async (authenticatedUser: AuthUser, id: string) => {
-  await isHaveAccess(authenticatedUser, null, "Announcement", "read");
+  await isHaveAccess(authenticatedUser, "Announcement", "read");
 
   const announcement = await AnnouncementModel.findById(id);
   return announcement;
 };
 
 export const updateAnnouncementService = async (authenticatedUser: AuthUser, id: string, announcement: Partial<IAnnouncement>) => {
-  await isHaveAccess(authenticatedUser, null, "Announcement", "manage");
+  const existingAnnouncement = await AnnouncementModel.findById(id);
+  if (!existingAnnouncement) throw new NotFoundException("Announcement not found");
+
+  await isHaveAccess(authenticatedUser, "Announcement", "update", existingAnnouncement);
 
   const payload = {
     ...announcement,
     lastUpdatedBy: authenticatedUser.userId,
-    ...(announcement.status === "published" && !announcement.publishedAt ? { publishedAt: new Date() } : {}),
-    ...(announcement.status === "published" && announcement.publishedBy ? { publishedBy: authenticatedUser.userId } : {}),
-  }
+    ...(announcement.status === "published" && !existingAnnouncement.publishedAt ? { publishedAt: new Date() } : {}),
+    ...(announcement.status === "published" && !existingAnnouncement.publishedBy ? { publishedBy: authenticatedUser.userId } : {}),
+  };
 
   const updatedAnnouncement = await AnnouncementModel.findByIdAndUpdate(id, payload, { new: true });
   return updatedAnnouncement;
 };
 
 export const deleteAnnouncementService = async (authenticatedUser: AuthUser, id: string) => {
-  await isHaveAccess(authenticatedUser, null, "Announcement", "manage");
-  
+  const existingAnnouncement = await AnnouncementModel.findById(id);
+  if (!existingAnnouncement) throw new NotFoundException("Announcement not found");
+
+  await isHaveAccess(authenticatedUser, "Announcement", "manage", existingAnnouncement);
+
   const deletedAnnouncement = await AnnouncementModel.findByIdAndUpdate(id, { status: "deleted" }, { new: true });
   return deletedAnnouncement;
 };

@@ -28,19 +28,19 @@ export const getAnnouncementsController = async (req: Request, res: Response) =>
   const page = parseInt(req.query.page as string, 10) || 1;
   const limit = parseInt(req.query.limit as string, 10) || 10;
   const { data, total } = await getAnnouncementsService(authenticatedUser, { search, page, limit });
-  res.status(200).json({ success: true, data, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } });
+  res.status(HTTPSTATUS.OK).json({ success: true, data, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } });
 };
 
 export const getFeaturedAnnouncementsController = async (req: Request, res: Response) => {
   const authenticatedUser = (req as any).user;
   const data = await getFeaturedAnnouncementsService(authenticatedUser);
-  res.status(200).json({ success: true, data });
+  res.status(HTTPSTATUS.OK).json({ success: true, data });
 };
 
 export const getAnnouncementByIdController = async (req: Request, res: Response) => {
   const authenticatedUser = (req as any).user;
   const announcement = await getAnnouncementByIdService(authenticatedUser, req.params.id as string);
-  res.status(200).json(announcement);
+  res.status(HTTPSTATUS.OK).json(announcement);
 };
 
 export const updateAnnouncementController = async (req: Request, res: Response) => {
@@ -59,11 +59,11 @@ export const updateAnnouncementController = async (req: Request, res: Response) 
     labelText,
   }
   const announcement = await updateAnnouncementService(authenticatedUser, req.params.id as string, payload);
-  res.status(200).json(announcement);
+  res.status(HTTPSTATUS.OK).json(announcement);
 };
 
 export const deleteAnnouncementController = async (req: Request, res: Response) => {
   const authenticatedUser = (req as any).user;
   const announcement = await deleteAnnouncementService(authenticatedUser, req.params.id as string);
-  res.status(200).json(announcement);
+  res.status(HTTPSTATUS.OK).json(announcement);
 };

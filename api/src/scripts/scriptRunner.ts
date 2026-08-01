@@ -6,6 +6,7 @@ import { connectDatabase } from "../config/database";
 import { thumbnailMigrations } from "./migrations/thumbnailAnnouncements";
 import { isFeaturedAnnouncements } from "./migrations/isFeaturedAnnouncements";
 import { datePublishedAnnouncements } from "./migrations/datePublishedAnnouncements";
+import { leaveBalanceMigration } from "./migrations/initializeLeave";
 
 dotenv.config();
 
@@ -13,7 +14,8 @@ const migrations = [
   // { name: "usersMigrations", execute: usersMigrations },
   // {name: "announcementMigrations", execute: thumbnailMigrations},
   // {name: "isFeaturedAnnouncements", execute: isFeaturedAnnouncements}
-  {name: "datePublishedAnnouncements", execute: datePublishedAnnouncements}
+  // {name: "datePublishedAnnouncements", execute: datePublishedAnnouncements}
+  {name: "initializeLeave", execute: leaveBalanceMigration}
 ];
 
 async function runMigrations() {

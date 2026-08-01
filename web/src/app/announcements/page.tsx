@@ -288,38 +288,34 @@ export default function AnnouncementsPage() {
           </div>
         </DialogContent>
       </Dialog>
-      <Card className="border-none pt-0 ring-0 shadow-none">
-        <CardHeader className="flex justify-between items-end flex-row px-0">
-          <div>
-            <CardTitle className="text-2xl font-bold">Announcements</CardTitle>
-            <CardDescription>A comprehensive view of all announcements.</CardDescription>
-          </div>
-          <Button onClick={handleCreateAnnouncement} loading={isPending} disabled={isPending || isLoading}>
-           Create
-          </Button>
-        </CardHeader>
-        <CardContent className="px-0">
-          <BaseTable
-            onRowClicked={handleRowClicked}
-            columns={columns}
-            data={announcements}
-            columnLabels={columnDisplayLabels}
-            columnVisibility={columnVisibility}
-            onColumnVisibilityChange={setColumnVisibility}
-            showSearchField={!isError}
-            searchValue={search}
-            onSearchChange={handleSearchChange}
-            searchPlaceholder="Search by title..."
-            currentPage={page}
-            onPageChange={(newPage) => setPage(newPage)}
-            totalPages={pagination?.totalPages}
-            isLoading={isLoading}
-            isEmptyData={announcements && announcements?.length === 0}
-            emptyDataDescription="No announcements found"
-            emptyDataIcon={<Bell className="size-10 text-muted-foreground" />}
-          />
-        </CardContent>
-      </Card>
+      <div className="flex justify-between items-end flex-row px-0 mb-4">
+        <div>
+          <h1 className="text-2xl font-bold">Announcements</h1>
+          <p className="text-sm text-muted-foreground">A comprehensive view of all announcements.</p>
+        </div>
+        <Button onClick={handleCreateAnnouncement} loading={isPending} disabled={isPending || isLoading}>
+          Create
+        </Button>
+      </div>
+      <BaseTable
+        onRowClicked={handleRowClicked}
+        columns={columns}
+        data={announcements}
+        columnLabels={columnDisplayLabels}
+        columnVisibility={columnVisibility}
+        onColumnVisibilityChange={setColumnVisibility}
+        showSearchField={!isError}
+        searchValue={search}
+        onSearchChange={handleSearchChange}
+        searchPlaceholder="Search by title..."
+        currentPage={page}
+        onPageChange={(newPage) => setPage(newPage)}
+        totalPages={pagination?.totalPages}
+        isLoading={isLoading}
+        isEmptyData={announcements && announcements?.length === 0}
+        emptyDataDescription="No announcements found"
+        emptyDataIcon={<Bell className="size-10 text-muted-foreground" />}
+      />
     </>
   );
 }

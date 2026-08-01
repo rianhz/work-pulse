@@ -7,7 +7,7 @@ export const getHomeAnnouncementsService = async (authenticatedUser: AuthUser, o
   const tenantId = authenticatedUser.tenantId
 
   const { search, page, limit } = options;
-  await isHaveAccess(authenticatedUser, null, "Announcement", "read");
+  await isHaveAccess(authenticatedUser, "Announcement", "read");
   const skip = (page - 1) * limit;
 
   const baseQuery:any = {

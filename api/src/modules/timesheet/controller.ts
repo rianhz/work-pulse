@@ -19,22 +19,23 @@ export const getTimesheetsController = asyncHandler(async (req: Request, res: Re
 });
 
 export const getTimesheetController = asyncHandler(async (req: Request, res: Response) => {
+    const authenticatedUser = (req as any).user;
     const { id } = req.params;
-    const timesheet = await getTimesheetService(id as string);
+    const timesheet = await getTimesheetService(authenticatedUser, id as string);
     res.status(HTTPSTATUS.OK).json({ success: true, data: timesheet });
 });
 
 export const updateTimesheetController = asyncHandler(async (req: Request, res: Response) => {
-    const { userId } = (req as any).user;
-    const { tenantId } = (req as any).user;
+    const authenticatedUser = (req as any).user;
     const { id } = req.params;
     const { title, start, end, description, project, payAs } = req.body;
-    const timesheet = await updateTimesheetService(id as string, { userId, tenantId, title, start, end, description, project, payAs });
+    const timesheet = await updateTimesheetService(authenticatedUser, id as string, { title, start, end, description, project, payAs });
     res.status(HTTPSTATUS.OK).json({ success: true, data: timesheet });
 });
 
 export const deleteTimesheetController = asyncHandler(async (req: Request, res: Response) => {
+    const authenticatedUser = (req as any).user;
     const { id } = req.params;
-    await deleteTimesheetService(id as string);
+    await deleteTimesheetService(authenticatedUser, id as string);
     res.status(HTTPSTATUS.OK).json({ success: true });
 });

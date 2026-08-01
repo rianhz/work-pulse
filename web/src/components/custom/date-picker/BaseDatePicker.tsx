@@ -40,13 +40,15 @@ export function BaseDatePicker({
           id={id}
           disabled={disabled}
           className={cn(
-            "justify-between w-full font-normal text-left bg-input/50 hover:bg-input/50! aria-expanded:bg-input/50!",
+            "justify-between flex-1 font-normal text-left bg-input/50 hover:bg-input/50! aria-expanded:bg-input/50!",
             !value && "text-muted-foreground",
             className
           )}
+          icon={CalendarIcon}
+          iconPosition="right"
+          iconClassName={cn("h-4 w-4", disabled && "opacity-50")}
         >
           {value ? moment(value).format(formatString) : placeholder}
-          <CalendarIcon className={cn("h-4 w-4", disabled && "opacity-50")} />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto overflow-hidden p-0" align="start">

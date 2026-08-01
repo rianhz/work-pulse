@@ -274,7 +274,6 @@ export default function TeamPage() {
 
   return (
     <>
-      {/* Invite User Dialog */}
       <Dialog open={dialogType === "invite"} onOpenChange={(isOpen) => !isOpen && handleCloseDialog()}>
         <DialogContent>
           <DialogHeader>
@@ -315,7 +314,6 @@ export default function TeamPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Edit User Dialog */}
       <Dialog open={dialogType === "edit"} onOpenChange={(isOpen) => !isOpen && handleCloseDialog()}>
         <DialogContent>
           <DialogHeader>
@@ -464,7 +462,6 @@ export default function TeamPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete User Dialog */}
       <Dialog open={dialogType === "delete"} onOpenChange={(isOpen) => !isOpen && handleCloseDialog()}>
         <DialogContent>
           <DialogHeader>
@@ -482,15 +479,15 @@ export default function TeamPage() {
         </DialogContent>
       </Dialog>
 
-      <Card className="border-none pt-0 ring-0 shadow-none">
-        <CardHeader className="flex justify-between items-end flex-row px-0">
-          <div>
-            <CardTitle className="text-2xl font-bold">Team</CardTitle>
-            <CardDescription>A comprehensive view of your reporting tree, leadership structure, and team members.</CardDescription>
-          </div>
-          {isAdminOrOwner && <Button onClick={() => setDialogType("invite")} disabled={isLoadingUsers}>Invite</Button>}
-        </CardHeader>
-        <CardContent className="px-0">
+      <div className="flex justify-between items-end flex-row px-0 mb-4">
+        <div>
+          <h1 className="text-2xl font-bold">Team</h1>
+          <p className="text-sm text-muted-foreground">A comprehensive view of your reporting tree, leadership structure, and team members.</p>
+        </div>
+        {isAdminOrOwner && <Button onClick={() => setDialogType("invite")} disabled={isLoadingUsers}>Invite</Button>}
+      </div>
+      {/* <Card className="border-none ring-0 shadow-none">
+        <CardContent className="px-0"> */}
           <BaseTable
             columns={columns}
             data={users}
@@ -509,8 +506,8 @@ export default function TeamPage() {
             emptyDataDescription="No users found in your team"
             emptyDataIcon={<Users className="size-10 text-muted-foreground" />}
           />
-        </CardContent>
-      </Card>
+        {/* </CardContent>
+      </Card> */}
     </>
   );
 }
