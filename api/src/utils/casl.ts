@@ -3,9 +3,19 @@ import { ForbiddenException } from "./app-error";
 import { AuthUser } from "../modules/authentication/interfaces";
 
 export type Actions = "manage" | "create" | "read" | "update" | "delete";
-export type Subjects = "User" | "Project" | "Timesheet" | "Tenant" | "Invitation" | "Department" | "Position" | "Announcement" | "LeaveRequest" | "LeaveBalance" | "all";
+export type Subjects = 
+  | "User" 
+  | "Project" 
+  | "Timesheet" 
+  | "Tenant" 
+  | "Invitation" 
+  | "Department" 
+  | "Position" 
+  | "Announcement" 
+  | "LeaveRequest" 
+  | "LeaveBalance" 
+  | "all";
 
-// Relax subject conditions typing to avoid verbose interface definitions
 export type AppAbility = AnyMongoAbility;
 
 export function defineAbilitiesFor(user: AuthUser): AppAbility {
@@ -23,7 +33,9 @@ export function defineAbilitiesFor(user: AuthUser): AppAbility {
       can("manage", "Tenant", { tenantId: user.tenantId }); 
       can("manage", "Announcement", { tenantId: user.tenantId });
       can("manage", "LeaveBalance", { tenantId: user.tenantId });
-      can("manage", "LeaveRequest", { tenantId: user.tenantId });
+      
+      // LeaveRequest migrated fields (user, tenant)
+      can("manage", "LeaveRequest", { tenant: user.tenantId });
       break;
 
     case "manager":
@@ -35,11 +47,11 @@ export function defineAbilitiesFor(user: AuthUser): AppAbility {
       can("read", "Announcement", { tenantId: user.tenantId });
       can("read", "LeaveBalance", { userId: user.userId, tenantId: user.tenantId });
 
-      can("manage", "LeaveRequest", { userId: user.userId, tenantId: user.tenantId });
-      cannot("update", "LeaveRequest", ["status"], { userId: user.userId, tenantId: user.tenantId });
+      // LeaveRequest permissions
+      can("manage", "LeaveRequest", { user: user.userId, tenant: user.tenantId });
+      cannot("update", "LeaveRequest", ["status"], { user: user.userId, tenant: user.tenantId });
 
-      // Manager managing ANY leave request within their tenant (CAN update status)
-      can(["read", "update"], "LeaveRequest", { tenantId: user.tenantId });
+      can(["read", "update"], "LeaveRequest", { tenant: user.tenantId });
       break;
 
     case "employee":
@@ -54,12 +66,15 @@ export function defineAbilitiesFor(user: AuthUser): AppAbility {
       can("read", "Announcement", { tenantId: user.tenantId });
       can("read", "LeaveBalance", { userId: user.userId, tenantId: user.tenantId });
 
-      // 1. Employee managing their own request (CANNOT update 'status')
-      can("manage", "LeaveRequest", { userId: user.userId, tenantId: user.tenantId });
-      cannot("update", "LeaveRequest", ["status"], { userId: user.userId, tenantId: user.tenantId });
+      // 1. Employee managing their own leave requests
+      can("manage", "LeaveRequest", { user: user.userId, tenant: user.tenantId });
+      cannot("update", "LeaveRequest", ["status"], { user: user.userId, tenant: user.tenantId });
 
-      // 2. Employee acting as a LEADER for someone else's request (CAN update 'status')
-      can(["read", "update"], "LeaveRequest", { leader: user.userId, tenantId: user.tenantId });
+      // 2. Allow employee to execute read queries within their tenant
+      can("read", "LeaveRequest", { tenant: user.tenantId });
+
+      // 3. Employee acting as a LEADER for subordinate requests
+      can(["read", "update"], "LeaveRequest", { leader: user.userId, tenant: user.tenantId });
       break;
   }
 
@@ -75,9 +90,12 @@ export async function isHaveAccess(
 ): Promise<boolean> {
   const ability = defineAbilitiesFor(authenticatedUser);
 
+  // General fallback providing both legacy and migrated schema keys
   const targetData = resourceData ?? { 
     userId: authenticatedUser.userId, 
-    tenantId: authenticatedUser.tenantId 
+    tenantId: authenticatedUser.tenantId,
+    user: authenticatedUser.userId, 
+    tenant: authenticatedUser.tenantId 
   };
 
   const target = caslSubject(subjectName, JSON.parse(JSON.stringify(targetData)));

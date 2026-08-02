@@ -44,9 +44,12 @@ import { RootState } from "@/store";
 
 export function AppSidebar() {
   const pathname = usePathname();
-  const currentUserRole = useAppSelector(
-    (state: RootState) => state.currentUser.user?.role
+  const currentUser = useAppSelector(
+    (state: RootState) => state.currentUser.user
   );
+
+  const isLeader = currentUser?.isLeader;
+  const currentUserRole = currentUser?.role;
   const { mutate: logout } = useLogout();
 
   const isModerator = currentUserRole === "admin" || currentUserRole === "owner";
@@ -77,8 +80,9 @@ export function AppSidebar() {
       url: "#",
       icon: CalendarOff,
       children: [
-        { title: "Request", url: "/leave-request" },
+        { title: "Request", url: "/leave-requests" },
         { title: "History", url: "/leave-history" },
+        ...(isLeader || currentUserRole === "admin" || currentUserRole === "owner" ? [{ title: "Approvals", url: "/leave-approvals" }] : []),
       ],
     },
   ];

@@ -16,3 +16,13 @@ export const createLeaveRequest = async (dto: Partial<ILeaveRequest>) => {
   const response = await api.post<IBaseResponse>('/leave/requests', dto);
   return response.data;
 }
+
+export const getLeaveApprovals = async (options: IPaginationQueryOptions) => {
+  const response = await api.get<IGetPaginatedResponse<ILeaveRequest[]>>('/leave/requests', { params: options });
+  return response.data;
+}
+
+export const getLeaveRequestById = async (id: string) => {
+  const response = await api.get<IResponse<ILeaveRequest>>(`/leave/requests/${id}`);
+  return response.data;
+}

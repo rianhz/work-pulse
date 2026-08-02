@@ -1,11 +1,14 @@
 import { Request, Response } from "express";
-import { createLeaveRequestService, getLeaveRequestsService, updateLeaveRequestService, deleteLeaveRequestService, getMyLeaveRequestsService } from "./services";
+import { createLeaveRequestService, getLeaveRequestsService, updateLeaveRequestService, deleteLeaveRequestService, getMyLeaveRequestsService, getLeaveRequestByIdService } from "./services";
 import { HTTPSTATUS } from "../../../utils/http-config";
 
 export const getLeaveRequests = async (req: Request, res: Response) => {
   const authenticatedUser = (req as any).user;
-  const leaveRequests = await getLeaveRequestsService(authenticatedUser);
-  res.status(HTTPSTATUS.OK).json({ success: true, data: leaveRequests });
+  const search = req.query.search as string || "";
+  const page = parseInt(req.query.page as string, 10) || 1;
+  const limit = parseInt(req.query.limit as string, 10) || 10;
+  const leaveRequests = await getLeaveRequestsService(authenticatedUser, { search, page, limit });
+  res.status(HTTPSTATUS.OK).json({ success: true, data: leaveRequests.data, pagination: { page, limit, total: leaveRequests.total, totalPages: Math.ceil(leaveRequests.total / limit) } });
 }
 
 export const getMyLeaveRequests = async (req: Request, res: Response) => {
@@ -33,4 +36,10 @@ export const deleteLeaveRequest = async (req: Request, res: Response) => {
   const authenticatedUser = (req as any).user;
   await deleteLeaveRequestService(authenticatedUser, req.params.id as string);
   res.status(HTTPSTATUS.OK).json({ success: true, message: "Leave request deleted successfully" });
+}
+
+export const getLeaveRequestById = async (req: Request, res: Response) => {
+  const authenticatedUser = (req as any).user;
+  const leaveRequest = await getLeaveRequestByIdService(authenticatedUser, req.params.id as string);
+  res.status(HTTPSTATUS.OK).json({ success: true, data: leaveRequest });
 }

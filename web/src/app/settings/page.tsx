@@ -3,8 +3,7 @@ import { AccountSettingsForm } from "@/components/custom/forms/AccountSettingsFo
 import { CompanySettingsForm } from "@/components/custom/forms/CompanySettingsForm";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useGetTenantById } from "@/features/tenants/hooks";
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 import { RootState } from "@/store";
 import { BillingPlansSettingsForm } from "@/components/custom/forms/BillingPlansSettingsForm";
 import { ITenant } from "@/features/tenants/tenant";
@@ -33,25 +32,46 @@ export default function SettingsPage() {
 
   const isMobile = useIsMobile();
 
+  // 1. CALL ALL HOOKS UNCONDITIONALLY AT THE TOP
+  const { 
+    data: user, 
+    isLoading: isLoadingUser, 
+    error: errorUser, 
+    isError: isErrorUser 
+  } = useGetMe();
 
-  const { data: user, isLoading: isLoadingUser, error: errorUser, isError: isErrorUser } = useGetMe();
-  if(isErrorUser) {
-    return <ErrorMessage title={(errorUser as any)?.response?.data?.message || (errorUser as Error).message || 'Failed to get user'} />
-  }
+  const { 
+    data: providers, 
+    isLoading: isLoadingProviders, 
+    error: errorProviders, 
+    isError: isErrorProviders 
+  } = useGetMeProviders();
 
-  const { data: providers, isLoading: isLoadingProviders, error: errorProviders, isError: isErrorProviders } = useGetMeProviders();
-  if(isErrorProviders) {
-    return <ErrorMessage title={(errorProviders as any)?.response?.data?.message || (errorProviders as Error).message || 'Failed to get providers'} />
-  }
+  const tenantId = useSelector((state: RootState) => state.currentUser.user?.tenantId);
+  const tenant = useSelector((state: RootState) => state.currentTenant.tenant);
 
-  const tenantId = useSelector((state: RootState) => (state as RootState).currentUser.user?.tenantId);
-  const tenant = useSelector((state: RootState) => (state as RootState).currentTenant.tenant);
- 
   const handleUpdatedTenant = () => {
     queryClient.invalidateQueries({ queryKey: ['me'] });
+  };
+
+  // 2. NOW HANDLE CONDITIONAL EARLY RETURNS AFTER ALL HOOKS HAS RUN
+  if (isErrorUser) {
+    return (
+      <ErrorMessage 
+        title={(errorUser as any)?.response?.data?.message || (errorUser as Error).message || 'Failed to get user'} 
+      />
+    );
   }
 
+  if (isErrorProviders) {
+    return (
+      <ErrorMessage 
+        title={(errorProviders as any)?.response?.data?.message || (errorProviders as Error).message || 'Failed to get providers'} 
+      />
+    );
+  }
 
+  // 3. MAIN JSX RENDER
   return (
     <Tabs value={tab} className="w-full">
       <TabsList>
@@ -81,27 +101,27 @@ export default function SettingsPage() {
           <NotAuthorised />
         )}
         {allowedCompanyTabAccess && tab === "company" && (
-         <>
-          <h1 className="text-2xl font-bold">Organization Settings</h1>
-          <p className="text-sm text-muted-foreground">Manage your organization's identity, team permissions, and cloud integrations.</p>
-          <Tabs defaultValue="general" orientation={isMobile ? "horizontal" : "vertical"} className="mt-4">
-            <TabsList className="bg-transparent px-0! pt-0!">
-              <TabsTrigger className="rounded-sm data-active:bg-transparent hover:bg-sidebar-accent p-2! min-w-[150px]" value="general">General</TabsTrigger>
-              <TabsTrigger className="rounded-sm data-active:bg-transparent hover:bg-sidebar-accent p-2! min-w-[150px]" value="departments">Departments</TabsTrigger>
-              <TabsTrigger className="rounded-sm data-active:bg-transparent hover:bg-sidebar-accent p-2! min-w-[150px]" value="billing">Billing & Plans</TabsTrigger>
-            </TabsList>
-            <TabsContent value="general">
-              <CompanySettingsForm tenantId={tenantId as string} tenant={tenant as ITenant} isLoading={isLoadingUser || isLoadingProviders} onSaved={handleUpdatedTenant} />
-            </TabsContent>
-            <TabsContent value="departments">
-              <DepartmentSettingsForm tenantId={tenantId as string} tenant={tenant as ITenant} isLoading={isLoadingUser || isLoadingProviders} />
-            </TabsContent>
-            <TabsContent value="billing">
-              <BillingPlansSettingsForm tenantId={tenantId as string} tenant={tenant as ITenant} isLoading={isLoadingUser || isLoadingProviders} />
-            </TabsContent>
-          </Tabs>
-        </>
-         )}
+          <>
+            <h1 className="text-2xl font-bold">Organization Settings</h1>
+            <p className="text-sm text-muted-foreground">Manage your organization's identity, team permissions, and cloud integrations.</p>
+            <Tabs defaultValue="general" orientation={isMobile ? "horizontal" : "vertical"} className="mt-4">
+              <TabsList className="bg-transparent px-0! pt-0!">
+                <TabsTrigger className="rounded-sm data-active:bg-transparent hover:bg-sidebar-accent p-2! min-w-[150px]" value="general">General</TabsTrigger>
+                <TabsTrigger className="rounded-sm data-active:bg-transparent hover:bg-sidebar-accent p-2! min-w-[150px]" value="departments">Departments</TabsTrigger>
+                <TabsTrigger className="rounded-sm data-active:bg-transparent hover:bg-sidebar-accent p-2! min-w-[150px]" value="billing">Billing & Plans</TabsTrigger>
+              </TabsList>
+              <TabsContent value="general">
+                <CompanySettingsForm tenantId={tenantId as string} tenant={tenant as ITenant} isLoading={isLoadingUser || isLoadingProviders} onSaved={handleUpdatedTenant} />
+              </TabsContent>
+              <TabsContent value="departments">
+                <DepartmentSettingsForm tenantId={tenantId as string} tenant={tenant as ITenant} isLoading={isLoadingUser || isLoadingProviders} />
+              </TabsContent>
+              <TabsContent value="billing">
+                <BillingPlansSettingsForm tenantId={tenantId as string} tenant={tenant as ITenant} isLoading={isLoadingUser || isLoadingProviders} />
+              </TabsContent>
+            </Tabs>
+          </>
+        )}
       </TabsContent>
     </Tabs>
   );

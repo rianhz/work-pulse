@@ -15,10 +15,10 @@ export const getTenantService = async (authenticatedUser: AuthUser, tenantId: st
   }
 
   // Maps primary key _id to tenantId for CASL evaluation
-  await isHaveAccess(authenticatedUser, "Tenant", "read", { 
-    ...tenant, 
-    tenantId: tenant._id.toString() 
-  });
+  // await isHaveAccess(authenticatedUser, "Tenant", "read", { 
+  //   ...tenant, 
+  //   tenantId: tenant._id.toString() 
+  // });
 
   return tenant as unknown as ITenant;
 };

@@ -35,7 +35,13 @@ export const STATUS_PENDING = "pending" as const;
 export const STATUS_APPROVED = "approved" as const;
 export const STATUS_REJECTED = "rejected" as const;
 export const STATUS_CANCELLED = "cancelled" as const;
+export const STATUS_COMPLETED = "completed" as const;
+export const STATUS_IN_PROGRESS = "in_progress" as const;
+export const STATUS_AWAITING_APPROVAL = "awaiting_approval" as const;
 
 export const ANNOUNCEMENT_TYPE_OFFICE = "office-announcement" as const;
 export const ANNOUNCEMENT_TYPE_USER = "user-announcement" as const;
 
+export const NOTIFICATION_TYPE_LEAVE_REQUESTED = "LEAVE_REQUESTED";
+export const NOTIFICATION_TYPE_LEAVE_APPROVED = "LEAVE_APPROVED";
+export const NOTIFICATION_TYPE_LEAVE_REJECTED = "LEAVE_REJECTED";

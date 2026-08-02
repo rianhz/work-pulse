@@ -5,6 +5,7 @@ import { Menu } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 import { DarkModeSwitcher } from "../switcher/DarkModeSwitcher";
 import { ProfileDropdown } from "../dropdown/ProfileDropdown";
+import { NotificationDropdown } from "../dropdown/NotificationDropdown";
 
 
 export default function BaseLoggedInNavTop() {
@@ -28,7 +29,8 @@ export default function BaseLoggedInNavTop() {
         </div>
 
         
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2">
+          <NotificationDropdown />
           <DarkModeSwitcher />
           <ProfileDropdown />
         </div>

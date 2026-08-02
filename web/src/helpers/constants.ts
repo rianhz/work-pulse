@@ -19,6 +19,9 @@ export const STATUS_PENDING = "pending" as const;
 export const STATUS_APPROVED = "approved" as const;
 export const STATUS_REJECTED = "rejected" as const;
 export const STATUS_CANCELLED = "cancelled" as const;
+export const STATUS_COMPLETED = "completed" as const;
+export const STATUS_IN_PROGRESS = "in_progress" as const;
+export const STATUS_AWAITING_APPROVAL = "awaiting_approval" as const;
 
 export const leaveTypesOptions = [
   { label: 'Annual Leave', value: LEAVE_TYPE_ANNUAL_LEAVE },
@@ -36,4 +39,22 @@ export const statusOptions = [
   { label: 'Approved', value: STATUS_APPROVED },
   { label: 'Rejected', value: STATUS_REJECTED },
   { label: 'Cancelled', value: STATUS_CANCELLED },
+  { label: 'Awaiting Approval', value: STATUS_AWAITING_APPROVAL },
+  { label: 'Completed', value: STATUS_COMPLETED },
+  { label: 'In Progress', value: STATUS_IN_PROGRESS },
 ] as const;
+
+export const NOTIFICATION_TYPE_USER_JOINED = "USER_JOINED";
+export const NOTIFICATION_TYPE_ANNOUNCEMENT_CREATED = "ANNOUNCEMENT_CREATED";
+export const NOTIFICATION_TYPE_LEAVE_REQUESTED = "LEAVE_REQUESTED";
+export const NOTIFICATION_TYPE_LEAVE_APPROVED = "LEAVE_APPROVED";
+export const NOTIFICATION_TYPE_LEAVE_REJECTED = "LEAVE_REJECTED";
+
+
+export const notificationTypeLabels = {
+  [NOTIFICATION_TYPE_USER_JOINED]: "User Joined",
+  [NOTIFICATION_TYPE_ANNOUNCEMENT_CREATED]: "Announcement Created",
+  [NOTIFICATION_TYPE_LEAVE_REQUESTED]: "Leave Requested",
+  [NOTIFICATION_TYPE_LEAVE_APPROVED]: "Leave Approved",
+  [NOTIFICATION_TYPE_LEAVE_REJECTED]: "Leave Rejected",
+} as const;

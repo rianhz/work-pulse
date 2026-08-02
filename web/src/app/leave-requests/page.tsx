@@ -27,7 +27,7 @@ export default function RequestLeavePage() {
               <Spinner />
             </Activity>
             <Activity mode={!isLoadingLeaveBalance ? 'visible' : 'hidden'}>
-              <p className="text-sm font-bold">{leaveBalance?.data.balance} Days</p>
+              <p className="text-sm font-bold">{leaveBalance?.data?.balance || 0} Days</p>
             </Activity>
           </div>
         </div>

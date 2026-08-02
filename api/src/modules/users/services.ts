@@ -1,3 +1,5 @@
+import { Types } from 'mongoose';
+import { getAccessibleUserIds } from '../../helpers/users-helper';
 import { ForbiddenException, NotFoundException } from '../../utils/app-error';
 import { isHaveAccess } from '../../utils/casl';
 import { AuthUser } from '../authentication/interfaces';
@@ -8,14 +10,27 @@ import { ProjectModel } from '../projects/schema';
 import { IUser } from './interfaces';
 import { UserModel } from './schema';
 
-export const getMeService = async (userId: string): Promise<IUser> => {
+export const getMeService = async (
+  userId: string
+): Promise<IUser & { isLeader: boolean }> => {
   const user = await UserModel.findById(userId)
     .populate("department", "name")
     .select("-refreshToken -__v -createdAt -updatedAt")
     .lean({ virtuals: true });
 
-  if (!user) throw new NotFoundException('User not found');
-  return user as unknown as IUser;
+  if (!user) throw new NotFoundException("User not found");
+
+  // Check if at least one active user in the tenant lists this user as their leader
+  const hasSubordinates = await UserModel.exists({
+    tenantId: user.tenantId,
+    leader: userId,
+    status: { $ne: "deleted" },
+  });
+
+  return {
+    ...(user as unknown as IUser),
+    isLeader: Boolean(hasSubordinates),
+  };
 };
 
 export const getLoginTypesService = async (userId: string): Promise<('password' | 'google')[]> => {
@@ -54,23 +69,20 @@ export const updateUserService = async (
 };
 
 export const getDirectReportsTreeService = async (
-  currentUser: AuthUser, 
+  currentUser: AuthUser,
   options: QueryOptions
-): Promise<{ users: IUser[], total: number }> => {
+): Promise<{ users: IUser[]; total: number }> => {
   const { userId, role, tenantId } = currentUser;
-  const { search, page, limit } = options;
+  const { search, page = 1, limit = 10 } = options;
 
-  await isHaveAccess(currentUser, "User", "read", {
-    userId,
-    tenantId
-  });
+  await isHaveAccess(currentUser, "User", "read", { userId, tenantId });
 
   const skip = (page - 1) * limit;
-  const baseQuery: any = {
+  const baseQuery: Record<string, any> = {
     tenantId,
     status: { $ne: "deleted" },
-    role: { $ne: "owner" }
-  };  
+    role: { $ne: "owner" },
+  };
 
   if (search) {
     baseQuery.$or = [
@@ -79,66 +91,49 @@ export const getDirectReportsTreeService = async (
     ];
   }
 
-  switch (role) {
-    case "owner":
-    case "admin":
-      baseQuery._id = { $ne: userId };
-      break;
+  // 1. Get base hierarchy IDs from helper (returns self, leader, and subordinates)
+  const accessibleUserIds = await getAccessibleUserIds(userId, role, tenantId);
 
-    case "employee":
-    case "manager": {
-      const me = await UserModel.findById(userId).select("leader").lean();
-      if (!me) {
-        throw new NotFoundException("User not found.");
-      }
+  if (accessibleUserIds === null) {
+    // Admin / Owner mode: see everyone in tenant
+  } else {
+    const targetIdSet = new Set<string>(
+      accessibleUserIds.map((id) => id.toString())
+    );
 
-      let accessibleUserIds = [userId];
-      let currentSearchIds = [userId];
+    // 2. Fetch current user to check if they have a leader
+    const me = await UserModel.findById(userId).select("leader").lean();
 
-      // Look UPWARD: include direct leader
-      if (me.leader) {
-        accessibleUserIds.push(me.leader.toString());
-      }
+    // 3. If user has a leader, fetch all peers sharing the same leader
+    if (me?.leader) {
+      const peers = await UserModel.find({
+        tenantId,
+        leader: me.leader,
+        status: { $ne: "deleted" },
+      })
+        .select("_id")
+        .lean();
 
-      // Look DOWNWARD: recursive check for direct and nested subordinates
-      while (currentSearchIds.length > 0) {
-        const nextTierReports = await UserModel.find({
-          tenantId,
-          leader: { $in: currentSearchIds },
-          status: { $ne: "deleted" },
-        }).select("_id").lean();
-
-        if (nextTierReports.length > 0) {
-          const nextTierIds = nextTierReports.map(u => u._id.toString());
-          accessibleUserIds.push(...nextTierIds);
-          currentSearchIds = nextTierIds;
-        } else {
-          currentSearchIds = [];
-        }
-      }
-
-      baseQuery._id = { $in: [...new Set(accessibleUserIds)] };
-      break;
+      peers.forEach((peer) => targetIdSet.add(peer._id.toString()));
     }
-    default:
-      throw new ForbiddenException("Invalid role mapping.");
+
+    baseQuery._id = {
+      $in: Array.from(targetIdSet).map((id) => new Types.ObjectId(id)),
+    };
   }
 
   const [users, total] = await Promise.all([
     UserModel.find(baseQuery)
-      .populate("leader", "fullName")
-      .populate("department", "name")
-      .select("-refreshToken -__v")
-      .sort({ fullName: 1 })
-      .collation({ locale: "en", numericOrdering: true })
       .skip(skip)
       .limit(limit)
-      .lean({ virtuals: true }),
-    UserModel.countDocuments(baseQuery)
+      .populate("leader", "fullName")
+      .populate("department", "name")
+      .lean(),
+    UserModel.countDocuments(baseQuery),
   ]);
 
-  return { users: users as unknown as IUser[], total };
-};  
+  return { users, total };
+};
 
 export const searchUsersService = async (
   authenticatedUser: AuthUser, 

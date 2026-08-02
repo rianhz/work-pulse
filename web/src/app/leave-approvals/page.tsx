@@ -3,18 +3,19 @@
 import { BaseTable } from "@/components/custom/table/BaseTable";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { useMyLeaveRequests } from "@/features/leave/hooks";
+import { useLeaveApprovals } from "@/features/leave/hooks";
 import { ILeaveRequest } from "@/features/leave/leave";
-import { leaveTypesOptions, STATUS_APPROVED, STATUS_CANCELLED, STATUS_PENDING, STATUS_REJECTED, statusOptions } from "@/helpers/constants";
+import { leaveTypesOptions, STATUS_APPROVED, STATUS_AWAITING_APPROVAL, STATUS_CANCELLED, STATUS_PENDING, STATUS_REJECTED, statusOptions } from "@/helpers/constants";
 import { ColumnDef, VisibilityState } from "@tanstack/react-table";
 import { ArrowUpDown, Calendar } from "lucide-react";
 import moment from "moment";
+import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
-export default function LeaveHistoryPage() {
+export default function LeaveApprovalsPage() {
+  const router = useRouter();
   const [page, setPage] = useState(1);
-  const { data, isLoading: isLoadingLeaveRequests } = useMyLeaveRequests({ page, limit: 10 });
+  const { data, isLoading: isLoadingLeaveApprovals } = useLeaveApprovals({ page, limit: 10 });
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
 
   const leaveRequests = useMemo(() => data?.data || [], [data]);
@@ -28,11 +29,15 @@ export default function LeaveHistoryPage() {
     return statusOptions.find((option) => option.value === status)?.label;
   }
 
+  const handleRowClicked = (row: ILeaveRequest) => {
+    router.push(`/leave-approvals/${row._id}`);
+  }
+
   const columnDisplayLabels = {
     leaveType: "Leave Type",
     startDate: "From",
     endDate: "To",
-    reviewer: "Reviewer",
+    userId: "Submitted By",
     status: "Status",
   };
 
@@ -71,12 +76,12 @@ export default function LeaveHistoryPage() {
       },
     },
     {
-      accessorKey: "reviewer",
+      accessorKey: "userId",
       header: ({ column }) => (
-          <span>Reviewer</span>
+          <span>Submitted By</span>
       ),
       cell: ({ row }) => {
-        return <span>{row.original.reviewer?.fullName || "-"}</span>
+        return <span>{row.original.user?.fullName || "-"}</span>
       },
     },
     {
@@ -85,7 +90,7 @@ export default function LeaveHistoryPage() {
           <span>Status</span>
       ),
       cell: ({ row }) => {
-        return <Badge variant={row.original.status.includes(STATUS_CANCELLED) ? "cancelled" : row.original.status.includes(STATUS_REJECTED) ? "destructive" : row.original.status.includes(STATUS_PENDING) ? "pending" : row.original.status.includes(STATUS_APPROVED) ? "active" : "secondary"}>
+        return <Badge variant={row.original.status.includes(STATUS_CANCELLED) ? "cancelled" : row.original.status.includes(STATUS_REJECTED) ? "destructive" : row.original.status.includes(STATUS_PENDING) ? "pending" : row.original.status.includes(STATUS_APPROVED) ? "active" : row.original.status.includes(STATUS_AWAITING_APPROVAL) ? "awaitingApproval" : "secondary"}>
           {getStatusLabel(row.original.status)}
         </Badge>
       },
@@ -96,15 +101,14 @@ export default function LeaveHistoryPage() {
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="text-2xl font-bold">Leave History</h2>
-        <p className="text-sm text-muted-foreground">View your leave history and manage your leave requests.</p>
+        <h2 className="text-2xl font-bold">Leave Approvals</h2>
+        <p className="text-sm text-muted-foreground">Review and manage leave requests submitted by your team.</p>
       </div>
-      
-  
           <BaseTable 
+            onRowClicked={handleRowClicked}
             columns={columns}
             data={leaveRequests}
-            isLoading={isLoadingLeaveRequests}
+            isLoading={isLoadingLeaveApprovals}
             currentPage={page}
             onPageChange={(newPage) => setPage(newPage)}
             totalPages={totalPages}

@@ -23,6 +23,7 @@ const badgeVariants = cva(
         active: "bg-success/20 text-success",
         pending: "bg-pending/20 text-pending",
         cancelled: "bg-cancelled/20 text-cancelled",
+        awaitingApproval: "bg-awaiting-approval/20 text-awaiting-approval",
       },
     },
     defaultVariants: {

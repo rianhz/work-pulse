@@ -1,29 +1,39 @@
+import mongoose, { AnyBulkWriteOperation } from "mongoose";
 import { LeaveBalanceModel } from "../../modules/leave/leave-balance/schema";
 import { UserModel } from "../../modules/users/schema";
+import { ILeaveBalance } from "../../modules/leave/leave-balance/interfaces"; // Adjust path
 
-const TARGET_USER_ID = "6a3fa01bbff627dd45129f44";
 const DEFAULT_BALANCE = 12;
 
-export async function leaveBalanceMigration() {
-  const user = await UserModel.findById(TARGET_USER_ID, "_id tenantId").lean();
+export async function bulkLeaveBalanceMigration() {
+  const users = await UserModel.find(
+    { status: { $ne: "deleted" } },
+    "_id tenantId"
+  ).lean();
 
-  if (!user) {
-    throw new Error(`User with ID ${TARGET_USER_ID} not found.`);
+  if (!users.length) {
+    console.log("No users found for migration.");
+    return;
   }
 
-  const result = await LeaveBalanceModel.findOneAndUpdate(
-    { userId: user._id },
-    {
-      userId: user._id,
-      tenantId: user.tenantId,
-      balance: DEFAULT_BALANCE,
-    },
-    {
+  // Explicitly type the bulkOps array to AnyBulkWriteOperation<ILeaveBalance>[]
+  const bulkOps: AnyBulkWriteOperation<ILeaveBalance>[] = users.map((user) => ({
+    updateOne: {
+      filter: { userId: user._id as any },
+      update: {
+        $setOnInsert: {
+          userId: user._id as any,
+          tenantId: user.tenantId as any,
+          balance: DEFAULT_BALANCE,
+        },
+      },
       upsert: true,
-      new: true,
-      setDefaultsOnInsert: true,
-    }
-  );
+    },
+  }));
 
-  console.log(`   Updated LeaveBalance for user ${TARGET_USER_ID}: balance = ${result.balance}`);
+  const result = await LeaveBalanceModel.bulkWrite(bulkOps);
+
+  console.log(`Migration Complete:`);
+  console.log(`- Inserted (New Balances): ${result.upsertedCount}`);
+  console.log(`- Matched (Already Exists): ${result.matchedCount}`);
 }

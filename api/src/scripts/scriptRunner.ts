@@ -6,16 +6,15 @@ import { connectDatabase } from "../config/database";
 import { thumbnailMigrations } from "./migrations/thumbnailAnnouncements";
 import { isFeaturedAnnouncements } from "./migrations/isFeaturedAnnouncements";
 import { datePublishedAnnouncements } from "./migrations/datePublishedAnnouncements";
-import { leaveBalanceMigration } from "./migrations/initializeLeave";
+import { bulkLeaveBalanceMigration } from "./migrations/initializeLeave";
+import { leaveRequestsPendingUpdate } from "./migrations/leaveRequestsPendingUpdate";
+import { renameLeaveRequestFields } from "./migrations/renameLeaveRequest";
 
 dotenv.config();
 
 const migrations = [
   // { name: "usersMigrations", execute: usersMigrations },
-  // {name: "announcementMigrations", execute: thumbnailMigrations},
-  // {name: "isFeaturedAnnouncements", execute: isFeaturedAnnouncements}
-  // {name: "datePublishedAnnouncements", execute: datePublishedAnnouncements}
-  {name: "initializeLeave", execute: leaveBalanceMigration}
+  { name: "renameLeaveRequestFields", execute: renameLeaveRequestFields },
 ];
 
 async function runMigrations() {

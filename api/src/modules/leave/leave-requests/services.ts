@@ -1,7 +1,7 @@
 import { subject } from "@casl/ability";
 import { BadRequestException, ForbiddenException, NotFoundException } from "../../../utils/app-error";
 import { defineAbilitiesFor, isHaveAccess } from "../../../utils/casl";
-import { STATUS_PENDING } from "../../../utils/constant";
+import { STATUS_AWAITING_APPROVAL } from "../../../utils/constant";
 import { AuthUser } from "../../authentication/interfaces";
 import { LeaveBalanceModel } from "../leave-balance/schema";
 import { getLeaveBalance } from "../leave-balance/services";
@@ -10,6 +10,10 @@ import { LeaveRequestModel } from "./schema";
 import moment from "moment";
 import mongoose from "mongoose";
 import { QueryOptions } from "../../global";
+import { createNotificationService } from "../../notification/services";
+import { UserModel } from "../../users/schema";
+import { NotificationType } from "../../notification/interfaces";
+import { getAccessibleUserIds, getImmediateLeaderUserId } from "../../../helpers/users-helper";
 
 export const createLeaveRequestService = async (authenticatedUser: AuthUser, dto: Partial<ILeaveRequest>) => {
   const currentUserBalance = await getLeaveBalance(authenticatedUser, authenticatedUser.userId);
@@ -25,54 +29,130 @@ export const createLeaveRequestService = async (authenticatedUser: AuthUser, dto
 
   const payload = {
     ...dto,
-    status: STATUS_PENDING,
-    userId: authenticatedUser.userId,
-    tenantId: authenticatedUser.tenantId,
+    status: STATUS_AWAITING_APPROVAL,
+    user: authenticatedUser.userId,
+    tenant: authenticatedUser.tenantId,
   };
 
-  // CASL checks if Employee can create for themselves in this tenant
   await isHaveAccess(authenticatedUser, 'LeaveRequest', 'create', payload);
 
   const leaveRequest = await LeaveRequestModel.create(payload);
-  await LeaveBalanceModel.updateOne({ userId: leaveRequest.userId }, { $inc: { balance: -totalLeaveDays } });
+  
+  await LeaveBalanceModel.updateOne({ userId: leaveRequest.user }, { $inc: { balance: -totalLeaveDays } });
+
+  const currentUser = await UserModel.findById(authenticatedUser.userId);
+  const currentUserLeaderId = await getImmediateLeaderUserId(authenticatedUser.userId, authenticatedUser.tenantId);
+  const recipients: string[] = [];
+
+  if (currentUserLeaderId) {
+    recipients.push(currentUserLeaderId.toString());
+  }
+  
+  if (recipients.length > 0) {
+    await createNotificationService({
+      tenantId: authenticatedUser.tenantId,
+      recipients,
+      actorId: authenticatedUser.userId,
+      type: NotificationType.LEAVE_REQUESTED,
+      title: "Leave need to be reviewed",
+      message: `${currentUser?.fullName} has submitted a leave request for review`,
+    });
+  }
   return leaveRequest;
 };
 
-export const getLeaveRequestsService = async (authenticatedUser: AuthUser, filterDto: Partial<ILeaveRequest> = {}) => {
-  // Build DB filter dynamically based on role scoping
+export const getLeaveRequestsService = async (
+  authenticatedUser: AuthUser,
+  options: QueryOptions
+) => {
+  const { search, page = 1, limit = 10 } = options;
+
+  await isHaveAccess(authenticatedUser, "LeaveRequest", "read", {
+    tenant: authenticatedUser.tenantId,
+    user: authenticatedUser.userId,
+  });
+
+  const skip = (page - 1) * limit;
+
   const queryFilter: Record<string, any> = {
-    ...filterDto,
-    tenantId: authenticatedUser.tenantId, // Strict tenant boundary
+    tenant: authenticatedUser.tenantId,
   };
 
-  // Employees can ONLY read their own requests
-  if (authenticatedUser.role === 'employee') {
-    queryFilter.userId = authenticatedUser.userId;
+  if (search) {
+    queryFilter.$or = [
+      { leaveType: { $regex: search, $options: "i" } },
+      { notes: { $regex: search, $options: "i" } },
+    ];
   }
 
-  await isHaveAccess(authenticatedUser, 'LeaveRequest', 'read');
+  if (authenticatedUser.role === "owner" || authenticatedUser.role === "admin") {
+    // Owner/Admin: See all tenant leave requests
+  } else if (authenticatedUser.role === "manager" || authenticatedUser.role === "employee") {
+    const accessibleUserIds = await getAccessibleUserIds(authenticatedUser.userId, authenticatedUser.role, authenticatedUser.tenantId);
 
-  const leaveRequests = await LeaveRequestModel.find(queryFilter).lean();
-  return leaveRequests;
+    let subordinateIds: string[] = [];
+
+    if (accessibleUserIds !== null) {
+      const me = await UserModel.findById(authenticatedUser.userId).select("leader").lean();
+      const leaderIdStr = me?.leader ? me.leader.toString() : null;
+
+      subordinateIds = accessibleUserIds
+        .map((id) => id.toString())
+        .filter((id) => id !== authenticatedUser.userId && id !== leaderIdStr);
+    }
+
+    if (subordinateIds.length === 0) {
+      return { data: [], total: 0 };
+    }
+
+    queryFilter.user = { $in: subordinateIds };
+  } else {
+    return { data: [], total: 0 };
+  }
+
+  const [leaveRequests, total] = await Promise.all([
+    LeaveRequestModel.find(queryFilter)
+      .populate("user", "fullName nickName email -_id")
+      .populate("reviewer", "fullName nickName email -_id")
+      .skip(skip)
+      .limit(limit)
+      .sort({ createdAt: -1 })
+      .lean(),
+    LeaveRequestModel.countDocuments(queryFilter),
+  ]);
+
+  return { data: leaveRequests, total };
 };
 
 export const getMyLeaveRequestsService = async (authenticatedUser: AuthUser, options: QueryOptions) => {
-  const { search, page, limit } = options;
-  await isHaveAccess(authenticatedUser, 'LeaveRequest', 'read');
+  const { search, page = 1, limit = 10 } = options;
+  
+  await isHaveAccess(authenticatedUser, 'LeaveRequest', 'read', {
+    user: authenticatedUser.userId,
+    tenant: authenticatedUser.tenantId,
+  });
 
   const skip = (page - 1) * limit;
   const baseQuery: any = {
-    userId: authenticatedUser.userId,
-    tenantId: authenticatedUser.tenantId,
+    user: authenticatedUser.userId,
+    tenant: authenticatedUser.tenantId,
     status: { $ne: "deleted" },
   };
+
   if (search) {
     baseQuery.$or = [
       { leaveType: { $regex: search, $options: "i" } },
       { notes: { $regex: search, $options: "i" } },
     ];
   }
-  const leaveRequests = await LeaveRequestModel.find(baseQuery).populate("reviewedBy", "nickName fullName").skip(skip).limit(limit).sort({ createdAt: -1 }).lean();
+  
+  const leaveRequests = await LeaveRequestModel.find(baseQuery)
+    .populate("reviewer", "nickName fullName")
+    .skip(skip)
+    .limit(limit)
+    .sort({ createdAt: -1 })
+    .lean();
+    
   const total = await LeaveRequestModel.countDocuments(baseQuery);
   return { data: leaveRequests, total };
 };
@@ -80,15 +160,36 @@ export const getMyLeaveRequestsService = async (authenticatedUser: AuthUser, opt
 export const getLeaveRequestByIdService = async (authenticatedUser: AuthUser, id: string) => {
   const leaveRequest = await LeaveRequestModel.findOne({ 
     _id: id, 
-    tenantId: authenticatedUser.tenantId 
+    tenant: authenticatedUser.tenantId,
+  }).populate({
+    path: "user",
+    select: "fullName nickName email department avatar position leader", 
+    populate: {
+      path: "department",
+      select: "name",
+    },
   }).lean();
 
   if (!leaveRequest) {
     throw new NotFoundException("Leave request not found");
   }
 
-  // CASL validates against the actual document loaded from DB
-  await isHaveAccess(authenticatedUser, 'LeaveRequest', 'read', leaveRequest);
+  const populatedUser = leaveRequest.user as any;
+
+  // Normalize object structure so CASL gets standard string IDs for matching
+  const recordToValidate = {
+    ...leaveRequest,
+    user: populatedUser?._id?.toString() ?? null,
+    tenant: leaveRequest.tenant?.toString() ?? null,
+    leader: populatedUser?.leader?.toString() ?? null,
+  };
+
+  await isHaveAccess(
+    authenticatedUser, 
+    'LeaveRequest', 
+    'read', 
+    subject('LeaveRequest', recordToValidate)
+  );
 
   return leaveRequest;
 };
@@ -100,19 +201,29 @@ export const updateLeaveRequestService = async (
 ) => {
   const existingRequest = await LeaveRequestModel.findOne({ 
     _id: id, 
-    tenantId: authenticatedUser.tenantId 
+    tenant: authenticatedUser.tenantId 
   }).lean();
 
   if (!existingRequest) {
     throw new NotFoundException("Leave request not found");
   }
 
-  // 1. CASL Access Check
-  await isHaveAccess(authenticatedUser, 'LeaveRequest', 'update', existingRequest);
+  // Fetch populated user to obtain potential leader context for CASL check
+  const populatedUser = await UserModel.findById(existingRequest.user).select("leader").lean();
 
-  // 2. CASL Field-level Permission Check
+  const recordToValidate = {
+    ...existingRequest,
+    user: existingRequest.user?.toString(),
+    tenant: existingRequest.tenant?.toString(),
+    leader: populatedUser?.leader?.toString() ?? null,
+  };
+
+  // 1. Check entity-level update permission
+  await isHaveAccess(authenticatedUser, 'LeaveRequest', 'update', recordToValidate);
+
+  // 2. Check field-level update permissions
   const ability = defineAbilitiesFor(authenticatedUser);
-  const targetSubject = subject('LeaveRequest', JSON.parse(JSON.stringify(existingRequest)));
+  const targetSubject = subject('LeaveRequest', JSON.parse(JSON.stringify(recordToValidate)));
 
   for (const field of Object.keys(dto)) {
     if (!ability.can('update', targetSubject, field)) {
@@ -120,7 +231,7 @@ export const updateLeaveRequestService = async (
     }
   }
 
-  // 3. Handle Status Transition & Balance Calculation with Transactions
+  // 3. Handle status transition & balance updates in transaction
   const session = await mongoose.startSession();
   session.startTransaction();
 
@@ -128,18 +239,15 @@ export const updateLeaveRequestService = async (
     const oldStatus = existingRequest.status;
     const newStatus = dto.status;
 
-    // Check if status has changed
     if (newStatus && newStatus !== oldStatus) {
-      // Calculate leave days using moment
       const startDate = dto.startDate || existingRequest.startDate;
       const endDate = dto.endDate || existingRequest.endDate;
       const totalLeaveDays = moment(endDate).diff(moment(startDate), 'days') + 1;
 
-      // Case A: Pending/Rejected -> Approved (Deduct balance)
       if (newStatus === "approved" && oldStatus !== "approved") {
         const balanceDoc = await LeaveBalanceModel.findOne({ 
-          userId: existingRequest.userId, 
-          tenantId: existingRequest.tenantId 
+          userId: existingRequest.user, 
+          tenantId: existingRequest.tenant 
         }).session(session);
 
         if (!balanceDoc || balanceDoc.balance < totalLeaveDays) {
@@ -149,37 +257,33 @@ export const updateLeaveRequestService = async (
         }
 
         await LeaveBalanceModel.updateOne(
-          { userId: existingRequest.userId, tenantId: existingRequest.tenantId },
+          { userId: existingRequest.user, tenantId: existingRequest.tenant },
           { $inc: { balance: -totalLeaveDays } },
           { session }
         );
       }
 
-      // Case B: Approved -> Rejected or Cancelled (Refund balance)
       if (oldStatus === "approved" && (newStatus === "rejected" || newStatus === "cancelled")) {
         await LeaveBalanceModel.updateOne(
-          { userId: existingRequest.userId, tenantId: existingRequest.tenantId },
+          { userId: existingRequest.user, tenantId: existingRequest.tenant },
           { $inc: { balance: totalLeaveDays } },
           { session }
         );
       }
     }
 
-    // 4. Update the Leave Request Document
     const updatedRequest = await LeaveRequestModel.findByIdAndUpdate(
       id, 
       { $set: dto }, 
       { new: true, session }
     ).lean();
 
-    // Commit Transaction
     await session.commitTransaction();
     session.endSession();
 
     return updatedRequest;
 
   } catch (error) {
-    // Rollback any database changes if error occurs
     await session.abortTransaction();
     session.endSession();
     throw error;
@@ -189,14 +293,20 @@ export const updateLeaveRequestService = async (
 export const deleteLeaveRequestService = async (authenticatedUser: AuthUser, id: string) => {
   const existingRequest = await LeaveRequestModel.findOne({ 
     _id: id, 
-    tenantId: authenticatedUser.tenantId 
+    tenant: authenticatedUser.tenantId 
   }).lean();
 
   if (!existingRequest) {
     throw new NotFoundException("Leave request not found");
   }
 
-  await isHaveAccess(authenticatedUser, 'LeaveRequest', 'delete', existingRequest);
+  const recordToValidate = {
+    ...existingRequest,
+    user: existingRequest.user?.toString(),
+    tenant: existingRequest.tenant?.toString(),
+  };
+
+  await isHaveAccess(authenticatedUser, 'LeaveRequest', 'delete', recordToValidate);
 
   await LeaveRequestModel.findByIdAndDelete(id);
   return { success: true };

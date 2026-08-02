@@ -19,3 +19,8 @@ export const baseDateFormatFromNow= (date: Date | undefined | null): string => {
   if (!date) return "";
   return moment(date).fromNow();
 };
+
+export const baseDateDaysDiff = (startDate: Date | undefined | null, endDate: Date | undefined | null): number => {
+  if (!startDate || !endDate) return 0;
+  return moment(endDate).diff(moment(startDate), 'days') + 1;
+};

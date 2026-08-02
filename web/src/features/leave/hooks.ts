@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { createLeaveRequest, getMyLeaveBalance, getMyLeaveRequests } from "./api";
+import { createLeaveRequest, getLeaveApprovals, getLeaveRequestById, getMyLeaveBalance, getMyLeaveRequests } from "./api";
 import { toast } from "sonner";
 import { IPaginationQueryOptions } from "@/global";
 
@@ -23,5 +23,20 @@ export const useCreateLeaveRequest = () => {
     onError: (error) => {
       toast.error((error as any)?.response?.data?.message || (error as Error).message || "Failed to create leave request");
     },
+  });
+}
+
+export const useLeaveApprovals = (options: IPaginationQueryOptions) => {
+  return useQuery({
+    queryKey: ['leave-approvals'],
+    queryFn: () => getLeaveApprovals(options),
+  });
+}
+
+export const useLeaveRequestById = (id: string) => {
+  return useQuery({
+    queryKey: ['leave-request-by-id', id],
+    queryFn: () => getLeaveRequestById(id),
+    enabled: !!id,
   });
 }

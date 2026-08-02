@@ -23,6 +23,7 @@ export interface IUser {
     createdAt: Date;
   } | null;
   projects: string[];
+  isLeader?: boolean;
 }
 
 export interface IGetMeResponse extends IResponse {
