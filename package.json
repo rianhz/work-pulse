@@ -1,32 +1,18 @@
 {
   "name": "work-pulse",
-  "version": "1.0.0",
-  "description": "A full-stack application for productivity and workflow management with an Express API backend and Next.js frontend.",
-  "main": "index.js",
-  "packageManager": "npm@10.8.1",
+  "private": true,
+  "workspaces": [
+    "apps/*"
+  ],
   "scripts": {
     "dev": "turbo dev",
+    "dev:web": "turbo dev --filter=web",
+    "dev:api": "turbo dev --filter=api",
     "build": "turbo build",
-    "start": "turbo start",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "lint": "turbo lint",
+    "start": "turbo start"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/rianhz/work-pulse.git"
-  },
-  "workspaces": [
-    "api",
-    "web"
-  ],
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
-  "bugs": {
-    "url": "https://github.com/rianhz/work-pulse/issues"
-  },
-  "homepage": "https://github.com/rianhz/work-pulse#readme",
   "devDependencies": {
-    "turbo": "^2.10.0"
+    "turbo": "^2.0.0"
   }
 }
