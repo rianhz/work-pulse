@@ -1,7 +1,7 @@
 import mongoose, { AnyBulkWriteOperation } from "mongoose";
 import { LeaveBalanceModel } from "../../modules/leave/leave-balance/schema";
 import { UserModel } from "../../modules/users/schema";
-import { ILeaveBalance } from "../../modules/leave/leave-balance/interfaces"; // Adjust path
+import { ILeaveBalance } from "../../modules/leave/leave-balance/interfaces";
 
 const DEFAULT_BALANCE = 12;
 

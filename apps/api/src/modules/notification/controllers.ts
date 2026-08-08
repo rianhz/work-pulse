@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { getUnreadCountService, markAsReadService, markAllAsReadService, getMineService, createNotificationService } from "./services";
 import { HTTPSTATUS } from "../../utils/http-config";
-import { AuthUser } from "../authentication/interfaces";
+import { AuthUser } from "../../modules/authentication/interfaces";
 
 export const getNotificationsController = async (
   req: Request,

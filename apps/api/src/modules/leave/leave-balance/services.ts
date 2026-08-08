@@ -1,6 +1,6 @@
 import { NotFoundException } from "../../../utils/app-error";
 import { isHaveAccess } from "../../../utils/casl";
-import { AuthUser } from "../../authentication/interfaces";
+import { AuthUser } from "../../../modules/authentication/interfaces";
 import { LeaveBalanceModel } from "./schema";
 
 export const updateLeaveBalance = async (authenticatedUser: AuthUser, userId: string, balance: number) => {

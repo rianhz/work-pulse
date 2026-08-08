@@ -3,7 +3,7 @@ import { NOTIFICATION_TYPE_LEAVE_APPROVED, NOTIFICATION_TYPE_LEAVE_REQUESTED, NO
 export const getNotificationTitle = (type: string): string => {
   switch (type) {
     case NOTIFICATION_TYPE_LEAVE_REQUESTED:
-      return "New Leave Request";
+      return "Leave Request Requested";
 
     case NOTIFICATION_TYPE_LEAVE_APPROVED:
       return "Leave Request Approved";
@@ -25,7 +25,7 @@ export const getNotificationMessage = (
 ): string => {
   switch (type) {
     case NOTIFICATION_TYPE_LEAVE_REQUESTED: {
-      return `You have a new leave request that requires your review.`;
+      return `New leave request that requires your review.`;
     }
 
     case NOTIFICATION_TYPE_LEAVE_APPROVED: {

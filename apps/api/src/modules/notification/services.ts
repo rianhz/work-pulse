@@ -1,5 +1,5 @@
-import { AuthUser } from "../authentication/interfaces";
-import { QueryOptions } from "../global";
+import { AuthUser } from "../../modules/authentication/interfaces";
+import { QueryOptions } from "../../modules/global";
 import { CreateNotificationDto } from "./interfaces";
 import Notification from "./schema";
 

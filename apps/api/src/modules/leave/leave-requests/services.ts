@@ -2,17 +2,17 @@ import { subject } from "@casl/ability";
 import { BadRequestException, ForbiddenException, NotFoundException } from "../../../utils/app-error";
 import { defineAbilitiesFor, isHaveAccess } from "../../../utils/casl";
 import { STATUS_AWAITING_APPROVAL } from "../../../utils/constant";
-import { AuthUser } from "../../authentication/interfaces";
+import { AuthUser } from "../../../modules/authentication/interfaces";
 import { LeaveBalanceModel } from "../leave-balance/schema";
 import { getLeaveBalance } from "../leave-balance/services";
 import { ILeaveRequest } from "./interfaces";
 import { LeaveRequestModel } from "./schema";
 import moment from "moment";
 import mongoose from "mongoose";
-import { QueryOptions } from "../../global";
+import { QueryOptions } from "../../../modules/global";
 import { createNotificationService } from "../../notification/services";
-import { UserModel } from "../../users/schema";
-import { NotificationType } from "../../notification/interfaces";
+import { UserModel } from "../../../modules/users/schema";
+import { NotificationType } from "../../../modules/notification/interfaces";
 import { getAccessibleUserIds, getImmediateLeaderUserId } from "../../../helpers/users-helper";
 
 export const createLeaveRequestService = async (authenticatedUser: AuthUser, dto: Partial<ILeaveRequest>) => {

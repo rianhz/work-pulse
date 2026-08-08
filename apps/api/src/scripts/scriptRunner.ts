@@ -9,12 +9,13 @@ import { datePublishedAnnouncements } from "./migrations/datePublishedAnnounceme
 import { bulkLeaveBalanceMigration } from "./migrations/initializeLeave";
 import { leaveRequestsPendingUpdate } from "./migrations/leaveRequestsPendingUpdate";
 import { renameLeaveRequestFields } from "./migrations/renameLeaveRequest";
+import { usersMigrations } from "./migrations/usersMigrations";
 
 dotenv.config();
 
 const migrations = [
-  // { name: "usersMigrations", execute: usersMigrations },
-  { name: "renameLeaveRequestFields", execute: renameLeaveRequestFields },
+  { name: "usersMigrations", execute: usersMigrations },
+  // { name: "renameLeaveRequestFields", execute: renameLeaveRequestFields },
 ];
 
 async function runMigrations() {

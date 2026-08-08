@@ -1,13 +1,18 @@
 import { UserModel } from "../../modules/users/schema";
 
 export async function usersMigrations() {
-  console.log("   -> Starting direct database cleanup...");
+  const users = await UserModel.find({}, "email fullName role").lean();
 
-  const cleanupResult = await UserModel.updateMany(
-    {}, 
-    { $unset: { reportsTo: "" } },
-    { strict: false }
-  );
+    if (users.length === 0) {
+      console.log("No users found in the database.");
+    } else {
+      console.log("--- REGISTERED USERS ---");
+      console.table(
+        users.map((u) => ({
+          Email: u.email
+        }))
+      );
+    }
 
-  console.log(`   └─ Done! Successfully deleted 'reportsTo' from ${cleanupResult.modifiedCount} user documents.`);
+  console.log(`   └─ Done! Successfully showing users documents.`);
 }
