@@ -7,6 +7,7 @@ import { IdentityModel } from '../idp/schema';
 import { compareValue, hashValue } from '../../utils/bcrypt';
 import { BadRequestException, NotFoundException } from '../../utils/app-error';
 import { IIdentity } from '../idp/interfaces';
+import { LeaveBalanceModel } from '../leave/leave-balance/schema';
 
 export const registerService = async (payload: IRegisterPayload): Promise<IUser> => {
     const { email, password, companyName, slug, fullName } = payload;
@@ -34,6 +35,12 @@ export const registerService = async (payload: IRegisterPayload): Promise<IUser>
         status: 'active',
     });
 
+    await LeaveBalanceModel.create({
+      userId: user._id.toString(),
+      tenantId: tenant._id.toString(),
+      balance: 0,
+    });
+
     const passwordHash = await hashValue(password, 10);
 
     const identityPayload: IIdentity = {
@@ -43,8 +50,6 @@ export const registerService = async (payload: IRegisterPayload): Promise<IUser>
       passwordHash,
       email: email.toLowerCase(),
     };
-
-    console.log(identityPayload);
 
     await IdentityModel.create(identityPayload);
 
@@ -79,6 +84,12 @@ export const registerWithGoogleService = async (payload: IRegisterWithGooglePayl
         fullName: googlePayload?.name,
         role: 'owner',
         status: 'active',
+    });
+
+    await LeaveBalanceModel.create({
+      userId: user._id.toString(),
+      tenantId: tenant._id.toString(),
+      balance: 0,
     });
 
     await IdentityModel.create({

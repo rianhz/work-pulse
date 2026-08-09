@@ -10,7 +10,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
 import { UniversalUploader } from "../uploader/ImageUploader";
 import { InputGroup, InputGroupInput, InputGroupTextarea } from "@/components/ui/input-group";
-import { useQueryClient } from "@tanstack/react-query";
 import BaseAvatar from "../images/BaseAvatar";
 import { ITenant } from "@/features/tenants/tenant";
 import { useUpdateTenant } from "@/features/tenants/hooks";
@@ -18,10 +17,9 @@ import { TimezoneDropdown } from "../dropdown/TimezoneDropdown";
 
 export function CompanySettingsForm({ tenantId, tenant, isLoading, onSaved }: { tenantId: string, tenant: ITenant, isLoading: boolean, onSaved: () => void }) {
   const [isUploaderOpen, setIsUploaderOpen] = useState(false);
-  const queryClient = useQueryClient();
   const { mutate: updateTenant, isPending: isPendingUpdateTenant } = useUpdateTenant();
   const tenantInitials = useMemo(() => {
-    return tenant?.name.split(' ').map((name) => name[0]).join('').slice(0, 2).toUpperCase() || '';
+    return tenant?.name?.charAt(0).toUpperCase() || '';
   }, [tenant]);
 
   const { control: controlCompany, register: registerCompany, watch: watchCompany, setValue: setValueCompany, handleSubmit: handleSubmitCompany, formState: { errors: errorsCompany, isDirty: isDirtyCompany, isSubmitting: isSubmittingCompany }, reset: resetCompany } = useForm<CompanySettingsFormValues>({

@@ -13,6 +13,9 @@ import { invitationRoutes } from './modules/invitation/routes';
 import { departmentRoutes } from './modules/departments/routes';
 import { announcementsRoutes } from './modules/announcements/routes';
 import { homeRoutes } from './modules/home/routes';
+import leaveBalanceRoutes from './modules/leave/leave-balance/routes';
+import leaveRequestsRoutes from './modules/leave/leave-requests/routes';
+import notificationRoutes from './modules/notification/routes';
 
 const app = express();
 
@@ -30,6 +33,9 @@ app.use('/invitations', invitationRoutes);
 app.use('/departments', departmentRoutes);
 app.use('/announcements', announcementsRoutes);
 app.use('/home', homeRoutes);
+app.use('/leave', leaveBalanceRoutes);
+app.use('/leave', leaveRequestsRoutes);
+app.use('/notifications', notificationRoutes);
 
 app.use(errorHandler);
 

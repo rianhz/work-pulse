@@ -213,7 +213,7 @@ export default function ProjectsPage() {
         </Button>
       ),
       cell: ({ row }) => (
-        <Badge className={cn(row.original.status === "active" ? "bg-green-500 text-white hover:bg-green-600" : "bg-red-500 text-white hover:bg-red-600")}>
+        <Badge variant={row.original.status === "active" ? "active" : "destructive"}>
           {row.original.status.charAt(0).toUpperCase() + row.original.status.slice(1)}
         </Badge>
       )
@@ -390,40 +390,36 @@ export default function ProjectsPage() {
         </DialogContent>
       </Dialog>
 
-      <Card className="border-none pt-0 ring-0 shadow-none">
-        <CardHeader className="flex justify-between items-end flex-row px-0">
-          <div>
-            <CardTitle className="text-2xl font-bold">Projects</CardTitle>
-            <CardDescription>Track, organize, and manage your workspace initiatives, project roles, and delivery lifecycles.</CardDescription>
-          </div>
-          {isAdminOrOwner && (
-            <Button onClick={openCreateDialog} disabled={isLoadingProjects}>Create Project</Button>
-          )}
-        </CardHeader>
-        <CardContent className="px-0">
-            <BaseTable
-              columns={columns}
-              data={projects}
-              columnLabels={columnDisplayLabels}
-              columnVisibility={columnVisibility}
-              onColumnVisibilityChange={setColumnVisibility}
-              // Controlled Search Configurations
-              showSearchField={!isErrorProjects}
-              searchValue={search}
-              onSearchChange={handleSearchChange}
-              searchPlaceholder="Searching..."
-              // Pagination Configurations
-              currentPage={page}
-              totalPages={pagination?.totalPages}
-              onPageChange={(newPage) => setPage(newPage)}
+      <div className="flex justify-between items-end flex-row px-0 mb-4">
+        <div>
+          <h1 className="text-2xl font-bold">Projects</h1>
+          <p className="text-sm text-muted-foreground">Track, organize, and manage your workspace initiatives, project roles, and delivery lifecycles.</p>
+        </div>
+        {isAdminOrOwner && (
+          <Button onClick={openCreateDialog} disabled={isLoadingProjects}>Create Project</Button>
+        )}
+      </div>
+      <BaseTable
+        columns={columns}
+        data={projects}
+        columnLabels={columnDisplayLabels}
+        columnVisibility={columnVisibility}
+        onColumnVisibilityChange={setColumnVisibility}
+        // Controlled Search Configurations
+        showSearchField={!isErrorProjects}
+        searchValue={search}
+        onSearchChange={handleSearchChange}
+        searchPlaceholder="Searching..."
+        // Pagination Configurations
+        currentPage={page}
+        totalPages={pagination?.totalPages}
+        onPageChange={(newPage) => setPage(newPage)}
 
-              isLoading={isLoadingProjects}
-              isEmptyData={projects && projects?.length === 0}
-              emptyDataDescription="No projects found"
-              emptyDataIcon={<Briefcase className="size-10 text-muted-foreground" />}
-            />
-        </CardContent>
-      </Card>
+        isLoading={isLoadingProjects}
+        isEmptyData={projects && projects?.length === 0}
+        emptyDataDescription="No projects found"
+        emptyDataIcon={<Briefcase className="size-10 text-muted-foreground" />}
+      />
     </>
   );
 }

@@ -1,19 +1,13 @@
 
 import mongoose from "mongoose";
 import dotenv from "dotenv";
-// import { usersMigrations } from "./migrations/usersMigrations";
 import { connectDatabase } from "../config/database";
-import { thumbnailMigrations } from "./migrations/thumbnailAnnouncements";
-import { isFeaturedAnnouncements } from "./migrations/isFeaturedAnnouncements";
-import { datePublishedAnnouncements } from "./migrations/datePublishedAnnouncements";
+import { notificationMigration } from "./migrations/notificationMigration";
 
 dotenv.config();
 
 const migrations = [
-  // { name: "usersMigrations", execute: usersMigrations },
-  // {name: "announcementMigrations", execute: thumbnailMigrations},
-  // {name: "isFeaturedAnnouncements", execute: isFeaturedAnnouncements}
-  {name: "datePublishedAnnouncements", execute: datePublishedAnnouncements}
+  { name: "notificationMigration", execute: notificationMigration },
 ];
 
 async function runMigrations() {

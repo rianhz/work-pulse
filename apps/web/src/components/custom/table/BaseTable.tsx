@@ -18,6 +18,7 @@ import { InputGroup, InputGroupInput } from "@/components/ui/input-group";
 import { BasePagination } from "@/components/custom/pagination/BasePagination";
 import { Spinner } from "@/components/ui/spinner";
 import { EmptyData } from "../errors-and-empty/EmptyData";
+import { Card } from "@/components/ui/card";
 
 interface BaseTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -82,8 +83,8 @@ export function BaseTable<TData, TValue>({
   });
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between gap-4">
+    <Card className="space-y-4 py-4 ring-0">
+      <div className="flex items-center justify-between gap-4 px-4 mb-0">
         <React.Activity mode={showSearchField ? "visible" : "hidden"}>
           <InputGroup className="max-w-lg">
             <InputGroupInput 
@@ -119,7 +120,7 @@ export function BaseTable<TData, TValue>({
         </DropdownMenu>
       </div>
 
-      <div className="rounded-md border overflow-x-auto relative">
+      <div className="overflow-x-auto relative">
         <React.Activity mode={isLoading ? "visible" : "hidden"}>
           <div className="flex justify-center items-center min-h-[200px]"> <Spinner className="size-10" /> </div>
         </React.Activity>
@@ -128,50 +129,50 @@ export function BaseTable<TData, TValue>({
         </React.Activity>
         <React.Activity mode={!isLoading && !isEmptyData ? "visible" : "hidden"}>
           <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => {
-                  const isActions = header.column.id === "actions";
-                  return (
-                    <TableHead
-                      key={header.id}
-                      className={
-                        isActions
-                          ? "sticky right-0 bg-background shadow-[-1px_0_0_0_rgba(0,0,0,0.1)] dark:shadow-[-1px_0_0_0_rgba(255,255,255,0.1)] z-10 text-right w-[100px]"
-                          : ""
-                      }
-                    >
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(header.column.columnDef.header, header.getContext())}
-                    </TableHead>
-                  );
-                })}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows.map((row) => (
-              <TableRow key={row.id} onClick={() => onRowClicked?.(row.original)} className={onRowClicked ? "cursor-pointer" : ""}>
-                {row.getVisibleCells().map((cell) => {
-                  const isActions = cell.column.id === "actions";
-                  return (
-                    <TableCell
-                      key={cell.id}
-                      className={
-                        isActions
-                          ? "sticky right-0 bg-background shadow-[-1px_0_0_0_rgba(0,0,0,0.1)] dark:shadow-[-1px_0_0_0_rgba(255,255,255,0.1)] z-10 text-right"
-                          : ""
-                      }
-                    >
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </TableCell>
-                  );
-                })}
-              </TableRow>
-            ))}
-          </TableBody>
+            <TableHeader>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => {
+                    const isActions = header.column.id === "actions";
+                    return (
+                      <TableHead
+                        key={header.id}
+                        className={
+                          isActions
+                            ? "sticky right-0 shadow-[-1px_0_0_0_rgba(0,0,0,0.1)] dark:shadow-[-1px_0_0_0_rgba(255,255,255,0.1)] z-10 text-right w-[100px]"
+                            : ""
+                        }
+                      >
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(header.column.columnDef.header, header.getContext())}
+                      </TableHead>
+                    );
+                  })}
+                </TableRow>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {table.getRowModel().rows.map((row) => (
+                <TableRow key={row.id} onClick={() => onRowClicked?.(row.original)} className={onRowClicked ? "cursor-pointer" : ""}>
+                  {row.getVisibleCells().map((cell) => {
+                    const isActions = cell.column.id === "actions";
+                    return (
+                      <TableCell
+                        key={cell.id}
+                        className={
+                          isActions
+                            ? "sticky right-0 shadow-[-1px_0_0_0_rgba(0,0,0,0.1)] dark:shadow-[-1px_0_0_0_rgba(255,255,255,0.1)] z-10 text-right"
+                            : ""
+                        }
+                      >
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </TableCell>
+                    );
+                  })}
+                </TableRow>
+              ))}
+            </TableBody>
         </Table>
         </React.Activity>
       </div>
@@ -185,6 +186,6 @@ export function BaseTable<TData, TValue>({
           />
         </div>
       </React.Activity>
-    </div>
+    </Card>
   );
 }

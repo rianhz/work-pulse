@@ -139,4 +139,11 @@ userSchema.index({
   tenantId: 1,
 });
 
+userSchema.index({
+  tenantId: 1,
+  leader: 1,
+  status: 1,
+});
+
+
 export const UserModel = mongoose.model<IUser>("User", userSchema);

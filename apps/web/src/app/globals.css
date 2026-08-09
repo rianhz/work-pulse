@@ -11,8 +11,8 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-manrope);
+  --font-serif: var(--font-garamond);
   --font-heading: var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -54,12 +54,25 @@
   --animate-slide-up-fixed: slideUpFixed 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   --animate-slide-down-fixed: slideDownFixed 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 
+  --color-awaiting-approval: var(--color-awaiting-bg);
+  --color-awaiting-approval-text: var(--color-awaiting-text);
+  --color-rejected: var(--color-rejected-bg);
+  --color-rejected-text: var(--color-rejected-text);
+  --color-approved: var(--color-approved-bg);
+  --color-approved-text: var(--color-approved-text);
+  --color-cancelled: var(--color-cancelled-bg);
+  --color-cancelled-text: var(--color-cancelled-text);
+  --color-success: var(--color-success-bg);
+  --color-success-text: var(--color-success-text);
+  --color-pending: var(--color-pending-bg);
+  --color-pending-text: var(--color-pending-text);
+
 }
 
 :root,
 [data-theme="light"] {
   /* Fresh, bright off-white background with a hint of coolness */
-  --background: oklch(0.99 0.003 277);
+  --background: oklch(96.706% 0.00712 268.595);
   --foreground: oklch(0.12 0.012 277);
   
   /* Very clean, crisp white cards */
@@ -100,7 +113,7 @@
   --radius: 0.75rem; /* Slightly rounder for a modern look */
   
   /* Clean, light sidebar contrast */
-  --sidebar: oklch(0.98 0.005 277);
+  --sidebar: oklch(99.703% 0.00011 271.152);
   --sidebar-foreground: oklch(0.15 0.01 277);
   --sidebar-primary: oklch(0.52 0.19 277);
   --sidebar-primary-foreground: oklch(0.99 0.005 277);
@@ -109,6 +122,30 @@
   --sidebar-border: oklch(0.91 0.008 277);
   --sidebar-ring: oklch(0.52 0.19 277 / 30%);
   --fc-today-bg-color: oklch(0.95 0.008 277);
+
+  /* Approved */
+  --color-approved-bg: oklch(0.95 0.06 145);
+  --color-approved-text: oklch(0.45 0.15 145);
+
+  /* Awaiting Approval */
+  --color-awaiting-bg: oklch(0.95 0.08 75);
+  --color-awaiting-text: oklch(0.50 0.16 75);
+
+  /* Rejected */
+  --color-rejected-bg: oklch(0.94 0.06 25);
+  --color-rejected-text: oklch(0.48 0.18 25);
+
+  /* Success */
+  --color-success-bg: oklch(0.95 0.06 145);
+  --color-success-text: oklch(0.45 0.15 145);
+
+  /* Pending */
+  --color-pending-bg: oklch(0.95 0.08 75);
+  --color-pending-text: oklch(0.50 0.16 75);
+
+  /* Cancelled */
+  --color-cancelled-bg: oklch(0.94 0.01 250);
+  --color-cancelled-text: oklch(0.48 0.02 250);
 }
 
 .dark,
@@ -137,8 +174,10 @@
   --accent-foreground: oklch(0.98 0.005 277);
   
   /* Highly visible dark-mode destructive red */
-  --destructive: oklch(0.55 0.18 24);
-  
+  --destructive: oklch(0.58 0.19 24);
+  --success: oklch(76.342% 0.19032 146.539);
+  --pending: oklch(68.18% 0.15417 117.007);
+
   /* Tinted semi-transparent premium borders */
   --border: oklch(0.28 0.015 277 / 60%);
   --input: oklch(0.28 0.015 277 / 60%);
@@ -161,6 +200,31 @@
   --sidebar-border: oklch(0.22 0.015 277 / 70%);
   --sidebar-ring: oklch(0.62 0.17 277 / 40%);
   --fc-today-bg-color: oklch(0.22 0.015 277);
+
+  /* Approved */
+  --color-approved-bg: oklch(0.25 0.08 145);
+  --color-approved-text: oklch(0.85 0.12 145);
+
+  /* Awaiting Approval / Pending */
+  --color-awaiting-bg: oklch(0.26 0.09 75);
+  --color-awaiting-text: oklch(0.88 0.12 75);
+
+  /* Rejected */
+  --color-rejected-bg: oklch(0.25 0.09 25);
+  --color-rejected-text: oklch(0.85 0.14 25);
+
+  /* Cancelled */
+  --color-cancelled-bg: oklch(0.24 0.01 250);
+  --color-cancelled-text: oklch(0.75 0.02 250);
+
+  /* Success */
+  --color-success-bg: oklch(0.95 0.06 145);
+  --color-success-text: oklch(0.45 0.15 145);
+
+  
+  /* Pending */
+  --color-pending-bg: oklch(0.95 0.08 75);
+  --color-pending-text: oklch(0.50 0.16 75);
 }
 
 @layer base {
@@ -173,10 +237,6 @@
   html {
     @apply font-sans;
   }
-}
-
-@utility bg-gradient-primary {
-  background: var(--gradient-primary);
 }
 
 .live-dot {
@@ -200,26 +260,26 @@
 }
 
 @keyframes slideUpFixed {
-    0% { 
-      opacity: 0; 
-      transform: translateY(150%); 
-    }
-    100% { 
-      opacity: 1; 
-      transform: translateY(0); 
-    }
+  0% { 
+    opacity: 0; 
+    transform: translateY(150%); 
   }
+  100% { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
+}
 
-  @keyframes slideDownFixed {
-    0% { 
-      opacity: 1; 
-      transform: translateY(0); 
-    }
-    100% { 
-      opacity: 0; 
-      transform: translateY(150%); 
-    }
+@keyframes slideDownFixed {
+  0% { 
+    opacity: 1; 
+    transform: translateY(0); 
   }
+  100% { 
+    opacity: 0; 
+    transform: translateY(150%); 
+  }
+}
 
 
 .fc .fc-scrollgrid-section-header.fc-scrollgrid-section-sticky > *{

@@ -16,7 +16,7 @@ import {
   editUserSchema,
 } from "@/features/users/validator";
 import { Card } from "@/components/ui/card";
-import { useGetMe, useUpdateUser } from "@/features/users/hooks";
+import { useUpdateUser } from "@/features/users/hooks";
 import { Skeleton } from "@/components/ui/skeleton";
 import { UniversalUploader } from "../uploader/ImageUploader";
 import { InputGroup, InputGroupInput } from "@/components/ui/input-group";
@@ -60,8 +60,8 @@ export function AccountSettingsForm({ user, isLoading }: { user: IUserWithProvid
 
   const avatar = watchAccountSettings("avatar");
   const initials = useMemo(() => {
-    return user.fullName?.split(" ").map((name) => name[0]).join("");
-  }, [user.fullName]);
+    return user?.fullName?.charAt(0).toUpperCase();
+  }, [user?.fullName]);
 
   const handleUploadSuccess = (url: string) => {
     setValueAccountSettings("avatar", url, { shouldDirty: true });

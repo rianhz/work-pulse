@@ -5,13 +5,14 @@ import { Menu } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 import { DarkModeSwitcher } from "../switcher/DarkModeSwitcher";
 import { ProfileDropdown } from "../dropdown/ProfileDropdown";
+import { NotificationDropdown } from "../dropdown/NotificationDropdown";
 
 
 export default function BaseLoggedInNavTop() {
   const { toggleSidebar } = useSidebar();
 
   return (
-    <nav className="w-full border-b border-sidebar-border z-50">
+    <nav className="w-full border-b border-sidebar-border z-50 bg-sidebar">
       <header className="flex py-2 items-center justify-between px-4">
         
         <div className="flex items-center gap-4">
@@ -28,7 +29,8 @@ export default function BaseLoggedInNavTop() {
         </div>
 
         
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2">
+          <NotificationDropdown />
           <DarkModeSwitcher />
           <ProfileDropdown />
         </div>
