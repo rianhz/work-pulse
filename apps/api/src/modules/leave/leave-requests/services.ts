@@ -1,11 +1,11 @@
 import { subject } from "@casl/ability";
 import { BadRequestException, ForbiddenException, NotFoundException } from "../../../utils/app-error";
 import { defineAbilitiesFor, isHaveAccess } from "../../../utils/casl";
-import { STATUS_AWAITING_APPROVAL } from "../../../utils/constant";
+import { STATUS_APPROVED, STATUS_AWAITING_APPROVAL, STATUS_REJECTED } from "../../../utils/constant";
 import { AuthUser } from "../../../modules/authentication/interfaces";
 import { LeaveBalanceModel } from "../leave-balance/schema";
 import { getLeaveBalance } from "../leave-balance/services";
-import { ILeaveRequest } from "./interfaces";
+import { ILeaveRequest, LeaveStatus } from "./interfaces";
 import { LeaveRequestModel } from "./schema";
 import moment from "moment";
 import mongoose from "mongoose";
@@ -53,9 +53,10 @@ export const createLeaveRequestService = async (authenticatedUser: AuthUser, dto
       tenantId: authenticatedUser.tenantId,
       recipients,
       actorId: authenticatedUser.userId,
-      type: NotificationType.LEAVE_REQUESTED,
+      entityType: NotificationType.LEAVE_REQUESTED,
       title: "Leave need to be reviewed",
       message: `${currentUser?.fullName} has submitted a leave request for review`,
+      entityId: leaveRequest._id.toString(),
     });
   }
   return leaveRequest;
@@ -168,7 +169,12 @@ export const getLeaveRequestByIdService = async (authenticatedUser: AuthUser, id
       path: "department",
       select: "name",
     },
-  }).lean();
+  })
+  .populate({
+    path: "reviewer",
+    select: "fullName nickName email",
+  })
+  .lean();
 
   if (!leaveRequest) {
     throw new NotFoundException("Leave request not found");
@@ -250,12 +256,6 @@ export const updateLeaveRequestService = async (
           tenantId: existingRequest.tenant 
         }).session(session);
 
-        if (!balanceDoc || balanceDoc.balance < totalLeaveDays) {
-          throw new BadRequestException(
-            `Insufficient leave balance. Required: ${totalLeaveDays}, Available: ${balanceDoc?.balance ?? 0}`
-          );
-        }
-
         await LeaveBalanceModel.updateOne(
           { userId: existingRequest.user, tenantId: existingRequest.tenant },
           { $inc: { balance: -totalLeaveDays } },
@@ -310,4 +310,202 @@ export const deleteLeaveRequestService = async (authenticatedUser: AuthUser, id:
 
   await LeaveRequestModel.findByIdAndDelete(id);
   return { success: true };
+};
+
+export const approveLeaveRequestService = async (
+  authenticatedUser: AuthUser,
+  id: string
+) => {
+  const existingRequest = await LeaveRequestModel.findOne({
+    _id: id,
+    tenant: authenticatedUser.tenantId,
+  }).lean();
+
+  if (!existingRequest) {
+    throw new NotFoundException("Leave request not found");
+  }
+
+  if (existingRequest.status === STATUS_APPROVED) {
+    throw new BadRequestException("Leave request is already approved");
+  }
+
+  // Fetch populated user to obtain leader context for CASL check
+  const populatedUser = await UserModel.findById(existingRequest.user).select("leader").lean();
+
+  const recordToValidate = {
+    ...existingRequest,
+    user: existingRequest.user?.toString(),
+    tenant: existingRequest.tenant?.toString(),
+    leader: populatedUser?.leader?.toString() ?? null,
+  };
+
+  // 1. Entity-level update check
+  await isHaveAccess(authenticatedUser, "LeaveRequest", "update", recordToValidate);
+
+  // 2. Field-level permissions check for 'status'
+  const ability = defineAbilitiesFor(authenticatedUser);
+  const targetSubject = subject("LeaveRequest", JSON.parse(JSON.stringify(recordToValidate)));
+
+  if (!ability.can("update", targetSubject, "status")) {
+    throw new ForbiddenException("You are not allowed to update the field 'status'");
+  }
+
+  // 3. Database Transaction
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  let updatedRequest;
+
+  try {
+    const oldStatus = existingRequest.status;
+    const startDate = existingRequest.startDate;
+    const endDate = existingRequest.endDate;
+    const totalLeaveDays = moment(endDate).diff(moment(startDate), "days") + 1;
+
+    // Deduct leave balance if it wasn't already approved
+    if (oldStatus !== STATUS_APPROVED as LeaveStatus) {
+      const balanceDoc = await LeaveBalanceModel.findOne({
+        userId: existingRequest.user,
+        tenantId: existingRequest.tenant,
+      }).session(session);
+
+      await LeaveBalanceModel.updateOne(
+        { userId: existingRequest.user, tenantId: existingRequest.tenant },
+        { $inc: { balance: -totalLeaveDays } },
+        { session }
+      );
+    }
+
+    updatedRequest = await LeaveRequestModel.findByIdAndUpdate(
+      id,
+      { $set: { status: STATUS_APPROVED as LeaveStatus, reviewer: authenticatedUser.userId } },
+      { new: true, session }
+    ).lean();
+
+    await session.commitTransaction();
+  } catch (error) {
+    await session.abortTransaction();
+    throw error;
+  } finally {
+    session.endSession();
+  }
+
+  // 4. Safe Async Notification
+  try {
+    await createNotificationService({
+      tenantId: authenticatedUser.tenantId,
+      recipients: [existingRequest.user.toString()],
+      actorId: authenticatedUser.userId,
+      entityType: NotificationType.LEAVE_APPROVED,
+      title: "Leave Request Approved",
+      message: "Your leave request has been approved.",
+      entityId: existingRequest._id.toString(),
+    });
+  } catch (notificationError) {
+    console.error("Failed to dispatch leave approval notification:", notificationError);
+  }
+
+  return updatedRequest;
+};
+
+export const rejectLeaveRequestService = async (
+  authenticatedUser: AuthUser,
+  id: string,
+  dto?: { rejectionReason?: string }
+) => {
+  const existingRequest = await LeaveRequestModel.findOne({
+    _id: id,
+    tenant: authenticatedUser.tenantId,
+  }).lean();
+
+  if (!existingRequest) {
+    throw new NotFoundException("Leave request not found");
+  }
+
+  if (existingRequest.status === STATUS_REJECTED) {
+    throw new BadRequestException("Leave request is already rejected");
+  }
+
+  // Fetch populated user to obtain leader context for CASL check
+  const populatedUser = await UserModel.findById(existingRequest.user).select("leader").lean();
+
+  const recordToValidate = {
+    ...existingRequest,
+    user: existingRequest.user?.toString(),
+    tenant: existingRequest.tenant?.toString(),
+    leader: populatedUser?.leader?.toString() ?? null,
+  };
+
+  // 1. Entity-level update check
+  await isHaveAccess(authenticatedUser, "LeaveRequest", "update", recordToValidate);
+
+  // 2. Field-level permissions check for 'status' and optional 'rejectionReason'
+  const ability = defineAbilitiesFor(authenticatedUser);
+  const targetSubject = subject("LeaveRequest", JSON.parse(JSON.stringify(recordToValidate)));
+
+  const fieldsToVerify = ["status", ...(dto?.rejectionReason ? ["reason"] : [])];
+  for (const field of fieldsToVerify) {
+    if (!ability.can("update", targetSubject, field)) {
+      throw new ForbiddenException(`You are not allowed to update the field '${field}'`);
+    }
+  }
+
+  // 3. Database Transaction
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  let updatedRequest;
+
+  try {
+    const oldStatus = existingRequest.status;
+
+    // Restore leave balance if we are rejecting a request that was previously approved
+    if (oldStatus === STATUS_APPROVED) {
+      const startDate = existingRequest.startDate;
+      const endDate = existingRequest.endDate;
+      const totalLeaveDays = moment(endDate).diff(moment(startDate), "days") + 1;
+
+      await LeaveBalanceModel.updateOne(
+        { userId: existingRequest.user, tenantId: existingRequest.tenant },
+        { $inc: { balance: totalLeaveDays } },
+        { session }
+      );
+    }
+
+    const updatePayload: { status: LeaveStatus; reviewer: string; rejectionReason?: string } = {
+      status: STATUS_REJECTED as LeaveStatus,
+      ...(dto?.rejectionReason && { rejectionReason: dto.rejectionReason }),
+      reviewer: authenticatedUser.userId,
+    };
+
+    updatedRequest = await LeaveRequestModel.findByIdAndUpdate(
+      id,
+      { $set: updatePayload },
+      { new: true, session }
+    ).lean();
+
+    await session.commitTransaction();
+  } catch (error) {
+    await session.abortTransaction();
+    throw error;
+  } finally {
+    session.endSession();
+  }
+
+  // 4. Safe Async Notification
+  try {
+    await createNotificationService({
+      tenantId: authenticatedUser.tenantId,
+      recipients: [existingRequest.user.toString()],
+      actorId: authenticatedUser.userId,
+      entityType: NotificationType.LEAVE_REJECTED,
+      title: "Leave Request Rejected",
+      message: "Your leave request has been rejected.",
+      entityId: existingRequest._id.toString(),
+    });
+  } catch (notificationError) {
+    console.error("Failed to dispatch leave rejection notification:", notificationError);
+  }
+
+  return updatedRequest;
 };

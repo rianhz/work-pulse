@@ -10,8 +10,8 @@ export interface CreateNotificationDto {
   tenantId: string;
   recipients: string[];
   actorId?: string;
-  type: NotificationType;
   title: string;
   message: string;
-  data?: Record<string, any>;
+  entityType: NotificationType;
+  entityId?: string;
 }

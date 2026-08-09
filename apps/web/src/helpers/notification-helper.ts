@@ -49,11 +49,7 @@ export const getNotificationLink = (type: string, id: string): string => {
   const origin = window.location.origin;
   switch (type) {
     case NOTIFICATION_TYPE_LEAVE_REQUESTED:
-      return `${origin}/leave-approvals/${id}`;
-
     case NOTIFICATION_TYPE_LEAVE_APPROVED:
-      return `${origin}/leave-requests/${id}`;
-
     case NOTIFICATION_TYPE_LEAVE_REJECTED:
       return `${origin}/leave-requests/${id}`;
 

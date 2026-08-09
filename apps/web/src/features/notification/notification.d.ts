@@ -14,7 +14,8 @@ export interface INotification {
   _id: string;
   tenantId: Partial<ITenant>;
   actorId?: Partial<IUser>;
-  type: NotificationType;
+  entityType: NotificationType;
+  entityId?: string;
   title: string;
   url?: string;
   createdAt: string;

@@ -9,13 +9,16 @@ import { LEAVE_TYPE_ANNUAL_LEAVE, LEAVE_TYPE_HOURS_ADJUSTMENT, LEAVE_TYPE_MARRIA
 import { zodResolver } from "@hookform/resolvers/zod";
 import { leaveRequestFormSchema, LeaveRequestFormValues } from "@/features/leave/validator";
 import { Textarea } from "@/components/ui/textarea";
-import { useCreateLeaveRequest } from "@/features/leave/hooks";
+import { useCreateLeaveRequest, useMyLeaveBalance } from "@/features/leave/hooks";
 import { Activity } from "react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { Spinner } from "@/components/ui/spinner";
+import { CalendarCheck } from "lucide-react";
 
 export default function LeaveForm() {
   const queryClient = useQueryClient();
+  const { data: leaveBalance, isLoading: isLoadingLeaveBalance } = useMyLeaveBalance();
   const { mutate: createLeaveRequest, isPending: isPendingCreateLeaveRequest } = useCreateLeaveRequest();
   const { control, watch, setValue, handleSubmit, formState: { errors } } = useForm<LeaveRequestFormValues>({
     resolver: zodResolver(leaveRequestFormSchema),
@@ -38,6 +41,7 @@ export default function LeaveForm() {
         onSuccess: (data: any) => {
           toast.success(data.message);
           queryClient.invalidateQueries({ queryKey: ['my-leave-requests'] });
+          queryClient.invalidateQueries({ queryKey: ['my-leave-balance'] });
           handleCancel();
         },
       });
@@ -52,38 +56,55 @@ export default function LeaveForm() {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex-1">
       <Card className="p-4 min-h-[calc(100vh-200px)]">
-        <CardContent className="px-0">
+        <CardContent className="px-0 flex flex-col gap-4">
+          
           <Collapsible open={leaveTypeWatcher !== null} className="w-full space-y-2">
-            <CollapsibleTrigger asChild>
-              <div className="flex justify-between items-center w-full">
-                <div className="flex flex-col gap-2 w-full">
-                  <Label>Leave Type</Label>
-                  <Controller 
-                    control={control}
-                    name="leaveType"
-                    render={({ field }) => (
-                      <div onClick={(e) => e.stopPropagation()} className="w-full">
-                        <Select value={field.value ?? ''} onValueChange={field.onChange} >
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select a leave" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {leaveTypes.map((leaveType) => (
-                              <SelectItem key={leaveType.value} value={leaveType.value}>
-                                {leaveType.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    )}
-                  />
-                  <Activity mode={errors.leaveType ? 'visible' : 'hidden'}>
-                    <p className="text-xs text-destructive">{errors.leaveType?.message}</p>
+            <div className="flex justify-between items-center gap-4">
+              <CollapsibleTrigger asChild>
+                <div className="flex justify-between items-center flex-1">
+                  <div className="flex flex-col gap-2 w-full">
+                    <Label>Leave Type</Label>
+                    <Controller 
+                      control={control}
+                      name="leaveType"
+                      render={({ field }) => (
+                        <div onClick={(e) => e.stopPropagation()} className="w-full">
+                          <Select value={field.value ?? ''} onValueChange={field.onChange} >
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Select a leave" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {leaveTypes.map((leaveType) => (
+                                <SelectItem key={leaveType.value} value={leaveType.value}>
+                                  {leaveType.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
+                    />
+                    <Activity mode={errors.leaveType ? 'visible' : 'hidden'}>
+                      <p className="text-xs text-destructive">{errors.leaveType?.message}</p>
+                    </Activity>
+                  </div>
+                </div>
+              </CollapsibleTrigger>
+              <div className="p-4 bg-background self-end flex items-center gap-2 rounded-sm">
+                <div className="bg-primary/10 rounded-sm p-2">
+                  <CalendarCheck size={30} className="text-primary" />
+                </div>           
+                <div className="flex flex-col">
+                  <p className="text-sm text-muted-foreground">Leave Balance</p>
+                  <Activity mode={isLoadingLeaveBalance ? 'visible' : 'hidden'}>
+                    <Spinner />
+                  </Activity>
+                  <Activity mode={!isLoadingLeaveBalance ? 'visible' : 'hidden'}>
+                    <p className="text-sm font-bold">{leaveBalance?.data?.balance || 0} Days</p>
                   </Activity>
                 </div>
               </div>
-            </CollapsibleTrigger>
+            </div>
 
             <CollapsibleContent className="space-y-2 overflow-hidden data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down">
               <div className="space-y-4 pt-2 pb-1 flex flex-col">

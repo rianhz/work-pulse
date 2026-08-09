@@ -19,7 +19,7 @@ export function CompanySettingsForm({ tenantId, tenant, isLoading, onSaved }: { 
   const [isUploaderOpen, setIsUploaderOpen] = useState(false);
   const { mutate: updateTenant, isPending: isPendingUpdateTenant } = useUpdateTenant();
   const tenantInitials = useMemo(() => {
-    return tenant?.name.split(' ').map((name) => name[0]).join('').slice(0, 2).toUpperCase() || '';
+    return tenant?.name?.charAt(0).toUpperCase() || '';
   }, [tenant]);
 
   const { control: controlCompany, register: registerCompany, watch: watchCompany, setValue: setValueCompany, handleSubmit: handleSubmitCompany, formState: { errors: errorsCompany, isDirty: isDirtyCompany, isSubmitting: isSubmittingCompany }, reset: resetCompany } = useForm<CompanySettingsFormValues>({

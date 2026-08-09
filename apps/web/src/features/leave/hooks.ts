@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { createLeaveRequest, getLeaveApprovals, getLeaveRequestById, getMyLeaveBalance, getMyLeaveRequests } from "./api";
+import { approveLeaveRequest, createLeaveRequest, getLeaveApprovals, getLeaveRequestById, getMyLeaveBalance, getMyLeaveRequests, rejectLeaveRequest } from "./api";
 import { toast } from "sonner";
 import { IPaginationQueryOptions } from "@/global";
 
@@ -12,7 +12,7 @@ export const useMyLeaveBalance = () => {
 
 export const useMyLeaveRequests = (options: IPaginationQueryOptions) => {
   return useQuery({
-    queryKey: ['my-leave-requests'],
+    queryKey: ['my-leave-requests', options],
     queryFn: () => getMyLeaveRequests(options),
   });
 }
@@ -38,5 +38,23 @@ export const useLeaveRequestById = (id: string) => {
     queryKey: ['leave-request-by-id', id],
     queryFn: () => getLeaveRequestById(id),
     enabled: !!id,
+  });
+}
+
+export const useRejectLeaveRequest = () => {
+  return useMutation({
+    mutationFn: ({ id, rejectionReason }: { id: string; rejectionReason: string }) => rejectLeaveRequest(id, rejectionReason),
+    onError: (error) => {
+      toast.error((error as any)?.response?.data?.message || (error as Error).message || "Failed to reject leave request");
+    },
+  });
+}
+
+export const useApproveLeaveRequest = () => {
+  return useMutation({
+    mutationFn: ({ id }: { id: string }) => approveLeaveRequest(id),
+    onError: (error) => {
+      toast.error((error as any)?.response?.data?.message || (error as Error).message || "Failed to approve leave request");
+    },
   });
 }

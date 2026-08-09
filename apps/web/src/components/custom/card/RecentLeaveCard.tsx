@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
 import { useMyLeaveRequests } from "@/features/leave/hooks";
-import { leaveTypesOptions, statusOptions } from "@/helpers/constants";
+import { leaveTypesOptions, STATUS_APPROVED, STATUS_PENDING, STATUS_REJECTED, statusOptions } from "@/helpers/constants";
 import moment from "moment";
 import Link from "next/link";
 import { Activity, useMemo, useState } from "react";
@@ -14,7 +14,9 @@ export default function RecentLeaveCard() {
   const [search, setSearch] = useState("");
   const { data, isLoading: isLoadingLeaveRequests } = useMyLeaveRequests({ page, limit, search });
 
-  const leaveRequests = useMemo(() => data?.data.slice(0, 2) || [], [data?.data]);
+  const leaveRequests = useMemo(() => data?.data.slice(0, 5) || [], [data?.data]);
+
+  console.log(leaveRequests);
 
   const getLeaveTypeLabel = (leaveType: string) => {
     return leaveTypesOptions.find((option) => option.value === leaveType)?.label;
@@ -28,7 +30,9 @@ export default function RecentLeaveCard() {
     <Card className="p-4 w-full">
       <CardContent className="px-0">
         <Activity mode={isLoadingLeaveRequests ? 'visible' : 'hidden'}>
-          <Spinner />
+          <div className="flex items-center justify-center h-40">
+            <Spinner className="w-7 h-7"/>
+          </div>
         </Activity>
         <Activity mode={!isLoadingLeaveRequests ? 'visible' : 'hidden'}>
           <h3 className="text-base font-bold">Recent Requests</h3>
@@ -43,7 +47,7 @@ export default function RecentLeaveCard() {
                     <p className="text-sm">{getLeaveTypeLabel(leaveRequest.leaveType)}</p>
                     <p className="text-xs text-muted-foreground">{moment(leaveRequest.startDate).format('DD MMM YYYY')} - {moment(leaveRequest.endDate).format('DD MMM YYYY')}</p>
                   </div>
-                  <Badge variant={leaveRequest.status as any} className="min-w-[80px] text-center">{getStatusLabel(leaveRequest.status)}</Badge>
+                  <Badge variant={leaveRequest.status === STATUS_PENDING ? 'pending' : leaveRequest.status === STATUS_APPROVED ? 'approved' : leaveRequest.status === STATUS_REJECTED ? 'rejected' : 'awaitingApproval'} className="min-w-[123px] text-center">{getStatusLabel(leaveRequest.status)}</Badge>
                 </div>
               ))}
             </Activity>

@@ -1,21 +1,13 @@
 
 import mongoose from "mongoose";
 import dotenv from "dotenv";
-// import { usersMigrations } from "./migrations/usersMigrations";
 import { connectDatabase } from "../config/database";
-import { thumbnailMigrations } from "./migrations/thumbnailAnnouncements";
-import { isFeaturedAnnouncements } from "./migrations/isFeaturedAnnouncements";
-import { datePublishedAnnouncements } from "./migrations/datePublishedAnnouncements";
-import { bulkLeaveBalanceMigration } from "./migrations/initializeLeave";
-import { leaveRequestsPendingUpdate } from "./migrations/leaveRequestsPendingUpdate";
-import { renameLeaveRequestFields } from "./migrations/renameLeaveRequest";
-import { usersMigrations } from "./migrations/usersMigrations";
+import { notificationMigration } from "./migrations/notificationMigration";
 
 dotenv.config();
 
 const migrations = [
-  { name: "usersMigrations", execute: usersMigrations },
-  // { name: "renameLeaveRequestFields", execute: renameLeaveRequestFields },
+  { name: "notificationMigration", execute: notificationMigration },
 ];
 
 async function runMigrations() {

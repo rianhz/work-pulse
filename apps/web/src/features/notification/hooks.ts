@@ -1,5 +1,5 @@
-import { QueryOptions, useQuery } from "@tanstack/react-query";
-import { getNotifications, getUnreadNotificationsCount } from "./api";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { getNotifications, getUnreadNotificationsCount, markAllNotificationsAsRead, markNotificationAsRead } from "./api";
 import { INotification } from "./notification";
 import { IGetPaginatedResponse, IPaginationQueryOptions } from "@/global";
 
@@ -17,4 +17,18 @@ export const useUnreadNotificationsCount = () => {
     queryFn: () => getUnreadNotificationsCount(),
   });
   return query;
+};
+
+export const useMarkNotificationAsRead = () => {
+  const mutation = useMutation({
+    mutationFn: (id: string) => markNotificationAsRead(id),
+  });
+  return mutation;
+};
+
+export const useMarkAllNotificationsAsRead = () => {
+  const mutation = useMutation({
+    mutationFn: () => markAllNotificationsAsRead(),
+  });
+  return mutation;
 };

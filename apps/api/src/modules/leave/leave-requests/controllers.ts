@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { createLeaveRequestService, getLeaveRequestsService, updateLeaveRequestService, deleteLeaveRequestService, getMyLeaveRequestsService, getLeaveRequestByIdService } from "./services";
+import { createLeaveRequestService, getLeaveRequestsService, updateLeaveRequestService, deleteLeaveRequestService, getMyLeaveRequestsService, getLeaveRequestByIdService, approveLeaveRequestService, rejectLeaveRequestService } from "./services";
 import { HTTPSTATUS } from "../../../utils/http-config";
 
 export const getLeaveRequests = async (req: Request, res: Response) => {
@@ -42,4 +42,16 @@ export const getLeaveRequestById = async (req: Request, res: Response) => {
   const authenticatedUser = (req as any).user;
   const leaveRequest = await getLeaveRequestByIdService(authenticatedUser, req.params.id as string);
   res.status(HTTPSTATUS.OK).json({ success: true, data: leaveRequest });
+}
+
+export const approveLeaveRequest = async (req: Request, res: Response) => {
+  const authenticatedUser = (req as any).user;
+  await approveLeaveRequestService(authenticatedUser, req.params.id as string);
+  res.status(HTTPSTATUS.OK).json({ success: true, message: "Leave request approved successfully" });
+}
+
+export const rejectLeaveRequest = async (req: Request, res: Response) => {
+  const authenticatedUser = (req as any).user;
+  await rejectLeaveRequestService(authenticatedUser, req.params.id as string, { rejectionReason: req.body.rejectionReason as string });
+  res.status(HTTPSTATUS.OK).json({ success: true, message: "Leave request rejected successfully" });
 }

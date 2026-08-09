@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist } from "next/font/google";
+import { Manrope, EB_Garamond } from "next/font/google";
 import "./globals.css";
 import StoreProvider from "@/providers/StoreProvider";
 import ReactQueryProvider from "@/providers/ReactQueryProvider";
@@ -10,11 +10,12 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import GoogleAuthProvider from "@/providers/GoogleAuthProvider";
 
-const geist = Geist({subsets:['latin'],variable:'--font-sans'});
+const manrope = Manrope({subsets:['latin'],variable:'--font-manrope', display:'swap'});
+const ebGaramond = EB_Garamond({subsets:['latin'],variable:'--font-garamond', display:'swap'});
 
 export const metadata: Metadata = {
   title: "Work Pulse",
-  description: "Work Pulse is a platform for managing your work and projects.",
+  description: "The Operating System for Modern Teams",
 };
 
 export default function RootLayout({
@@ -26,7 +27,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={cn("font-sans h-full antialiased", geist.variable)}
+      className={cn("h-full antialiased", manrope.variable, ebGaramond.variable)}
     >
       <body className="min-h-full flex flex-col">
         <GoogleAuthProvider>

@@ -13,7 +13,7 @@ export const getUnreadNotificationsCount = async () => {
 };
 
 export const markNotificationAsRead = async (id: string) => {
-  const response = await api.post(`/notifications/mark-as-read/${id}`);
+  const response = await api.post(`/notifications/mark-as-read`, { id });
   return response.data;
 };
 

@@ -83,7 +83,7 @@ export function BaseTable<TData, TValue>({
   });
 
   return (
-    <Card className="space-y-4 pt-4 pb-0 ring-0">
+    <Card className="space-y-4 py-4 ring-0">
       <div className="flex items-center justify-between gap-4 px-4 mb-0">
         <React.Activity mode={showSearchField ? "visible" : "hidden"}>
           <InputGroup className="max-w-lg">

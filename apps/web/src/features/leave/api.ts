@@ -26,3 +26,13 @@ export const getLeaveRequestById = async (id: string) => {
   const response = await api.get<IResponse<ILeaveRequest>>(`/leave/requests/${id}`);
   return response.data;
 }
+
+export const approveLeaveRequest = async (id: string) => {
+  const response = await api.put<IBaseResponse>(`/leave/requests/${id}/approve`);
+  return response.data;
+}
+
+export const rejectLeaveRequest = async (id: string, rejectionReason: string) => {
+  const response = await api.put<IBaseResponse>(`/leave/requests/${id}/reject`, { rejectionReason });
+  return response.data;
+}

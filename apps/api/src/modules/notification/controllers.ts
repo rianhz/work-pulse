@@ -45,8 +45,9 @@ export const markNotificationAsReadController = async (
 ) => {
 
   const authenticatedUser = (req as any).user as AuthUser;
+  console.log(req.body.id);
 
-  await markAsReadService(req.params.id as string, authenticatedUser);
+  await markAsReadService(req.body.id as string, authenticatedUser);
 
   res.status(HTTPSTATUS.OK).json({
     success: true,

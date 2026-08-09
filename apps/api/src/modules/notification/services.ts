@@ -9,10 +9,10 @@ export async function createNotificationService(dto: CreateNotificationDto) {
     tenantId: dto.tenantId,
     recipientId,
     actorId: dto.actorId,
-    type: dto.type,
+    entityType: dto.entityType,
     title: dto.title,
     message: dto.message,
-    data: dto.data,
+    entityId: dto.entityId,
   }));
 
   return Notification.insertMany(notifications);

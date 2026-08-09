@@ -22,10 +22,16 @@ const notificationSchema = new Schema(
       ref: "User",
     },
 
-    type: {
+    entityType: {
       type: String,
       enum: Object.values(NotificationType),
       required: true,
+    },
+
+    entityId: {
+      type: String,
+      required: false,
+      default: null,
     },
 
     title: {
@@ -36,10 +42,6 @@ const notificationSchema = new Schema(
     message: {
       type: String,
       required: true,
-    },
-    data: {
-      type: Schema.Types.Mixed,
-      default: {},
     },
 
     isRead: {
