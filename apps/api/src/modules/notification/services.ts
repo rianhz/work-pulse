@@ -35,7 +35,7 @@ export async function getMineService(
     Notification.find(baseQuery)
       .sort({ createdAt: -1 })
       .select('-__v -updatedAt -tenantId -recipientId')
-      .populate('actorId', 'fullName email nickName')
+      .populate('actorId', 'fullName nickName -_id')
       .skip(skip)
       .limit(limit)
       .lean(),

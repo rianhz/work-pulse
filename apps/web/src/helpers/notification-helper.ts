@@ -3,13 +3,13 @@ import { NOTIFICATION_TYPE_LEAVE_APPROVED, NOTIFICATION_TYPE_LEAVE_REQUESTED, NO
 export const getNotificationTitle = (type: string): string => {
   switch (type) {
     case NOTIFICATION_TYPE_LEAVE_REQUESTED:
-      return "Leave Request Requested";
+      return "Leave Requested";
 
     case NOTIFICATION_TYPE_LEAVE_APPROVED:
-      return "Leave Request Approved";
+      return "Leave Approved";
 
     case NOTIFICATION_TYPE_LEAVE_REJECTED:
-      return "Leave Request Declined";
+      return "Leave Declined";
 
     case NOTIFICATION_TYPE_USER_JOINED:
       return "New Team Member";

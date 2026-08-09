@@ -8,7 +8,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { useDeleteUser, useGetUsers, useSearchUsers, useUpdateUser } from "@/features/users/hooks";
-import { ChevronDownIcon, MoreHorizontalIcon, Users, ArrowUpDown, Pencil, Trash } from "lucide-react";
+import { ChevronDownIcon, MoreHorizontalIcon, Users, ArrowUpDown, Pencil, Trash, Trash2, Download, UserCheck } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -27,7 +27,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import moment from "moment";
 import { Command, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 
-import { ColumnDef, VisibilityState } from "@tanstack/react-table";
+import { ColumnDef, RowSelectionState, VisibilityState } from "@tanstack/react-table";
 import { BaseTable } from "@/components/custom/table/BaseTable";
 import { EditUserFormValues, editUserSchema } from "@/features/users/validator";
 
@@ -57,6 +57,8 @@ export default function TeamPage() {
   const [leaderDropdownOpen, setLeaderDropdownOpen] = useState(false);
   const [page, setPage] = useState(1);
   const limit = 10;
+
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
 
   const debouncedSearch = useDebounce(search, 1000);
   const debouncedLeaderSearch = useDebounce(leaderSearch, 1000);
@@ -191,27 +193,21 @@ export default function TeamPage() {
     },
     {
       accessorKey: "email",
-      header: ({ column }) => (
-        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")} className="px-0 h-8 hover:bg-transparent" icon={ArrowUpDown} iconPosition="right">
-          Email
-        </Button>
+      header: () => (
+        <span>Email</span>
       ),
     },
     {
       id: "leader",
       accessorFn: (row) => row.leader?.fullName || "",
-      header: ({ column }) => (
-        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")} className="px-0 h-8 hover:bg-transparent" icon={ArrowUpDown} iconPosition="right">
-          Leader
-        </Button>
+      header: () => (
+        <span>Leader</span>
       ),
     },
     {
       accessorKey: "role",
-      header: ({ column }) => (
-        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")} className="px-0 h-8 hover:bg-transparent" icon={ArrowUpDown} iconPosition="right">
-          Role
-        </Button>
+      header: () => (
+        <span>Role</span>
       ),
       cell: ({ row }) => {
         const role = row.original.role;
@@ -221,18 +217,14 @@ export default function TeamPage() {
     {
       id: "department",
       accessorFn: (row) => row.department?.name || "",
-      header: ({ column }) => (
-        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")} className="px-0 h-8 hover:bg-transparent" icon={ArrowUpDown} iconPosition="right">
-          Department
-        </Button>
+      header: () => (
+         <span>Department</span>
       ),
     },
     {
       accessorKey: "position",
-      header: ({ column }) => (
-        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")} className="px-0 h-8 hover:bg-transparent" icon={ArrowUpDown} iconPosition="right">
-          Position
-        </Button>
+      header: () => (
+        <span>Position</span>
       ),
     },
     {
@@ -505,6 +497,27 @@ export default function TeamPage() {
             isEmptyData={users && users?.length === 0}
             emptyDataDescription="No users found in your team"
             emptyDataIcon={<Users className="size-10 text-muted-foreground" />}
+            enableRowSelection={true}
+            rowSelection={rowSelection}
+            onRowSelectionChange={setRowSelection}
+            bulkActions={[
+              {
+                label: "Change Role",
+                icon: UserCheck,
+                onClick: (selected) => console.log(selected),
+              },
+              {
+                label: "Export",
+                icon: Download,
+                onClick: (selected) => console.log(selected),
+              },
+              {
+                label: "Delete",
+                icon: Trash2,
+                variant: "destructive",
+                onClick: (selected) => console.log(selected),
+              },
+            ]}
           />
         {/* </CardContent>
       </Card> */}
