@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./tooltip"
 import { Spinner } from "@/components/ui/spinner" 
 import { Slottable } from "@radix-ui/react-slot"
+import { MorphIcon, type IconInput } from "morphicons/react"
 
 export type ButtonProps =
   React.ComponentProps<"button"> &
@@ -12,9 +13,9 @@ export type ButtonProps =
     asChild?: boolean
     tooltip?: React.ReactNode
     tooltipSide?: "top" | "right" | "bottom" | "left"
-    icon?: React.ComponentType<{ className?: string }>
+    icon?: IconInput | React.ComponentType<{ className?: string }> | React.ReactNode 
     iconPosition?: "left" | "right"
-    iconClassName?: string,
+    iconClassName?: string
     enableIconTransition?: boolean
     loading?: boolean
   }
@@ -61,7 +62,7 @@ function Button({
   asChild = false,
   tooltip,
   tooltipSide = "top",
-  icon: Icon,
+  icon: IconProp,
   iconPosition = "left",
   iconClassName,
   enableIconTransition = false,
@@ -72,17 +73,35 @@ function Button({
 }: ButtonProps) {
   const Comp = asChild ? Slot.Root : "button"
 
+  // Helper to construct transition/sizing classes for icons
+  const computedIconClass = cn(
+    "size-4 shrink-0",
+    enableIconTransition ? "transition-transform duration-300" : "transition-none",
+    enableIconTransition && iconPosition === "left",
+    enableIconTransition && iconPosition === "right",
+    iconClassName
+  )
+
+  // Helper to determine if an icon is valid MorphIcon input (path array or MorphIcon object)
+  const isMorphIconInput = (icon: unknown): icon is IconInput => {
+    if (!icon) return false;
+    if (Array.isArray(icon)) return true; // Tuple path arrays from "lucide"
+    if (typeof icon === "object" && icon !== null && "paths" in icon) return true; // MorphIcon objects
+    return false;
+  };
+
   const renderVisual = loading ? (
     <Spinner className="animate-spin" />
-  ) : Icon ? (
-    <Icon 
-      className={cn(
-        enableIconTransition ? "transition-transform duration-300" : "transition-none",
-        enableIconTransition && iconPosition === "left" && "group-hover/button:-translate-x-0.5",
-        enableIconTransition && iconPosition === "right" && "group-hover/button:translate-x-0.5",
-        iconClassName
-      )} 
-    />
+  ) : IconProp ? (
+    isMorphIconInput(IconProp) ? (
+      <MorphIcon icon={IconProp} className={computedIconClass} />
+    ) : React.isValidElement(IconProp) ? (
+      IconProp
+    ) : typeof IconProp === "function" ? (
+      React.createElement(IconProp as React.ComponentType<{ className?: string }>, {
+        className: computedIconClass,
+      })
+    ) : null
   ) : null;
 
   const button = (

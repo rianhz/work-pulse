@@ -15,7 +15,8 @@ import { RootState } from "@/store";
 import { useAppSelector } from "@/store/hooks/hooks";
 import { useQueryClient } from "@tanstack/react-query";
 import { ColumnDef, VisibilityState } from "@tanstack/react-table";
-import { ArrowUpDown, Bell, EllipsisVertical, Eye, EyeOff, Pencil, Send, Star, StarOff, Trash } from "lucide-react";
+import { Bell, EllipsisVertical, Pencil, Trash, Star as StarIcon } from "lucide-react";
+import { EyeOff, Eye, StarOff, Star } from "lucide";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
@@ -117,12 +118,8 @@ export default function AnnouncementsPage() {
   const columns = useMemo<ColumnDef<IAnnouncement>[]>(() => [
     {
       accessorKey: "title",
-      header: ({ column }) => (
-        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")} className="px-0 h-8 hover:bg-transparent">
-          <span>Title</span>
-          <ArrowUpDown className="h-4 w-4" />
-        </Button>
-      ),
+      header: () => <span>Title</span>,
+      enableSorting: true,
       cell: ({ row }) => {
         return (
           <div 
@@ -134,7 +131,7 @@ export default function AnnouncementsPage() {
             {row.original.isFeatured && (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Star fill="currentColor" className="size-4 text-yellow-500" />
+                  <StarIcon fill="currentColor" className="size-4 text-yellow-500" />
                 </TooltipTrigger>
                 <TooltipContent>
                   <p>Featured</p>
@@ -147,24 +144,16 @@ export default function AnnouncementsPage() {
     },
     {
       accessorKey: "status",
-      header: ({ column }) => (
-          <div className="flex items-center justify-center">
-            <span>Status</span>
-          </div>
-      ),
+      header: () => <span>Status</span>,
+      enableSorting: true,
       cell: ({ row }) => {
-        const status = row.original.status;
-        return <Badge variant={status as BadgeVariant} className="w-full text-center">{status.charAt(0).toUpperCase() + status.slice(1)}</Badge>;
+        return <Badge variant={row.original.status as BadgeVariant} className="w-full text-center">{row.original.status.charAt(0).toUpperCase() + row.original.status.slice(1)}</Badge>;
       },
     },
     {
       accessorKey: "createdAt",
-      header: ({ column }) => (
-        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")} className="px-0 h-8 hover:bg-transparent">
-          <span>Created At</span>
-          <ArrowUpDown className="h-4 w-4" />
-        </Button>
-      ),
+      header: () => <span>Created At</span>,
+      enableSorting: true,
       cell: ({ row }) => {
         return (
           <Tooltip>
@@ -180,12 +169,8 @@ export default function AnnouncementsPage() {
     },
     {
       accessorKey: "updatedAt",
-      header: ({ column }) => (
-        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")} className="px-0 h-8 hover:bg-transparent">
-          <span>Updated At</span>
-          <ArrowUpDown className="h-4 w-4" />
-        </Button>
-      ),
+      header: () => <span>Updated At</span>,
+      enableSorting: true,
       cell: ({ row }) => {
         return (
           <Tooltip>

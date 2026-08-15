@@ -53,42 +53,30 @@ export default function LeaveApprovalsPage() {
     },
     {
       accessorKey: "startDate",
-      header: ({ column }) => (
-        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")} className="px-0 h-8 hover:bg-transparent">
-          <span>From</span>
-          <ArrowUpDown className="h-4 w-4" />
-        </Button>
-      ),
+      header: () => <span>From</span>,
+      enableSorting: true,
       cell: ({ row }) => {
         return <span>{moment(row.original.startDate).format("DD MMM YYYY")}</span>
       },
     },
     {
       accessorKey: "endDate",
-      header: ({ column }) => (
-        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")} className="px-0 h-8 hover:bg-transparent">
-          <span>To</span>
-          <ArrowUpDown className="h-4 w-4" />
-        </Button>
-      ),
+      header: () => <span>To</span>,
+      enableSorting: true,
       cell: ({ row }) => {
         return <span>{moment(row.original.endDate).format("DD MMM YYYY")}</span>
       },
     },
     {
       accessorKey: "userId",
-      header: ({ column }) => (
-          <span>Submitted By</span>
-      ),
+      header: () => <span>Submitted By</span>,
       cell: ({ row }) => {
         return <span>{row.original.user?.fullName || "-"}</span>
       },
     },
     {
       accessorKey: "status",
-      header: ({ column }) => (
-          <span>Status</span>
-      ),
+      header: () => <span>Status</span>,
       cell: ({ row }) => {
         return <Badge variant={row.original.status.includes(STATUS_CANCELLED) ? "cancelled" : row.original.status.includes(STATUS_REJECTED) ? "destructive" : row.original.status.includes(STATUS_PENDING) ? "pending" : row.original.status.includes(STATUS_APPROVED) ? "active" : row.original.status.includes(STATUS_AWAITING_APPROVAL) ? "awaitingApproval" : "secondary"}>
           {getStatusLabel(row.original.status)}

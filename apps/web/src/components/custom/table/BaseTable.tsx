@@ -11,9 +11,10 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { SlidersHorizontal } from "lucide-react";
+import { ArrowUp, ArrowDown, ArrowUpDown } from "lucide";
 import { InputGroup, InputGroupInput } from "@/components/ui/input-group";
 import { BasePagination } from "@/components/custom/pagination/BasePagination";
 import { Spinner } from "@/components/ui/spinner";
@@ -26,7 +27,7 @@ interface BaseTableProps<TData, TValue> {
   columnLabels?: Record<string, string>;
   columnVisibility?: VisibilityState;
   onColumnVisibilityChange?: React.Dispatch<React.SetStateAction<VisibilityState>>;
-  
+
   showSearchField?: boolean;
   searchValue?: string;
   onSearchChange?: (value: string) => void;
@@ -69,9 +70,48 @@ export function BaseTable<TData, TValue>({
   const currentVisibility = isControlledVisibility ? columnVisibility : internalVisibility;
   const handleVisibilityChange = isControlledVisibility ? onColumnVisibilityChange : setInternalVisibility;
 
+  const processedColumns = React.useMemo(() => {
+    return columns.map((col) => {
+      const isSortable = col.enableSorting !== false && col.enableSorting !== undefined;
+      const OriginalHeader = col.header;
+
+      if (!isSortable || !OriginalHeader) {
+        return col;
+      }
+
+      return {
+        ...col,
+        header: (headerProps: any) => {
+          const sorted = headerProps.column.getIsSorted();
+          
+          // These are morphicon data objects from "lucide"
+          const currentMorphIcon =
+            sorted === "asc" ? ArrowUp : sorted === "desc" ? ArrowDown : ArrowUpDown;
+
+          const headerContent = flexRender(OriginalHeader, headerProps);
+
+          return (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => headerProps.column.toggleSorting(sorted === "asc")}
+              className="-ml-3 h-8 hover:bg-transparent font-semibold data-[state=open]:bg-accent"
+              icon={currentMorphIcon}
+              iconPosition="right"
+              iconClassName="size-3.5 opacity-70"
+              enableIconTransition={true}
+            >
+              {headerContent}
+            </Button>
+          );
+        },
+      };
+    }) as ColumnDef<TData, TValue>[];
+  }, [columns]);
+
   const table = useReactTable({
     data,
-    columns,
+    columns: processedColumns,
     state: {
       sorting,
       columnVisibility: currentVisibility,
@@ -84,21 +124,28 @@ export function BaseTable<TData, TValue>({
 
   return (
     <Card className="space-y-4 py-4 ring-0">
+      {/* Top Toolbar */}
       <div className="flex items-center justify-between gap-4 px-4 mb-0">
-        <React.Activity mode={showSearchField ? "visible" : "hidden"}>
+        {showSearchField && (
           <InputGroup className="max-w-lg">
-            <InputGroupInput 
-              placeholder={searchPlaceholder} 
-              value={searchValue} 
+            <InputGroupInput
+              placeholder={searchPlaceholder}
+              value={searchValue}
               onChange={(e) => onSearchChange?.(e.target.value)}
               disabled={isLoading}
             />
           </InputGroup>
-        </React.Activity>
-        
+        )}
+
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="ml-auto flex gap-2" disabled={isLoading} icon={SlidersHorizontal} iconPosition="left">
+            <Button
+              variant="outline"
+              className="ml-auto flex gap-2"
+              disabled={isLoading}
+              icon={SlidersHorizontal}
+              iconPosition="left"
+            >
               View
             </Button>
           </DropdownMenuTrigger>
@@ -120,14 +167,15 @@ export function BaseTable<TData, TValue>({
         </DropdownMenu>
       </div>
 
+      {/* Table Content */}
       <div className="overflow-x-auto relative">
-        <React.Activity mode={isLoading ? "visible" : "hidden"}>
-          <div className="flex justify-center items-center min-h-[200px]"> <Spinner className="size-10" /> </div>
-        </React.Activity>
-        <React.Activity mode={!isLoading && isEmptyData ? "visible" : "hidden"}>
+        {isLoading ? (
+          <div className="flex justify-center items-center min-h-[200px]">
+            <Spinner className="size-10" />
+          </div>
+        ) : isEmptyData ? (
           <EmptyData description={emptyDataDescription} icon={emptyDataIcon} />
-        </React.Activity>
-        <React.Activity mode={!isLoading && !isEmptyData ? "visible" : "hidden"}>
+        ) : (
           <Table>
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
@@ -139,7 +187,7 @@ export function BaseTable<TData, TValue>({
                         key={header.id}
                         className={
                           isActions
-                            ? "sticky right-0 shadow-[-1px_0_0_0_rgba(0,0,0,0.1)] dark:shadow-[-1px_0_0_0_rgba(255,255,255,0.1)] z-10 text-right w-[100px]"
+                            ? "sticky right-0 shadow-[-1px_0_0_0_rgba(0,0,0,0.1)] dark:shadow-[-1px_0_0_0_rgba(255,255,255,0.1)] z-10 text-right w-[100px] bg-popover"
                             : ""
                         }
                       >
@@ -154,7 +202,11 @@ export function BaseTable<TData, TValue>({
             </TableHeader>
             <TableBody>
               {table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id} onClick={() => onRowClicked?.(row.original)} className={onRowClicked ? "cursor-pointer" : ""}>
+                <TableRow
+                  key={row.id}
+                  onClick={() => onRowClicked?.(row.original)}
+                  className={onRowClicked ? "cursor-pointer" : ""}
+                >
                   {row.getVisibleCells().map((cell) => {
                     const isActions = cell.column.id === "actions";
                     return (
@@ -162,7 +214,7 @@ export function BaseTable<TData, TValue>({
                         key={cell.id}
                         className={
                           isActions
-                            ? "sticky right-0 shadow-[-1px_0_0_0_rgba(0,0,0,0.1)] dark:shadow-[-1px_0_0_0_rgba(255,255,255,0.1)] z-10 text-right"
+                            ? "sticky right-0 shadow-[-1px_0_0_0_rgba(0,0,0,0.1)] dark:shadow-[-1px_0_0_0_rgba(255,255,255,0.1)] z-10 text-right bg-popover"
                             : ""
                         }
                       >
@@ -173,19 +225,20 @@ export function BaseTable<TData, TValue>({
                 </TableRow>
               ))}
             </TableBody>
-        </Table>
-        </React.Activity>
+          </Table>
+        )}
       </div>
 
-      <React.Activity mode={currentPage !== undefined && onPageChange && totalPages > 1 ? "visible" : "hidden"}>
+      {/* Pagination */}
+      {currentPage !== undefined && onPageChange && totalPages > 1 && (
         <div className="pt-2">
-          <BasePagination 
-            currentPage={currentPage || 1} 
-            totalPages={totalPages} 
-            onPageChange={onPageChange || (() => {})} 
+          <BasePagination
+            currentPage={currentPage || 1}
+            totalPages={totalPages}
+            onPageChange={onPageChange || (() => {})}
           />
         </div>
-      </React.Activity>
+      )}
     </Card>
   );
 }

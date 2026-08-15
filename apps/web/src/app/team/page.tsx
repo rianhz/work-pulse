@@ -2,13 +2,13 @@
 
 import { ErrorMessage } from "@/components/custom/errors-and-empty/ErrorsMessage";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { useDeleteUser, useGetUsers, useSearchUsers, useUpdateUser } from "@/features/users/hooks";
-import { ChevronDownIcon, MoreHorizontalIcon, Users, ArrowUpDown, Pencil, Trash } from "lucide-react";
+import { Users, Pencil, Trash } from "lucide-react";
+import { MoreHorizontal, ChevronDown } from "lucide";
 import { useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -183,36 +183,24 @@ export default function TeamPage() {
   const columns = useMemo<ColumnDef<IUser>[]>(() => [
     {
       accessorKey: "fullName",
-      header: ({ column }) => (
-        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")} className="px-0 h-8 hover:bg-transparent" icon={ArrowUpDown} iconPosition="right">
-          Name
-        </Button>
-      ),
+      header: () => <span>Name</span>,
+      enableSorting: true,
     },
     {
       accessorKey: "email",
-      header: ({ column }) => (
-        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")} className="px-0 h-8 hover:bg-transparent" icon={ArrowUpDown} iconPosition="right">
-          Email
-        </Button>
-      ),
+      header: () => <span>Email</span>,
+      enableSorting: true,
     },
     {
       id: "leader",
       accessorFn: (row) => row.leader?.fullName || "",
-      header: ({ column }) => (
-        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")} className="px-0 h-8 hover:bg-transparent" icon={ArrowUpDown} iconPosition="right">
-          Leader
-        </Button>
-      ),
+      header: () => <span>Leader</span>,
+      enableSorting: true,
     },
     {
       accessorKey: "role",
-      header: ({ column }) => (
-        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")} className="px-0 h-8 hover:bg-transparent" icon={ArrowUpDown} iconPosition="right">
-          Role
-        </Button>
-      ),
+      header: () => <span>Role</span>,
+      enableSorting: true,
       cell: ({ row }) => {
         const role = row.original.role;
         return role.charAt(0).toUpperCase() + role.slice(1);
@@ -221,19 +209,13 @@ export default function TeamPage() {
     {
       id: "department",
       accessorFn: (row) => row.department?.name || "",
-      header: ({ column }) => (
-        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")} className="px-0 h-8 hover:bg-transparent" icon={ArrowUpDown} iconPosition="right">
-          Department
-        </Button>
-      ),
+      header: () => <span>Department</span>,
+      enableSorting: true,
     },
     {
       accessorKey: "position",
-      header: ({ column }) => (
-        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")} className="px-0 h-8 hover:bg-transparent" icon={ArrowUpDown} iconPosition="right">
-          Position
-        </Button>
-      ),
+      header: () => <span>Position</span>,
+      enableSorting: true,
     },
     {
       id: "actions",
@@ -244,7 +226,7 @@ export default function TeamPage() {
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant={'ghost'} className="p-1" icon={MoreHorizontalIcon} iconPosition="left">
+              <Button variant={'ghost'} className="p-1" icon={MoreHorizontal} iconPosition="left">
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -396,7 +378,7 @@ export default function TeamPage() {
                   return (
                     <DropdownMenu open={leaderDropdownOpen} onOpenChange={setLeaderDropdownOpen}>
                       <DropdownMenuTrigger asChild>
-                        <Button id="leader" variant="outline" role="combobox" className="w-full justify-between font-normal group" icon={ChevronDownIcon} iconClassName="pointer-events-none size-4 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" iconPosition="right">
+                        <Button id="leader" variant="outline" role="combobox" className="w-full justify-between font-normal group" icon={ChevronDown} iconClassName="pointer-events-none size-4 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" iconPosition="right">
                           {displayLabel}
                         </Button>
                       </DropdownMenuTrigger>

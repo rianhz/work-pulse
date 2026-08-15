@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { ArrowLeftIcon } from "lucide-react";
+import { ArrowLeft } from "lucide";
 import { useRouter } from "next/navigation";
 
 export default function BackButton() {
@@ -9,7 +9,7 @@ export default function BackButton() {
         router.replace('/leave-requests');
     }
     return (
-        <Button variant="ghost" icon={ArrowLeftIcon} iconClassName="w-4 h-4 text-muted-foreground" onClick={handleBack}>
+        <Button variant="ghost" icon={ArrowLeft} iconClassName="w-4 h-4 text-muted-foreground" onClick={handleBack}>
             <span className="text-sm text-muted-foreground">Back</span>
         </Button>
     );

@@ -161,25 +161,17 @@ export default function ProjectsPage() {
   const columns = useMemo<ColumnDef<IProject, any>[]>(() => [
     {
       accessorKey: "name",
-      header: ({ column }: { column: Column<IProject, any> }) => (
-        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")} className="px-0 h-8 hover:bg-transparent">
-          <span>Name</span>
-          <ArrowUpDown className="h-4 w-4" />
-        </Button>
-      ),  
+      header: () => <span>Name</span>,
+      enableSorting: true,
     },
     {
       accessorKey: "entity",
-      header: ({ column }) => (
-        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")} className="px-0 h-8 hover:bg-transparent">
-          <span>Entity</span>
-          <ArrowUpDown className="h-4 w-4" />
-        </Button>
-      ),
+      header: () => <span>Entity</span>,
+      enableSorting: true,
     },
     {
       accessorKey: "participants",
-      header: "Participants",
+      header: () => <span>Participants</span>,
       cell: ({ row }) => {
         const rowParticipants = row.original.participants || [];
         if (rowParticipants.length === 0) return <span className="text-muted-foreground text-xs">-</span>;
@@ -206,12 +198,8 @@ export default function ProjectsPage() {
     },
     {
       accessorKey: "status",
-      header: ({ column }: { column: Column<IProject, any> }) => (
-        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")} className="px-0 h-8 hover:bg-transparent">
-          <span>Status</span>
-          <ArrowUpDown className="h-4 w-4" />
-        </Button>
-      ),
+      header: () => <span>Status</span>,
+      enableSorting: true,
       cell: ({ row }) => (
         <Badge variant={row.original.status === "active" ? "active" : "destructive"}>
           {row.original.status.charAt(0).toUpperCase() + row.original.status.slice(1)}
@@ -220,12 +208,8 @@ export default function ProjectsPage() {
     },
     {
       accessorKey: "createdAt",
-      header: ({ column }: { column: Column<IProject, any> }) => (
-        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")} className="px-0 h-8 hover:bg-transparent">
-          <span>Date Created</span>
-          <ArrowUpDown className="h-4 w-4" />
-        </Button>
-      ),
+      header: () => <span>Date Created</span>,
+      enableSorting: true,
       cell: ({ row }) => {
         return (
           <Tooltip>
@@ -241,12 +225,8 @@ export default function ProjectsPage() {
     },
     {
       accessorKey: "updatedAt",
-      header: ({ column }: { column: Column<IProject, any> }) => (
-        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")} className="px-0 h-8 hover:bg-transparent">
-          <span>Last Updated</span>
-          <ArrowUpDown className="h-4 w-4" />
-        </Button>
-      ),
+      header: () => <span>Last Updated</span>,
+      enableSorting: true,
       cell: ({ row }) => {
         return (
           <Tooltip>
