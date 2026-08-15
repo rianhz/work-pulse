@@ -12,16 +12,11 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { 
-  DropdownMenu, 
-  DropdownMenuCheckboxItem, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger 
-} from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { SlidersHorizontal, X, ChevronDown, LucideIcon } from "lucide-react";
+import { ArrowUp, ArrowDown, ArrowUpDown } from "lucide";
 import { InputGroup, InputGroupInput } from "@/components/ui/input-group";
 import { BasePagination } from "@/components/custom/pagination/BasePagination";
 import { Spinner } from "@/components/ui/spinner";
@@ -137,9 +132,48 @@ export function BaseTable<TData, TValue>({
     return [selectColumn, ...userColumns];
   }, [enableRowSelection, userColumns]);
 
+  const processedColumns = React.useMemo(() => {
+    return columns.map((col) => {
+      const isSortable = col.enableSorting !== false && col.enableSorting !== undefined;
+      const OriginalHeader = col.header;
+
+      if (!isSortable || !OriginalHeader) {
+        return col;
+      }
+
+      return {
+        ...col,
+        header: (headerProps: any) => {
+          const sorted = headerProps.column.getIsSorted();
+          
+          // These are morphicon data objects from "lucide"
+          const currentMorphIcon =
+            sorted === "asc" ? ArrowUp : sorted === "desc" ? ArrowDown : ArrowUpDown;
+
+          const headerContent = flexRender(OriginalHeader, headerProps);
+
+          return (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => headerProps.column.toggleSorting(sorted === "asc")}
+              className="-ml-3 h-8 hover:bg-transparent font-semibold data-[state=open]:bg-accent"
+              icon={currentMorphIcon}
+              iconPosition="right"
+              iconClassName="size-3.5 opacity-70"
+              enableIconTransition={true}
+            >
+              {headerContent}
+            </Button>
+          );
+        },
+      };
+    }) as ColumnDef<TData, TValue>[];
+  }, [columns]);
+
   const table = useReactTable({
     data,
-    columns,
+    columns: processedColumns,
     state: {
       sorting,
       columnVisibility: currentVisibility,
@@ -271,14 +305,15 @@ export function BaseTable<TData, TValue>({
         </AnimatePresence>
       </div>
 
+      {/* Table Content */}
       <div className="overflow-x-auto relative">
-        <React.Activity mode={isLoading ? "visible" : "hidden"}>
-          <div className="flex justify-center items-center min-h-[200px]"> <Spinner className="size-10" /> </div>
-        </React.Activity>
-        <React.Activity mode={!isLoading && isEmptyData ? "visible" : "hidden"}>
+        {isLoading ? (
+          <div className="flex justify-center items-center min-h-[200px]">
+            <Spinner className="size-10" />
+          </div>
+        ) : isEmptyData ? (
           <EmptyData description={emptyDataDescription} icon={emptyDataIcon} />
-        </React.Activity>
-        <React.Activity mode={!isLoading && !isEmptyData ? "visible" : "hidden"}>
+        ) : (
           <Table>
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
@@ -291,7 +326,7 @@ export function BaseTable<TData, TValue>({
                         key={header.id}
                         className={
                           isActions
-                            ? "sticky right-0 shadow-[-1px_0_0_0_rgba(0,0,0,0.1)] dark:shadow-[-1px_0_0_0_rgba(255,255,255,0.1)] z-10 text-right w-[100px]"
+                            ? "sticky right-0 shadow-[-1px_0_0_0_rgba(0,0,0,0.1)] dark:shadow-[-1px_0_0_0_rgba(255,255,255,0.1)] z-10 text-right w-[100px] bg-popover"
                             : isSelect
                             ? "w-12 text-center px-2"
                             : "px-4"
@@ -308,11 +343,15 @@ export function BaseTable<TData, TValue>({
             </TableHeader>
             <TableBody>
               {table.getRowModel().rows.map((row) => (
-                <TableRow 
-                  key={row.id} 
+                <TableRow
+                  
+                  key={row.id}
+                  
                   data-state={row.getIsSelected() && "selected"}
-                  onClick={() => onRowClicked?.(row.original)} 
+                  onClick={() => onRowClicked?.(row.original)}
+                  
                   className={onRowClicked ? "cursor-pointer" : ""}
+                
                 >
                   {row.getVisibleCells().map((cell) => {
                     const isActions = cell.column.id === "actions";
@@ -322,7 +361,7 @@ export function BaseTable<TData, TValue>({
                         key={cell.id}
                         className={
                           isActions
-                            ? "sticky right-0 shadow-[-1px_0_0_0_rgba(0,0,0,0.1)] dark:shadow-[-1px_0_0_0_rgba(255,255,255,0.1)] z-10 text-right"
+                            ? "sticky right-0 shadow-[-1px_0_0_0_rgba(0,0,0,0.1)] dark:shadow-[-1px_0_0_0_rgba(255,255,255,0.1)] z-10 text-right bg-popover"
                             : isSelect
                             ? "w-12 text-center px-2"
                             : "p-4"
@@ -335,19 +374,20 @@ export function BaseTable<TData, TValue>({
                 </TableRow>
               ))}
             </TableBody>
-          </Table>
-        </React.Activity>
+            </Table>
+        )}
       </div>
 
-      <React.Activity mode={currentPage !== undefined && onPageChange && totalPages > 1 ? "visible" : "hidden"}>
+      {/* Pagination */}
+      {currentPage !== undefined && onPageChange && totalPages > 1 && (
         <div className="pt-2">
-          <BasePagination 
-            currentPage={currentPage || 1} 
-            totalPages={totalPages} 
-            onPageChange={onPageChange || (() => {})} 
+          <BasePagination
+            currentPage={currentPage || 1}
+            totalPages={totalPages}
+            onPageChange={onPageChange || (() => {})}
           />
         </div>
-      </React.Activity>
+      )}
     </Card>
   );
 }

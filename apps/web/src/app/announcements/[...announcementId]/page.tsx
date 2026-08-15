@@ -18,7 +18,9 @@ import { useAppSelector } from "@/store/hooks/hooks";
 import { RootState } from "@/store";
 import { NotAuthorised } from "@/components/custom/errors-and-empty/NotAuthorised";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDownIcon, SaveIcon } from "lucide-react";
+import { ChevronDownIcon } from "lucide-react";
+import { Save, ArrowLeft } from "lucide";  
+
 import EditConfirm from "@/components/custom/popup/EditConfirm";
 import { Badge, BadgeVariant } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuItem, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -64,7 +66,6 @@ export default function AnnouncementDetailPage() {
 
   const handleSave = () => {
     const payload = getValues() as IAnnouncement;
-    console.log(payload);
     
     updateAnnouncement({ id: announcementId as string, announcement: { ...payload, status: 'draft' } as IAnnouncement }, {
       onSuccess: () => {
@@ -292,6 +293,8 @@ export default function AnnouncementDetailPage() {
                 onClick={handleTogglePreview} 
                 type="button" 
                 className="min-w-[90px]" 
+                icon={ArrowLeft} 
+                iconPosition="left"
               >
                 Back editing
               </Button>
@@ -311,7 +314,7 @@ export default function AnnouncementDetailPage() {
                 disabled={isPendingUpdateAnnouncement} 
                 loading={isPendingUpdateAnnouncement} 
                 className="min-w-[90px]" 
-                icon={SaveIcon} 
+                icon={Save} 
                 iconPosition="left"
               >
                 Save

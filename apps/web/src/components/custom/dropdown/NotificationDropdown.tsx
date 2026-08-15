@@ -4,7 +4,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { useMarkNotificationAsRead, useNotification, useUnreadNotificationsCount } from "@/features/notification/hooks";
 import { baseDateFormatFromNow } from "@/lib/date-format";
 import { getNotificationLink, getNotificationMessage, getNotificationTitle } from "@/helpers/notification-helper";
-import { Bell } from "lucide-react";
+import { Bell } from "lucide";
 import Link from "next/link";
 import { Activity, useMemo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -20,6 +20,18 @@ export const NotificationDropdown = () => {
   const { data: unreadNotificationsCount, isLoading: isUnreadNotificationsCountLoading } = useUnreadNotificationsCount();
   const { mutate: markNotificationAsRead } = useMarkNotificationAsRead();
 
+  const notifications = useMemo(() => {
+    return data?.data?.map((notification) => {
+      return {
+        _id: notification._id,
+        actor: notification.actorId?.fullName || notification.actorId?.nickName,
+        entityType: notification.entityType,
+        entityId: notification.entityId,
+        createdAt: notification.createdAt,
+        isRead: notification.isRead,
+      };
+    });
+  }, [data?.data]);
 
   const handleMarkNotificationAsRead = (id: string, isUnread: boolean) => {
     if (!isUnread) {

@@ -5,6 +5,7 @@ import { IUser } from '../modules/users/interfaces';
 import { ACCESS_TOKEN_EXPIRES_IN, REFRESH_TOKEN_EXPIRES_IN } from '../utils/constant';
 import { hashValue } from '../utils/bcrypt';
 import { UserModel } from '../modules/users/schema';
+import { Env } from '../config/env-config';
 
 interface ITokenPayload {
     userId: string;
@@ -15,7 +16,7 @@ interface ITokenPayload {
 export const generateAccessToken = (payload: ITokenPayload, duration: jwt.SignOptions['expiresIn']): string => {
     return jwt.sign(
         { userId: payload.userId, tenantId: payload.tenantId, role: payload.role }, 
-        process.env.JWT_ACCESS_SECRET as string, 
+        Env.JWT_ACCESS_SECRET, 
         { expiresIn: duration }
     );
 };
@@ -23,7 +24,7 @@ export const generateAccessToken = (payload: ITokenPayload, duration: jwt.SignOp
 export const generateRefreshToken = (payload: ITokenPayload, duration: jwt.SignOptions['expiresIn']): string => {
     return jwt.sign(
         { userId: payload.userId, tenantId: payload.tenantId, role: payload.role }, 
-        process.env.JWT_REFRESH_SECRET as string, 
+        Env.JWT_REFRESH_SECRET, 
         { expiresIn: duration }
     );
 };

@@ -16,8 +16,6 @@ export default function RecentLeaveCard() {
 
   const leaveRequests = useMemo(() => data?.data.slice(0, 5) || [], [data?.data]);
 
-  console.log(leaveRequests);
-
   const getLeaveTypeLabel = (leaveType: string) => {
     return leaveTypesOptions.find((option) => option.value === leaveType)?.label;
   }

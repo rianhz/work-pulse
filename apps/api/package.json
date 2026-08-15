@@ -4,11 +4,11 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon src/server.ts",
+    "dev": "doppler run -- nodemon src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
     "create-module": "node src/scripts/create-module.js",
-    "migrate": "npm run build && node dist/src/scripts/scriptRunner.js"
+    "migrate": "doppler run -- npm run build && node dist/src/scripts/scriptRunner.js"
   },
   "keywords": [],
   "author": "",
@@ -19,7 +19,6 @@
     "bcryptjs": "^3.0.3",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
-    "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "google-auth-library": "^10.7.0",
     "helmet": "^8.2.0",

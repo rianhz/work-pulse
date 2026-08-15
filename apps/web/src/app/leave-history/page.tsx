@@ -53,42 +53,30 @@ export default function LeaveHistoryPage() {
     },
     {
       accessorKey: "startDate",
-      header: ({ column }) => (
-        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")} className="px-0 h-8 hover:bg-transparent">
-          <span>From</span>
-          <ArrowUpDown className="h-4 w-4" />
-        </Button>
-      ),
+      header: () => <span>From</span>,
+      enableSorting: true,
       cell: ({ row }) => {
         return <span>{moment(row.original.startDate).format("DD MMM YYYY")}</span>
       },
     },
     {
       accessorKey: "endDate",
-      header: ({ column }) => (
-        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")} className="px-0 h-8 hover:bg-transparent">
-          <span>To</span>
-          <ArrowUpDown className="h-4 w-4" />
-        </Button>
-      ),
+      header: () => <span>To</span>,
+      enableSorting: true,
       cell: ({ row }) => {
         return <span>{moment(row.original.endDate).format("DD MMM YYYY")}</span>
       },
     },
     {
       accessorKey: "reviewer",
-      header: ({ column }) => (
-          <span>Reviewer</span>
-      ),
+      header: () => <span>Reviewer</span>,
       cell: ({ row }) => {
         return <span>{row.original.reviewer?.fullName || "-"}</span>
       },
     },
     {
       accessorKey: "status",
-      header: ({ column }) => (
-          <span>Status</span>
-      ),
+      header: () => <span>Status</span>,
       cell: ({ row }) => {
         return <Badge variant={row.original.status === STATUS_PENDING ? 'pending' : row.original.status === STATUS_APPROVED ? 'approved' : row.original.status === STATUS_REJECTED ? 'rejected' : 'awaitingApproval'} className="min-w-[123px] text-center">
           {getStatusLabel(row.original.status)}
@@ -96,9 +84,6 @@ export default function LeaveHistoryPage() {
       },
     },
   ], [leaveRequests]);
-
-  console.log(page);
-
 
   return (
     <div className="space-y-4">

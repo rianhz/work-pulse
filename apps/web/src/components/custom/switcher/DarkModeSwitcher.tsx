@@ -1,9 +1,10 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
+import { Moon, Sun } from "lucide";
+import { MorphIcon } from "morphicons/react";
 
 export const DarkModeSwitcher = () => {
   const [mounted, setMounted] = useState(false);
@@ -26,12 +27,8 @@ export const DarkModeSwitcher = () => {
       onClick={() => setTheme(isDark ? "light" : "dark")}
       className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
       type="button"
+      icon={isDark ? Moon : Sun}
     >
-      {isDark ? (
-        <Moon className="h-[1.2rem] w-[1.2rem]" />
-      ) : (
-        <Sun className="h-[1.2rem] w-[1.2rem]" />
-      )}
       <span className="sr-only">Toggle theme</span>
     </Button>
   );

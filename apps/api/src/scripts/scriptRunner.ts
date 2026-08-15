@@ -1,10 +1,6 @@
-
 import mongoose from "mongoose";
-import dotenv from "dotenv";
 import { connectDatabase } from "../config/database";
 import { notificationMigration } from "./migrations/notificationMigration";
-
-dotenv.config();
 
 const migrations = [
   { name: "notificationMigration", execute: notificationMigration },
