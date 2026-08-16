@@ -54,21 +54,15 @@ export async function getUnreadCountService(authenticatedUser: AuthUser) {
   }); 
 }
 
-export async function markAsReadService(id: string, authenticatedUser: AuthUser) {
+export async function markAsReadService(ids: string[], authenticatedUser: AuthUser) {
   const userId = authenticatedUser.userId;
 
-  return Notification.findOneAndUpdate(
+  return Notification.updateMany(
     {
-      _id: id,
+      _id: { $in: ids },
       recipientId: userId,
     },
-    {
-      isRead: true,
-      readAt: new Date(),
-    },
-    {
-      new: true,
-    }
+    { isRead: true }
   );
 }
 
@@ -82,7 +76,6 @@ export async function markAllAsReadService(authenticatedUser: AuthUser) {
     },
     {
       isRead: true,
-      readAt: new Date(),
     }
   );
 

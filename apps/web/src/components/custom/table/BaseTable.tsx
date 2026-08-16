@@ -3,19 +3,22 @@
 import * as React from "react";
 import {
   ColumnDef,
+  ColumnFiltersState,
   RowSelectionState,
   SortingState,
   VisibilityState,
   flexRender,
   getCoreRowModel,
+  getFilteredRowModel,
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSeparator, DropdownMenuPortal, DropdownMenuSubTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { SlidersHorizontal, X, ChevronDown, LucideIcon } from "lucide-react";
+import { ChevronDown, LucideIcon, Filter } from "lucide-react";
+import { SlidersHorizontal } from "lucide";
 import { ArrowUp, ArrowDown, ArrowUpDown } from "lucide";
 import { InputGroup, InputGroupInput } from "@/components/ui/input-group";
 import { BasePagination } from "@/components/custom/pagination/BasePagination";
@@ -23,12 +26,20 @@ import { Spinner } from "@/components/ui/spinner";
 import { EmptyData } from "../errors-and-empty/EmptyData";
 import { Card } from "@/components/ui/card";
 import { AnimatePresence, motion } from "framer-motion";
+import { cn } from "@/lib/utils";
 
-export interface BulkActionItem<TData> {
+export interface ActionItem<TData> {
   label: string;
   icon?: LucideIcon;
   onClick: (selectedRows: TData[]) => void;
   variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
+  loading?: boolean;
+}
+
+export interface TableFilterConfig {
+  columnId: string;
+  placeholder: string;
+  options: { label: string; value: string }[];
 }
 
 interface BaseTableProps<TData, TValue> {
@@ -42,7 +53,13 @@ interface BaseTableProps<TData, TValue> {
   enableRowSelection?: boolean;
   rowSelection?: RowSelectionState;
   onRowSelectionChange?: React.Dispatch<React.SetStateAction<RowSelectionState>>;
-  bulkActions?: BulkActionItem<TData>[];
+  bulkActions?: ActionItem<TData>[];
+  bulkActionsTriggerVariant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
+  externalActions?: ActionItem<TData>[];
+  // Filters State & Config
+  filters?: TableFilterConfig[];
+  columnFilters?: ColumnFiltersState;
+  onColumnFiltersChange?: React.Dispatch<React.SetStateAction<ColumnFiltersState>>;
 
   showSearchField?: boolean;
   searchValue?: string;
@@ -70,6 +87,10 @@ export function BaseTable<TData, TValue>({
   rowSelection,
   onRowSelectionChange,
   bulkActions = [],
+  externalActions = [],
+  filters = [],
+  columnFilters: externalColumnFilters,
+  onColumnFiltersChange,
   showSearchField = false,
   searchValue = "",
   onSearchChange,
@@ -82,20 +103,22 @@ export function BaseTable<TData, TValue>({
   emptyDataDescription = "No data found",
   emptyDataIcon = <Table className="size-10 text-muted-foreground" />,
   onRowClicked,
+  bulkActionsTriggerVariant = "secondary",
 }: BaseTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [internalVisibility, setInternalVisibility] = React.useState<VisibilityState>({});
   const [internalRowSelection, setInternalRowSelection] = React.useState<RowSelectionState>({});
+  const [internalColumnFilters, setInternalColumnFilters] = React.useState<ColumnFiltersState>([]);
 
-  const isControlledVisibility = onColumnVisibilityChange !== undefined;
-  const currentVisibility = isControlledVisibility ? columnVisibility : internalVisibility;
-  const handleVisibilityChange = isControlledVisibility ? onColumnVisibilityChange : setInternalVisibility;
+  const currentVisibility = onColumnVisibilityChange !== undefined ? columnVisibility : internalVisibility;
+  const handleVisibilityChange = onColumnVisibilityChange !== undefined ? onColumnVisibilityChange : setInternalVisibility;
 
-  const isControlledSelection = onRowSelectionChange !== undefined;
-  const currentSelection = isControlledSelection ? (rowSelection ?? {}) : internalRowSelection;
-  const handleSelectionChange = isControlledSelection ? onRowSelectionChange : setInternalRowSelection;
+  const currentSelection = onRowSelectionChange !== undefined ? (rowSelection ?? {}) : internalRowSelection;
+  const handleSelectionChange = onRowSelectionChange !== undefined ? onRowSelectionChange : setInternalRowSelection;
 
-  // Selection Column Definition
+  const currentFilters = onColumnFiltersChange !== undefined ? (externalColumnFilters ?? []) : internalColumnFilters;
+  const handleFiltersChange = onColumnFiltersChange !== undefined ? onColumnFiltersChange : setInternalColumnFilters;
+
   const columns = React.useMemo(() => {
     if (!enableRowSelection) return userColumns;
 
@@ -137,20 +160,14 @@ export function BaseTable<TData, TValue>({
       const isSortable = col.enableSorting !== false && col.enableSorting !== undefined;
       const OriginalHeader = col.header;
 
-      if (!isSortable || !OriginalHeader) {
-        return col;
-      }
+      if (!isSortable || !OriginalHeader) return col;
 
       return {
         ...col,
         header: (headerProps: any) => {
           const sorted = headerProps.column.getIsSorted();
-          
-          // These are morphicon data objects from "lucide"
           const currentMorphIcon =
             sorted === "asc" ? ArrowUp : sorted === "desc" ? ArrowDown : ArrowUpDown;
-
-          const headerContent = flexRender(OriginalHeader, headerProps);
 
           return (
             <Button
@@ -163,7 +180,7 @@ export function BaseTable<TData, TValue>({
               iconClassName="size-3.5 opacity-70"
               enableIconTransition={true}
             >
-              {headerContent}
+              {flexRender(OriginalHeader, headerProps)}
             </Button>
           );
         },
@@ -178,31 +195,34 @@ export function BaseTable<TData, TValue>({
       sorting,
       columnVisibility: currentVisibility,
       rowSelection: currentSelection,
+      columnFilters: currentFilters,
     },
     enableRowSelection,
     onSortingChange: setSorting,
     onColumnVisibilityChange: handleVisibilityChange,
     onRowSelectionChange: handleSelectionChange,
+    onColumnFiltersChange: handleFiltersChange,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
   });
 
   const selectedRows = table.getSelectedRowModel().rows.map((row) => row.original);
   const selectedCount = selectedRows.length;
 
-  // Render Single Action Button or Actions Dropdown
-  const renderBulkActionsControl = () => {
-    if (bulkActions.length === 0) return null;
+  const renderActionsControl = (actions: ActionItem<TData>[], defaultTriggerLabel = "Actions") => {
+    if (actions.length === 0) return null;
 
-    if (bulkActions.length === 1) {
-      const action = bulkActions[0];
+    if (actions.length === 1) {
+      const action = actions[0];
       return (
         <Button
-          variant={action.variant || "default"}
+          variant={action.variant || bulkActionsTriggerVariant || "outline"}
           size="sm"
           onClick={() => action.onClick(selectedRows)}
           icon={action.icon}
           iconPosition="left"
+          loading={action.loading}
         >
           {action.label}
         </Button>
@@ -212,19 +232,20 @@ export function BaseTable<TData, TValue>({
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="secondary" size="sm" className="gap-2">
-            Actions
+          <Button variant={bulkActionsTriggerVariant || "secondary"} size="sm" className="gap-2">
+            {defaultTriggerLabel}
             <ChevronDown className="size-4" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-[160px]">
-          {bulkActions.map((action, idx) => {
+          {actions.map((action, idx) => {
             const Icon = action.icon;
             return (
               <DropdownMenuItem
                 key={idx}
                 onClick={() => action.onClick(selectedRows)}
                 className="gap-2 cursor-pointer"
+                disabled={action.loading}
               >
                 {Icon && <Icon className="size-4" />}
                 <span>{action.label}</span>
@@ -238,47 +259,114 @@ export function BaseTable<TData, TValue>({
 
   return (
     <Card className="pt-4 pb-0 ring-0 overflow-hidden gap-4">
-      {/* Top Header / Actions Container */}
       <div className="relative mb-0 flex min-h-[48px] items-center justify-between overflow-hidden px-4 py-1">
-        
-        {/* 1. Standard Header Bar (Always present in the background) */}
-        <div className="flex w-full items-center justify-between gap-4">
-          <React.Activity mode={showSearchField ? "visible" : "hidden"}>
-            <InputGroup className="max-w-lg">
-              <InputGroupInput 
-                placeholder={searchPlaceholder} 
-                value={searchValue} 
-                onChange={(e) => onSearchChange?.(e.target.value)}
-                disabled={isLoading}
-              />
-            </InputGroup>
-          </React.Activity>
+        <div className="flex w-full items-center justify-between gap-3 flex-wrap">
           
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="ml-auto flex gap-2" disabled={isLoading} icon={SlidersHorizontal} iconPosition="left">
-                View
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-[150px]">
-              {table
-                .getAllColumns()
-                .filter((column) => column.getCanHide())
-                .map((column) => (
-                  <DropdownMenuCheckboxItem
-                    key={column.id}
-                    className="capitalize"
-                    checked={column.getIsVisible()}
-                    onCheckedChange={(value) => column.toggleVisibility(!!value)}
-                  >
-                    {columnLabels[column.id] || column.id}
-                  </DropdownMenuCheckboxItem>
-                ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <div className="flex items-center gap-2 flex-1 flex-wrap">
+            <React.Activity mode={showSearchField ? "visible" : "hidden"}>
+              <InputGroup className="max-w-xs">
+                <InputGroupInput 
+                  placeholder={searchPlaceholder} 
+                  value={searchValue} 
+                  onChange={(e) => onSearchChange?.(e.target.value)}
+                  disabled={isLoading}
+                />
+              </InputGroup>
+            </React.Activity>
+            <React.Activity mode={filters.length > 0 ? "visible" : "hidden"}>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="gap-2" disabled={isLoading}>
+                    <Filter className="size-3.5" />
+                    Filter
+                    {currentFilters.length > 0 && (
+                      <span className="ml-1 rounded-full bg-primary/10 px-1.5 py-0.5 text-xs font-semibold text-primary">
+                        {currentFilters.length}
+                      </span>
+                    )}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-[180px]">
+                  {filters.map((filter) => {
+                    const column = table.getColumn(filter.columnId);
+                    if (!column) return null;
+                    const filterValue = (column.getFilterValue() as string) ?? "";
+
+                    return (
+                      <DropdownMenuSub key={filter.columnId}>
+                        <DropdownMenuSubTrigger className="cursor-pointer flex justify-between w-full">
+                          <span>{filter.placeholder}</span>
+                        </DropdownMenuSubTrigger>
+                        <DropdownMenuPortal>
+                          <DropdownMenuSubContent className="w-[180px]">
+                            <DropdownMenuItem
+                              onClick={() => column.setFilterValue(undefined)}
+                              className="cursor-pointer font-medium text-muted-foreground"
+                            >
+                              All
+                            </DropdownMenuItem>
+                            {filter.options.map((option) => (
+                              <DropdownMenuItem
+                                key={option.value}
+                                onClick={() => column.setFilterValue(option.value)}
+                                className={`cursor-pointer ${
+                                  filterValue === option.value ? "bg-accent font-semibold" : ""
+                                }`}
+                              >
+                                {option.label}
+                              </DropdownMenuItem>
+                            ))}
+                          </DropdownMenuSubContent>
+                        </DropdownMenuPortal>
+                      </DropdownMenuSub>
+                    );
+                  })}
+
+                  {/* Clear Filters Action */}
+                  {currentFilters.length > 0 && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={() => table.resetColumnFilters()}
+                        className="cursor-pointer justify-center text-xs font-medium text-destructive focus:text-destructive"
+                      >
+                        Reset Filters
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </React.Activity>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {renderActionsControl(externalActions)}
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="ml-auto flex gap-2" disabled={isLoading} icon={SlidersHorizontal} iconPosition="left">
+                  View
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-[150px]">
+                {table
+                  .getAllColumns()
+                  .filter((column) => column.getCanHide())
+                  .map((column) => (
+                    <DropdownMenuCheckboxItem
+                      key={column.id}
+                      className="capitalize"
+                      checked={column.getIsVisible()}
+                      onCheckedChange={(value) => column.toggleVisibility(!!value)}
+                    >
+                      {columnLabels[column.id] || column.id}
+                    </DropdownMenuCheckboxItem>
+                  ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
 
-        {/* 2. Floating Selection Banner (Slides in over the top) */}
         <AnimatePresence>
           {enableRowSelection && selectedCount > 0 && (
             <motion.div
@@ -290,14 +378,11 @@ export function BaseTable<TData, TValue>({
               className="absolute inset-y-0 left-0 right-0 z-10 flex items-center bg-card px-4"
             >
               <div className="flex w-full items-center justify-between rounded-md bg-primary px-4 h-12 transition-all">
-                <div className="flex items-center gap-3">
-                  <span className="text-sm font-medium text-primary-foreground">
-                    {selectedCount} {selectedCount === 1 ? "item" : "items"} selected
-                  </span>
-                </div>
-
+                <span className="text-sm font-medium text-primary-foreground">
+                  {selectedCount} {selectedCount === 1 ? "item" : "items"} selected
+                </span>
                 <div className="flex items-center gap-2">
-                  {renderBulkActionsControl()}
+                  {renderActionsControl(bulkActions)}
                 </div>
               </div>
             </motion.div>
@@ -305,7 +390,6 @@ export function BaseTable<TData, TValue>({
         </AnimatePresence>
       </div>
 
-      {/* Table Content */}
       <div className="overflow-x-auto relative">
         {isLoading ? (
           <div className="flex justify-center items-center min-h-[200px]">
@@ -317,7 +401,7 @@ export function BaseTable<TData, TValue>({
           <Table>
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id}>
+                <TableRow key={headerGroup.id} className="group">
                   {headerGroup.headers.map((header) => {
                     const isActions = header.column.id === "actions";
                     const isSelect = header.column.id === "select";
@@ -326,10 +410,10 @@ export function BaseTable<TData, TValue>({
                         key={header.id}
                         className={
                           isActions
-                            ? "sticky right-0 shadow-[-1px_0_0_0_rgba(0,0,0,0.1)] dark:shadow-[-1px_0_0_0_rgba(255,255,255,0.1)] z-10 text-right w-[100px] bg-popover"
+                            ? "sticky right-0 shadow-[-1px_0_0_0_rgba(0,0,0,0.1)] dark:shadow-[-1px_0_0_0_rgba(255,255,255,0.1)] z-10 text-right w-[100px] bg-popover transition-colors group-hover:bg-muted p-0"
                             : isSelect
-                            ? "w-12 text-center px-2"
-                            : "px-4"
+                            ? "w-12 text-center px-2 sticky left-0 shadow-[-1px_0_0_0_rgba(0,0,0,0.1)] dark:shadow-[-1px_0_0_0_rgba(255,255,255,0.1)] z-10 bg-popover"
+                            : "px-4 bg-popover"
                         }
                       >
                         {header.isPlaceholder
@@ -342,16 +426,18 @@ export function BaseTable<TData, TValue>({
               ))}
             </TableHeader>
             <TableBody>
-              {table.getRowModel().rows.map((row) => (
+              {table.getRowModel().rows.map((row) => {
+                const isUnread = (row.original as any)?.isRead;
+                return (
                 <TableRow
-                  
                   key={row.id}
-                  
                   data-state={row.getIsSelected() && "selected"}
+                  data-unread={isUnread}
                   onClick={() => onRowClicked?.(row.original)}
-                  
-                  className={onRowClicked ? "cursor-pointer" : ""}
-                
+                  className={cn(
+                    "group", // Allows child sticky cells to listen to parent row states
+                    onRowClicked && "cursor-pointer",
+                  )}
                 >
                   {row.getVisibleCells().map((cell) => {
                     const isActions = cell.column.id === "actions";
@@ -361,26 +447,26 @@ export function BaseTable<TData, TValue>({
                         key={cell.id}
                         className={
                           isActions
-                            ? "sticky right-0 shadow-[-1px_0_0_0_rgba(0,0,0,0.1)] dark:shadow-[-1px_0_0_0_rgba(255,255,255,0.1)] z-10 text-right bg-popover"
+                            ? "sticky right-0 shadow-[-1px_0_0_0_rgba(0,0,0,0.1)] dark:shadow-[-1px_0_0_0_rgba(255,255,255,0.1)] z-10 text-right bg-popover transition-colors group-hover:bg-muted"
                             : isSelect
-                            ? "w-12 text-center px-2"
+                            ? "w-12 text-center px-2 sticky left-0 shadow-[-1px_0_0_0_rgba(0,0,0,0.1)] dark:shadow-[-1px_0_0_0_rgba(255,255,255,0.1)] transition-colors bg-inherit group-hover:bg-muted z-10"
                             : "p-4"
                         }
                       >
                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
                       </TableCell>
-                    );
-                  })}
-                </TableRow>
-              ))}
+                      );
+                    })}
+                  </TableRow>
+                );
+              })}
             </TableBody>
-            </Table>
+          </Table>
         )}
       </div>
 
-      {/* Pagination */}
       {currentPage !== undefined && onPageChange && totalPages > 1 && (
-        <div className="pt-2">
+        <div className="mb-2">
           <BasePagination
             currentPage={currentPage || 1}
             totalPages={totalPages}

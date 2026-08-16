@@ -16,12 +16,12 @@ const MAX_EARLIER = 10;
 
 export const NotificationDropdown = () => {
   const queryClient = useQueryClient();
-  const { data: notifications, isLoading } = useNotification({ page: 1, limit: 10 });
+  const { data: notificationsData, isLoading } = useNotification({ page: 1, limit: 10 });
   const { data: unreadNotificationsCount, isLoading: isUnreadNotificationsCountLoading } = useUnreadNotificationsCount();
   const { mutate: markNotificationAsRead } = useMarkNotificationAsRead();
 
   const notifications = useMemo(() => {
-    return data?.data?.map((notification) => {
+    return notificationsData?.data?.map((notification) => {
       return {
         _id: notification._id,
         actor: notification.actorId?.fullName || notification.actorId?.nickName,
@@ -31,7 +31,7 @@ export const NotificationDropdown = () => {
         isRead: notification.isRead,
       };
     });
-  }, [data?.data]);
+  }, [notificationsData?.data]);
 
   const handleMarkNotificationAsRead = (id: string, isUnread: boolean) => {
     if (!isUnread) {
@@ -45,13 +45,13 @@ export const NotificationDropdown = () => {
   };
 
   const { todayNotifications, earlierNotifications } = useMemo(() => {
-    const notificationsData = notifications?.data || [];
-    if (!notificationsData?.length) {
+    const notifications = notificationsData?.data || [];
+    if (!notifications?.length) {
       return { todayNotifications: [], earlierNotifications: [] };
     }
 
     // 1. Ensure notifications are sorted by newest first
-    const sorted = [...notificationsData].sort(
+    const sorted = [...notifications].sort(
       (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
 
@@ -128,20 +128,20 @@ export const NotificationDropdown = () => {
           </Activity>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className={cn(notifications?.data?.length === 0 && !isLoading ? 'min-w-[150px]' : 'min-w-[430px]', 'flex flex-col gap-2 mr-6')}>
-        <Activity mode={notifications && notifications?.data?.length === 0 && !isLoading ? 'visible' : 'hidden'}>
+      <DropdownMenuContent className={cn(notifications?.length === 0 && !isLoading ? 'min-w-[150px]' : 'min-w-[430px]', 'flex flex-col gap-2 mr-6')}>
+        <Activity mode={notifications && notifications?.length === 0 && !isLoading ? 'visible' : 'hidden'}>
           <div className="flex items-center justify-center">
             <p className="text-xs text-muted-foreground text-center whitespace-nowrap">No notifications found</p>
           </div>
         </Activity>
-        <Activity mode={notifications && notifications?.data?.length > 0 && !isLoading ? 'visible' : 'hidden'}>
-          <div className="flex flex-col max-h-[500px]">
+        <Activity mode={notifications && notifications?.length > 0 && !isLoading ? 'visible' : 'hidden'}>
+          <div className="flex flex-col max-h-[450px]">
             {/* Scrollable list area */}
             <div className="flex-1 overflow-y-auto p-2 space-y-3 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
               {/* Today Section */}
               {todayNotifications.length > 0 && (
                 <div>
-                  <DropdownMenuLabel className="px-2 text-sm font-semibold tracking-wider">
+                  <DropdownMenuLabel className="px-2 font-bold">
                     Today
                   </DropdownMenuLabel>
                   <div className="space-y-1">
@@ -158,7 +158,7 @@ export const NotificationDropdown = () => {
               {/* Earlier Section */}
               {earlierNotifications.length > 0 && (
                 <div>
-                  <DropdownMenuLabel className="px-2 text-sm font-semibold tracking-wider">
+                  <DropdownMenuLabel className="px-2 font-bold">
                     Earlier
                   </DropdownMenuLabel>
                   <div className="space-y-1">

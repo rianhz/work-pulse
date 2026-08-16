@@ -17,7 +17,6 @@ export const notificationMigration = async () => {
       "title",
       "message",
       "isRead",
-      "readAt",
       "createdAt",
       "updatedAt",
       "__v",

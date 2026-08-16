@@ -1,19 +1,23 @@
 "use client";
 import { useMemo, useState } from "react";
 import { BaseTable } from "@/components/custom/table/BaseTable";
-import { useNotification } from "@/features/notification/hooks";
+import { useMarkAllNotificationsAsRead, useMarkNotificationAsRead, useNotification } from "@/features/notification/hooks";
 import { ColumnDef, RowSelectionState, VisibilityState } from "@tanstack/react-table";
 import { INotification } from "@/features/notification/notification";
 import { Bell, Check } from "lucide-react";
 import { getNotificationLink, getNotificationTitle } from "@/helpers/notification-helper";
 import { baseDateFormat } from "@/lib/date-format";
-import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function NotificationsTable() {
+    const queryClient = useQueryClient();
     const [page, setPage] = useState(1);
     const router = useRouter();
     const { data, isLoading } = useNotification({ page, limit: 10 });
+    const { mutateAsync: markAsRead, isPending: isMarkingAsRead } = useMarkNotificationAsRead();
+    const { mutateAsync: markAllAsRead, isPending: isMarkingAllAsRead } = useMarkAllNotificationsAsRead();
     const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
 
     const notifications = useMemo(() => data?.data || [], [data]);
@@ -21,6 +25,26 @@ export default function NotificationsTable() {
 
     const handleRowClicked = (row: INotification) => {
         router.push(getNotificationLink(row.entityType, row.entityId as string));
+    };
+
+    const handleMarkAsRead = (selectedRows: INotification[]) => {
+        markAsRead(selectedRows.map(row => row._id), {
+            onSuccess: () => {
+                toast.success("Notifications marked as read");
+                queryClient.invalidateQueries({ queryKey: ["notifications", { page, limit: 10 }] });
+                queryClient.invalidateQueries({ queryKey: ["unread-notifications-count"] });
+                setRowSelection({});
+            }
+        });
+    };
+
+    const handleMarkAllAsRead = () => {
+        markAllAsRead().then(() => {
+            toast.success("Notifications marked as read");
+            queryClient.invalidateQueries({ queryKey: ["notifications", { page, limit: 10 }] });
+            queryClient.invalidateQueries({ queryKey: ["unread-notifications-count"] });
+            setRowSelection({});
+        });
     };
 
     const columnDisplayLabels = {
@@ -53,9 +77,7 @@ export default function NotificationsTable() {
         },
     ], [notifications]);
 
-    const handleMarkAsRead = (selectedRows: INotification[]) => {
-        console.log(selectedRows);
-    };
+
     return (
         <BaseTable
             columns={columns}
@@ -66,12 +88,22 @@ export default function NotificationsTable() {
             enableRowSelection={true}
             rowSelection={rowSelection}
             onRowSelectionChange={setRowSelection}
+            externalActions={[
+                {
+                    label: "Mark all as read",
+                    icon: Check,
+                    onClick: handleMarkAllAsRead,
+                    loading: isMarkingAllAsRead || isLoading,
+                },
+            ]}
             bulkActions={[
               {
                 label: "Mark as Read",
                 icon: Check,
-                onClick: (selectedRows) => handleMarkAsRead(selectedRows),
-                variant: "secondary",
+                onClick: (selectedRows) => {
+                    handleMarkAsRead(selectedRows);
+                },
+                loading: isMarkingAsRead || isLoading,
               },
             ]}
             // Pagination Configurations

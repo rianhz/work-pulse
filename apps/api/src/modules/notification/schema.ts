@@ -48,8 +48,6 @@ const notificationSchema = new Schema(
       type: Boolean,
       default: false,
     },
-
-    readAt: Date,
   },
   {
     timestamps: true,

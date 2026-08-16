@@ -5,7 +5,7 @@ import StoreProvider from "@/providers/StoreProvider";
 import ReactQueryProvider from "@/providers/ReactQueryProvider";
 import { ThemeProvider } from "@/providers/ThemeProvider";
 import AuthServerProvider from "@/providers/AuthServerProvider";
-import { Toaster } from "sonner";
+import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import GoogleAuthProvider from "@/providers/GoogleAuthProvider";
@@ -36,7 +36,7 @@ export default function RootLayout({
                 <ThemeProvider>
                   <AuthServerProvider>
                     <TooltipProvider>
-                      <Toaster position="top-right" />
+                      <Toaster position="top-right" closeButton={true} />
                       {children}
                     </TooltipProvider>
                   </AuthServerProvider>

@@ -7,7 +7,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { useDeleteUser, useGetUsers, useSearchUsers, useUpdateUser } from "@/features/users/hooks";
-import { Users, Pencil, Trash } from "lucide-react";
+import { Users, Pencil, Trash, UserCheck, Download, Trash2 } from "lucide-react";
 import { MoreHorizontal, ChevronDown } from "lucide";
 import { useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
@@ -241,6 +241,31 @@ export default function TeamPage() {
     },
   ], [isAdminOrOwner]);
 
+  const tableFilterConfigs = useMemo(() => {
+    const departmentOptions =
+      departments?.map((d) => ({
+        label: d.name,
+        value: d.name,
+      })) || [];
+  
+    return [
+      {
+        columnId: "role",
+        placeholder: "Role",
+        options: [
+          { label: "Admin", value: "Admin" },
+          { label: "Manager", value: "Manager" },
+          { label: "Employee", value: "Employee" },
+        ],
+      },
+      {
+        columnId: "department",
+        placeholder: "Department",
+        options: departmentOptions,
+      },
+    ];
+  }, [departments])
+
   if (isLoadingDepartments) {
     return (
       <div className="flex flex-col w-full gap-2 px-2">
@@ -470,8 +495,7 @@ export default function TeamPage() {
         </div>
         {isAdminOrOwner && <Button onClick={() => setDialogType("invite")} disabled={isLoadingUsers}>Invite</Button>}
       </div>
-      {/* <Card className="border-none ring-0 shadow-none">
-        <CardContent className="px-0"> */}
+     
           <BaseTable
             columns={columns}
             data={users}
@@ -492,16 +516,19 @@ export default function TeamPage() {
             enableRowSelection={true}
             rowSelection={rowSelection}
             onRowSelectionChange={setRowSelection}
+            filters={tableFilterConfigs}
             bulkActions={[
               {
                 label: "Change Role",
                 icon: UserCheck,
                 onClick: (selected) => console.log(selected),
+                variant: "secondary",
               },
               {
                 label: "Export",
                 icon: Download,
                 onClick: (selected) => console.log(selected),
+                variant: "secondary",
               },
               {
                 label: "Delete",
@@ -510,9 +537,8 @@ export default function TeamPage() {
                 onClick: (selected) => console.log(selected),
               },
             ]}
+            bulkActionsTriggerVariant="secondary"
           />
-        {/* </CardContent>
-      </Card> */}
     </>
   );
 }

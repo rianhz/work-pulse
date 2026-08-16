@@ -78,7 +78,7 @@ export default function LeaveApprovalsPage() {
       accessorKey: "status",
       header: () => <span>Status</span>,
       cell: ({ row }) => {
-        return <Badge variant={row.original.status.includes(STATUS_CANCELLED) ? "cancelled" : row.original.status.includes(STATUS_REJECTED) ? "destructive" : row.original.status.includes(STATUS_PENDING) ? "pending" : row.original.status.includes(STATUS_APPROVED) ? "active" : row.original.status.includes(STATUS_AWAITING_APPROVAL) ? "awaitingApproval" : "secondary"}>
+        return <Badge variant={row.original.status.includes(STATUS_CANCELLED) ? "cancelled" : row.original.status.includes(STATUS_REJECTED) ? "destructive" : row.original.status.includes(STATUS_PENDING) ? "pending" : row.original.status.includes(STATUS_APPROVED) ? "approved" : row.original.status.includes(STATUS_AWAITING_APPROVAL) ? "awaitingApproval" : "secondary"}>
           {getStatusLabel(row.original.status)}
         </Badge>
       },
