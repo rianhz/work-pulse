@@ -1,7 +1,7 @@
 import { subject } from "@casl/ability";
 import { BadRequestException, ForbiddenException, NotFoundException } from "../../../utils/app-error";
 import { defineAbilitiesFor, isHaveAccess } from "../../../utils/casl";
-import { STATUS_APPROVED, STATUS_AWAITING_APPROVAL, STATUS_REJECTED } from "../../../utils/constant";
+import { LEAVE_TYPE_PERIOD_LEAVE, LEAVE_TYPE_SICK_LEAVE, STATUS_APPROVED, STATUS_AWAITING_APPROVAL, STATUS_REJECTED } from "../../../utils/constant";
 import { AuthUser } from "../../../modules/authentication/interfaces";
 import { LeaveBalanceModel } from "../leave-balance/schema";
 import { getLeaveBalance } from "../leave-balance/services";
@@ -16,20 +16,38 @@ import { NotificationType } from "../../../modules/notification/interfaces";
 import { getAccessibleUserIds, getImmediateLeaderUserId } from "../../../helpers/users-helper";
 
 export const createLeaveRequestService = async (authenticatedUser: AuthUser, dto: Partial<ILeaveRequest>) => {
-  const currentUserBalance = await getLeaveBalance(authenticatedUser, authenticatedUser.userId);
   const totalLeaveDays = moment(dto.endDate).diff(moment(dto.startDate), 'days') + 1;
-  
-  if (!currentUserBalance || currentUserBalance.balance <= 0) {
-    throw new BadRequestException("You have insufficient leave balance");
+  const leaveType = dto.leaveType;
+
+  // 1. Identify auto-approved leaves
+  const isAutoApprovedLeave = 
+    leaveType === LEAVE_TYPE_SICK_LEAVE || 
+    leaveType === LEAVE_TYPE_PERIOD_LEAVE;
+
+  // 2. All leaves require balance validation EXCEPT sick and period leave
+  const requiresBalanceDeduction = !isAutoApprovedLeave;
+
+  // 3. Handle Balance Validation (Annual, Maternity, Paternity, Marriage, etc.)
+  if (requiresBalanceDeduction) {
+    const currentUserBalance = await getLeaveBalance(authenticatedUser, authenticatedUser.userId);
+
+    if (!currentUserBalance || currentUserBalance.balance <= 0) {
+      throw new BadRequestException("You have insufficient leave balance");
+    }
+
+    if (totalLeaveDays > currentUserBalance.balance) {
+      throw new BadRequestException("You have insufficient leave balance");
+    }
   }
 
-  if (totalLeaveDays > currentUserBalance.balance) {
-    throw new BadRequestException("You have insufficient leave balance");
-  }
+  // 4. Set initial status
+  const initialStatus = isAutoApprovedLeave 
+    ? STATUS_APPROVED 
+    : STATUS_AWAITING_APPROVAL;
 
   const payload = {
     ...dto,
-    status: STATUS_AWAITING_APPROVAL,
+    status: initialStatus,
     user: authenticatedUser.userId,
     tenant: authenticatedUser.tenantId,
   };
@@ -38,8 +56,15 @@ export const createLeaveRequestService = async (authenticatedUser: AuthUser, dto
 
   const leaveRequest = await LeaveRequestModel.create(payload);
   
-  await LeaveBalanceModel.updateOne({ userId: leaveRequest.user }, { $inc: { balance: -totalLeaveDays } });
+  // 5. Deduct balance for all regular/approvable leave types
+  if (requiresBalanceDeduction) {
+    await LeaveBalanceModel.updateOne(
+      { userId: leaveRequest.user }, 
+      { $inc: { balance: -totalLeaveDays } }
+    );
+  }
 
+  // 6. Send Notifications
   const currentUser = await UserModel.findById(authenticatedUser.userId);
   const currentUserLeaderId = await getImmediateLeaderUserId(authenticatedUser.userId, authenticatedUser.tenantId);
   const recipients: string[] = [];
@@ -49,16 +74,25 @@ export const createLeaveRequestService = async (authenticatedUser: AuthUser, dto
   }
   
   if (recipients.length > 0) {
+    const notificationTitle = isAutoApprovedLeave 
+      ? "Leave request submitted" 
+      : "Leave need to be reviewed";
+
+    const notificationMessage = isAutoApprovedLeave 
+      ? `${currentUser?.fullName} has submitted a ${leaveType.replace(/_/g, ' ')}`
+      : `${currentUser?.fullName} has submitted a leave request for review`;
+
     await createNotificationService({
       tenantId: authenticatedUser.tenantId,
       recipients,
       actorId: authenticatedUser.userId,
       entityType: NotificationType.LEAVE_REQUESTED,
-      title: "Leave need to be reviewed",
-      message: `${currentUser?.fullName} has submitted a leave request for review`,
+      title: notificationTitle,
+      message: notificationMessage,
       entityId: leaveRequest._id.toString(),
     });
   }
+
   return leaveRequest;
 };
 

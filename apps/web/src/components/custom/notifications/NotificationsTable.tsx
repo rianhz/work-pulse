@@ -93,7 +93,9 @@ export default function NotificationsTable() {
                     label: "Mark all as read",
                     icon: Check,
                     onClick: handleMarkAllAsRead,
-                    loading: isMarkingAllAsRead || isLoading,
+                    loading: isMarkingAllAsRead,
+                    disabled: isLoading,
+                    variant: "outline",
                 },
             ]}
             bulkActions={[
@@ -103,9 +105,12 @@ export default function NotificationsTable() {
                 onClick: (selectedRows) => {
                     handleMarkAsRead(selectedRows);
                 },
-                loading: isMarkingAsRead || isLoading,
+                loading: isMarkingAsRead,
+                disabled: isLoading,
+                variant: "secondary",
               },
             ]}
+            // bulkActionsTriggerVariant="secondary"
             // Pagination Configurations
             currentPage={page}
             totalPages={pagination?.totalPages}

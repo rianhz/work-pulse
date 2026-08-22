@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { CalendarIcon } from "lucide-react";
+import { Calendar as CalendarIcon } from "lucide";
 import moment from "moment";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";

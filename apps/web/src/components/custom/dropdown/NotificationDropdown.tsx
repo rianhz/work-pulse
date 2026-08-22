@@ -35,7 +35,7 @@ export const NotificationDropdown = () => {
 
   const handleMarkNotificationAsRead = (id: string, isUnread: boolean) => {
     if (!isUnread) {
-      markNotificationAsRead(id, {
+      markNotificationAsRead([id], {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: ['notifications'] });
           queryClient.invalidateQueries({ queryKey: ['unread-notifications-count'] });

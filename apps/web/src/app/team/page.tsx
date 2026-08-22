@@ -177,7 +177,6 @@ export default function TeamPage() {
     fullName: "Name",
     email: "Email",
     leader: "Leader",
-    role: "Role",
     department: "Department",
     position: "Position"
   };
@@ -193,30 +192,22 @@ export default function TeamPage() {
       header: () => <span>Email</span>,
       enableSorting: true,
     },
-    {
-      id: "leader",
-      accessorFn: (row) => row.leader?.fullName || "",
-      header: () => <span>Leader</span>,
-      enableSorting: true,
-    },
-    {
-      accessorKey: "role",
-      header: () => <span>Role</span>,
-      enableSorting: true,
-      cell: ({ row }) => {
-        const role = row.original.role;
-        return role.charAt(0).toUpperCase() + role.slice(1);
+    ...(isAdminOrOwner ? [{
+        accessorKey: "leader",
+        accessorFn: (row: IUser) => row.leader?.fullName || "",
+        header: () => <span>Leader</span>,
+        enableSorting: true,
       },
+    ] : []),
+    {
+      accessorKey: "position",
+      header: () => <span>Position</span>,
+      enableSorting: true,
     },
     {
       id: "department",
       accessorFn: (row) => row.department?.name || "",
       header: () => <span>Department</span>,
-      enableSorting: true,
-    },
-    {
-      accessorKey: "position",
-      header: () => <span>Position</span>,
       enableSorting: true,
     },
     {
@@ -247,16 +238,17 @@ export default function TeamPage() {
         label: d.name,
         value: d.name,
       })) || [];
-  
+
+    const positionOptions = users?.map((u) => ({
+      label: u.position.charAt(0).toUpperCase() + u.position.slice(1),
+      value: u.position,
+    })).filter((u, index, self) => self.findIndex((t) => t.value === u.value) === index) || [];
+
     return [
       {
-        columnId: "role",
-        placeholder: "Role",
-        options: [
-          { label: "Admin", value: "Admin" },
-          { label: "Manager", value: "Manager" },
-          { label: "Employee", value: "Employee" },
-        ],
+        columnId: "position",
+        placeholder: "Position",
+        options: positionOptions
       },
       {
         columnId: "department",
@@ -518,12 +510,6 @@ export default function TeamPage() {
             onRowSelectionChange={setRowSelection}
             filters={tableFilterConfigs}
             bulkActions={[
-              {
-                label: "Change Role",
-                icon: UserCheck,
-                onClick: (selected) => console.log(selected),
-                variant: "secondary",
-              },
               {
                 label: "Export",
                 icon: Download,

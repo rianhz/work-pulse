@@ -99,7 +99,7 @@ export function AppSidebar() {
     <Sidebar variant="sidebar" collapsible={!isMobile ? "none" : "offcanvas"} className="bg-sidebar">
       <SidebarHeader>
         <div className="flex justify-center items-center py-2">
-          <Image src="/logo-final.png" alt="Logo" priority style={{ width: 'auto', height: 'auto' }} width={200} height={100} />
+          <Image src="/work-pulse-logo.png" alt="Logo" priority style={{ width: '180px', height: 'auto' }} width={200} height={100} />
         </div>
       </SidebarHeader>
 

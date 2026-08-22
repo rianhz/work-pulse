@@ -34,6 +34,7 @@ export interface ActionItem<TData> {
   onClick: (selectedRows: TData[]) => void;
   variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
   loading?: boolean;
+  disabled?: boolean;
 }
 
 export interface TableFilterConfig {
@@ -103,7 +104,7 @@ export function BaseTable<TData, TValue>({
   emptyDataDescription = "No data found",
   emptyDataIcon = <Table className="size-10 text-muted-foreground" />,
   onRowClicked,
-  bulkActionsTriggerVariant = "secondary",
+  bulkActionsTriggerVariant,
 }: BaseTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [internalVisibility, setInternalVisibility] = React.useState<VisibilityState>({});
@@ -223,6 +224,7 @@ export function BaseTable<TData, TValue>({
           icon={action.icon}
           iconPosition="left"
           loading={action.loading}
+          disabled={action.disabled}
         >
           {action.label}
         </Button>
@@ -245,7 +247,7 @@ export function BaseTable<TData, TValue>({
                 key={idx}
                 onClick={() => action.onClick(selectedRows)}
                 className="gap-2 cursor-pointer"
-                disabled={action.loading}
+                disabled={action.loading || action.disabled}
               >
                 {Icon && <Icon className="size-4" />}
                 <span>{action.label}</span>
@@ -276,7 +278,7 @@ export function BaseTable<TData, TValue>({
             <React.Activity mode={filters.length > 0 ? "visible" : "hidden"}>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="gap-2" disabled={isLoading}>
+                  <Button variant="outline" size="sm" className="gap-2 h-8" disabled={isLoading}>
                     <Filter className="size-3.5" />
                     Filter
                     {currentFilters.length > 0 && (
@@ -410,7 +412,7 @@ export function BaseTable<TData, TValue>({
                         key={header.id}
                         className={
                           isActions
-                            ? "sticky right-0 shadow-[-1px_0_0_0_rgba(0,0,0,0.1)] dark:shadow-[-1px_0_0_0_rgba(255,255,255,0.1)] z-10 text-right w-[100px] bg-popover transition-colors group-hover:bg-muted p-0"
+                            ? "sticky right-0 shadow-[-1px_0_0_0_rgba(0,0,0,0.1)] dark:shadow-[-1px_0_0_0_rgba(255,255,255,0.1)] z-10 text-right w-[100px] bg-popover p-0"
                             : isSelect
                             ? "w-12 text-center px-2 sticky left-0 shadow-[-1px_0_0_0_rgba(0,0,0,0.1)] dark:shadow-[-1px_0_0_0_rgba(255,255,255,0.1)] z-10 bg-popover"
                             : "px-4 bg-popover"
@@ -449,7 +451,7 @@ export function BaseTable<TData, TValue>({
                           isActions
                             ? "sticky right-0 shadow-[-1px_0_0_0_rgba(0,0,0,0.1)] dark:shadow-[-1px_0_0_0_rgba(255,255,255,0.1)] z-10 text-right bg-popover transition-colors group-hover:bg-muted"
                             : isSelect
-                            ? "w-12 text-center px-2 sticky left-0 shadow-[-1px_0_0_0_rgba(0,0,0,0.1)] dark:shadow-[-1px_0_0_0_rgba(255,255,255,0.1)] transition-colors bg-inherit group-hover:bg-muted z-10"
+                            ? "w-12 text-center px-2 sticky left-0 shadow-[-1px_0_0_0_rgba(0,0,0,0.1)] dark:shadow-[-1px_0_0_0_rgba(255,255,255,0.1)] transition-colors bg-popover group-hover:bg-muted z-10"
                             : "p-4"
                         }
                       >
@@ -466,7 +468,7 @@ export function BaseTable<TData, TValue>({
       </div>
 
       {currentPage !== undefined && onPageChange && totalPages > 1 && (
-        <div className="mb-2">
+        <div className="mb-6">
           <BasePagination
             currentPage={currentPage || 1}
             totalPages={totalPages}
