@@ -20,4 +20,5 @@ export interface INotification {
   url?: string;
   createdAt: string;
   isRead: boolean;
+  message: string;
 }

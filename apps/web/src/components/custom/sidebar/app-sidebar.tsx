@@ -41,6 +41,7 @@ import {
 import { useLogout } from "@/features/auth/hooks";
 import { useAppSelector } from "@/store/hooks/hooks";
 import { RootState } from "@/store";
+import Image from "next/image";
 
 export function AppSidebar() {
   const pathname = usePathname();
@@ -98,7 +99,7 @@ export function AppSidebar() {
     <Sidebar variant="sidebar" collapsible={!isMobile ? "none" : "offcanvas"} className="bg-sidebar">
       <SidebarHeader>
         <div className="flex justify-center items-center py-2">
-          <h1 className={`font-bold ${open ? "text-2xl" : "text-xl"}`}>WP</h1>
+          <Image src="/work-pulse-logo.png" alt="Logo" priority style={{ width: '180px', height: 'auto' }} width={200} height={100} />
         </div>
       </SidebarHeader>
 

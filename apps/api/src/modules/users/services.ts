@@ -91,34 +91,23 @@ export const getDirectReportsTreeService = async (
     ];
   }
 
-  // 1. Get base hierarchy IDs from helper (returns self, leader, and subordinates)
+  // 1. Get base hierarchy IDs (self and subordinates)
   const accessibleUserIds = await getAccessibleUserIds(userId, role, tenantId);
 
   if (accessibleUserIds === null) {
     // Admin / Owner mode: see everyone in tenant
   } else {
-    const targetIdSet = new Set<string>(
-      accessibleUserIds.map((id) => id.toString())
-    );
-
-    // 2. Fetch current user to check if they have a leader
+    // 2. Fetch current user to identify their leader
     const me = await UserModel.findById(userId).select("leader").lean();
+    const leaderIdStr = me?.leader?.toString();
 
-    // 3. If user has a leader, fetch all peers sharing the same leader
-    if (me?.leader) {
-      const peers = await UserModel.find({
-        tenantId,
-        leader: me.leader,
-        status: { $ne: "deleted" },
-      })
-        .select("_id")
-        .lean();
-
-      peers.forEach((peer) => targetIdSet.add(peer._id.toString()));
-    }
+    // 3. Filter out the leader's ID so they are excluded from the output
+    const targetIds = accessibleUserIds
+      .map((id) => id.toString())
+      .filter((idStr) => idStr !== leaderIdStr);
 
     baseQuery._id = {
-      $in: Array.from(targetIdSet).map((id) => new Types.ObjectId(id)),
+      $in: targetIds.map((id) => new Types.ObjectId(id)),
     };
   }
 

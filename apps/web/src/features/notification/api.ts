@@ -12,8 +12,8 @@ export const getUnreadNotificationsCount = async () => {
   return response.data;
 };
 
-export const markNotificationAsRead = async (id: string) => {
-  const response = await api.post(`/notifications/mark-as-read`, { id });
+export const markNotificationAsRead = async (ids: string[]) => {
+  const response = await api.post(`/notifications/mark-as-read`, { ids });
   return response.data;
 };
 

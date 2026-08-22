@@ -7,7 +7,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { useDeleteUser, useGetUsers, useSearchUsers, useUpdateUser } from "@/features/users/hooks";
-import { Users, Pencil, Trash } from "lucide-react";
+import { Users, Pencil, Trash, UserCheck, Download, Trash2 } from "lucide-react";
 import { MoreHorizontal, ChevronDown } from "lucide";
 import { useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
@@ -27,7 +27,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import moment from "moment";
 import { Command, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 
-import { ColumnDef, VisibilityState } from "@tanstack/react-table";
+import { ColumnDef, RowSelectionState, VisibilityState } from "@tanstack/react-table";
 import { BaseTable } from "@/components/custom/table/BaseTable";
 import { EditUserFormValues, editUserSchema } from "@/features/users/validator";
 
@@ -57,6 +57,8 @@ export default function TeamPage() {
   const [leaderDropdownOpen, setLeaderDropdownOpen] = useState(false);
   const [page, setPage] = useState(1);
   const limit = 10;
+
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
 
   const debouncedSearch = useDebounce(search, 1000);
   const debouncedLeaderSearch = useDebounce(leaderSearch, 1000);
@@ -175,7 +177,6 @@ export default function TeamPage() {
     fullName: "Name",
     email: "Email",
     leader: "Leader",
-    role: "Role",
     department: "Department",
     position: "Position"
   };
@@ -191,30 +192,22 @@ export default function TeamPage() {
       header: () => <span>Email</span>,
       enableSorting: true,
     },
-    {
-      id: "leader",
-      accessorFn: (row) => row.leader?.fullName || "",
-      header: () => <span>Leader</span>,
-      enableSorting: true,
-    },
-    {
-      accessorKey: "role",
-      header: () => <span>Role</span>,
-      enableSorting: true,
-      cell: ({ row }) => {
-        const role = row.original.role;
-        return role.charAt(0).toUpperCase() + role.slice(1);
+    ...(isAdminOrOwner ? [{
+        accessorKey: "leader",
+        accessorFn: (row: IUser) => row.leader?.fullName || "",
+        header: () => <span>Leader</span>,
+        enableSorting: true,
       },
+    ] : []),
+    {
+      accessorKey: "position",
+      header: () => <span>Position</span>,
+      enableSorting: true,
     },
     {
       id: "department",
       accessorFn: (row) => row.department?.name || "",
       header: () => <span>Department</span>,
-      enableSorting: true,
-    },
-    {
-      accessorKey: "position",
-      header: () => <span>Position</span>,
       enableSorting: true,
     },
     {
@@ -238,6 +231,32 @@ export default function TeamPage() {
       },
     },
   ], [isAdminOrOwner]);
+
+  const tableFilterConfigs = useMemo(() => {
+    const departmentOptions =
+      departments?.map((d) => ({
+        label: d.name,
+        value: d.name,
+      })) || [];
+
+    const positionOptions = users?.map((u) => ({
+      label: u.position.charAt(0).toUpperCase() + u.position.slice(1),
+      value: u.position,
+    })).filter((u, index, self) => self.findIndex((t) => t.value === u.value) === index) || [];
+
+    return [
+      {
+        columnId: "position",
+        placeholder: "Position",
+        options: positionOptions
+      },
+      {
+        columnId: "department",
+        placeholder: "Department",
+        options: departmentOptions,
+      },
+    ];
+  }, [departments])
 
   if (isLoadingDepartments) {
     return (
@@ -468,8 +487,7 @@ export default function TeamPage() {
         </div>
         {isAdminOrOwner && <Button onClick={() => setDialogType("invite")} disabled={isLoadingUsers}>Invite</Button>}
       </div>
-      {/* <Card className="border-none ring-0 shadow-none">
-        <CardContent className="px-0"> */}
+     
           <BaseTable
             columns={columns}
             data={users}
@@ -487,9 +505,26 @@ export default function TeamPage() {
             isEmptyData={users && users?.length === 0}
             emptyDataDescription="No users found in your team"
             emptyDataIcon={<Users className="size-10 text-muted-foreground" />}
+            enableRowSelection={true}
+            rowSelection={rowSelection}
+            onRowSelectionChange={setRowSelection}
+            filters={tableFilterConfigs}
+            bulkActions={[
+              {
+                label: "Export",
+                icon: Download,
+                onClick: (selected) => console.log(selected),
+                variant: "secondary",
+              },
+              {
+                label: "Delete",
+                icon: Trash2,
+                variant: "destructive",
+                onClick: (selected) => console.log(selected),
+              },
+            ]}
+            bulkActionsTriggerVariant="secondary"
           />
-        {/* </CardContent>
-      </Card> */}
     </>
   );
 }

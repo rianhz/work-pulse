@@ -1,15 +1,21 @@
-import { NOTIFICATION_TYPE_LEAVE_APPROVED, NOTIFICATION_TYPE_LEAVE_REQUESTED, NOTIFICATION_TYPE_LEAVE_REJECTED, NOTIFICATION_TYPE_USER_JOINED } from "@/helpers/constants";
+import { NOTIFICATION_TYPE_LEAVE_APPROVED, NOTIFICATION_TYPE_LEAVE_CANCELLED, NOTIFICATION_TYPE_LEAVE_REQUESTED, NOTIFICATION_TYPE_LEAVE_REJECTED, NOTIFICATION_TYPE_LEAVE_SUBMITTED, NOTIFICATION_TYPE_USER_JOINED } from "@/helpers/constants";
 
 export const getNotificationTitle = (type: string): string => {
   switch (type) {
     case NOTIFICATION_TYPE_LEAVE_REQUESTED:
-      return "Leave Request Requested";
+      return "Leave Requested";
 
     case NOTIFICATION_TYPE_LEAVE_APPROVED:
-      return "Leave Request Approved";
+      return "Leave Approved";
 
     case NOTIFICATION_TYPE_LEAVE_REJECTED:
-      return "Leave Request Declined";
+      return "Leave Declined";
+
+    case NOTIFICATION_TYPE_LEAVE_CANCELLED:
+      return "Leave Cancelled";
+
+    case NOTIFICATION_TYPE_LEAVE_SUBMITTED:
+      return "Leave Submitted";
 
     case NOTIFICATION_TYPE_USER_JOINED:
       return "New Team Member";
@@ -38,6 +44,14 @@ export const getNotificationMessage = (
 
     case NOTIFICATION_TYPE_USER_JOINED: {
       return `You have a new team member.`;
+    }
+
+    case NOTIFICATION_TYPE_LEAVE_CANCELLED: {
+      return `Your leave request has been cancelled.`;
+    }
+
+    case NOTIFICATION_TYPE_LEAVE_SUBMITTED: {
+      return `A new leave request has been submitted.`;
     }
 
     default:

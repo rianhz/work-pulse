@@ -28,88 +28,112 @@ import { BaseDatePicker } from "../date-picker/BaseDatePicker";
 import { TimezoneDropdown } from "../dropdown/TimezoneDropdown";
 import { InfoIcon } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-
+import z from "zod";
 
 export function AccountSettingsForm({ user, isLoading }: { user: IUserWithProviders, isLoading: boolean }) {
   const queryClient = useQueryClient();
- 
   const { mutate: updateUserMutation, isPending: isPendingUpdateUser } = useUpdateUser();
-
   const [isUploaderOpen, setIsUploaderOpen] = useState(false);
-  
+
+  const accountSettingsSchema = useMemo(() => {
+    return editUserSchema.pick({
+      fullName: true,
+      avatar: true,
+      nickName: true,
+      birthDate: true,
+      timezone: true,
+    });
+  }, []);
+
+  type AccountSettingsFormValues = z.infer<typeof accountSettingsSchema>;
+
+  const defaultFormValues: AccountSettingsFormValues = useMemo(() => {
+    return {
+      fullName: user?.fullName ?? "",
+      avatar: user?.avatar ?? "",
+      nickName: user?.nickName ?? "",
+      birthDate: user?.birthDate ? moment(user.birthDate).format("YYYY-MM-DD") : null,
+      timezone: user?.timezone ?? "",
+    };
+  }, [user]);
+
   const {
     control,
     register: registerAccountSettings,
     handleSubmit: handleSubmitAccountSettings,
     setValue: setValueAccountSettings,
-    getValues: getValuesAccountSettings,
     watch: watchAccountSettings,
-    formState: { errors: errorsAccountSettings, isDirty: isAccountSettingsDirty },
+    formState: { errors: errorsAccountSettings, isDirty: isAccountSettingsDirty, dirtyFields: dirtyFieldsAccountSettings },
     reset: resetAccountSettings,
-    formState: { dirtyFields: dirtyFieldsAccountSettings },
-  } = useForm<EditUserFormValues>({
-    resolver: zodResolver(editUserSchema),
-    defaultValues: {
-      fullName: "",
-      avatar: "",
-      nickName: "",
-      birthDate: null,
-      timezone: "",
-    },
+  } = useForm<AccountSettingsFormValues>({
+    resolver: zodResolver(accountSettingsSchema),
+    defaultValues: defaultFormValues, // Switched from `values` to `defaultValues`
   });
 
+  
   const avatar = watchAccountSettings("avatar");
   const initials = useMemo(() => {
     return user?.fullName?.charAt(0).toUpperCase();
   }, [user?.fullName]);
-
+  
   const handleUploadSuccess = (url: string) => {
     setValueAccountSettings("avatar", url, { shouldDirty: true });
   };
-
+  
   const handleAvatarRemove = () => {
     setValueAccountSettings("avatar", "", { shouldDirty: true });
   };
-
-  const onSubmitAccountSettings = (data: EditUserFormValues) => {
+  
+  const onSubmitAccountSettings = (data: AccountSettingsFormValues) => {
     const partialPayload: Record<string, any> = {};
-
+    
     Object.keys(dirtyFieldsAccountSettings).forEach((key) => {
-      if (key !== "_id") {
-        partialPayload[key] = data[key as keyof typeof data];
-      }
+      partialPayload[key] = data[key as keyof AccountSettingsFormValues];
     });
+    
     updateUserMutation({
       userId: user._id,
       payload: partialPayload,
     }, {
       onSuccess: () => {
-        resetAccountSettings({
-          fullName: data.fullName,
-          avatar: data.avatar,
-          nickName: data.nickName,
-          birthDate: data.birthDate ? data.birthDate : null,
-          timezone: data.timezone ?? "",
-        });
         queryClient.invalidateQueries({ queryKey: ["me"] });
       },
     });
   };
 
-  useEffect(() => {
-    if (!user) return;
+  // Reset form whenever user data prop updates or when Cancel is clicked
+  const handleResetForm = () => {
+    const cleanValues: AccountSettingsFormValues = {
+      fullName: user?.fullName ?? "",
+      avatar: user?.avatar ?? "",
+      nickName: user?.nickName ?? "",
+      birthDate: user?.birthDate ? moment(user.birthDate).format("YYYY-MM-DD") : null,
+      timezone: user?.timezone ?? "",
+    };
 
-    resetAccountSettings({
-      fullName: user.fullName ?? "",
-      avatar: user.avatar ?? "",
-      nickName: user.nickName ?? "",
-      birthDate: user.birthDate ? user.birthDate : null,
-      timezone: user.timezone ?? "",
+    resetAccountSettings(cleanValues, {
+      keepDefaultValues: false,
+      keepValues: false,
+      keepDirty: false,
+      keepErrors: false,
+      keepTouched: false,
+      keepIsValid: false,
     });
+  };
 
-  }, [user, resetAccountSettings]);
-
-
+  // Keep defaults updated when initial API loading finishes
+  useEffect(() => {
+    if (user && !isAccountSettingsDirty) {
+      handleResetForm();
+    }
+  }, [user]);
+  
+  // Sync form state when user data finishes loading without setting isDirty to true
+  useEffect(() => {
+    if (user) {
+      resetAccountSettings(defaultFormValues);
+    }
+  }, [user, resetAccountSettings, defaultFormValues]);
   if (isLoading) {
     return (
       <div className="flex flex-col w-full gap-2 px-2">
@@ -131,17 +155,21 @@ export function AccountSettingsForm({ user, isLoading }: { user: IUserWithProvid
 
   return (
     <>
-      <UniversalUploader variant="popup" isOpen={isUploaderOpen} onClose={() => setIsUploaderOpen(false)} onUploadSuccess={handleUploadSuccess}/>
+      <UniversalUploader 
+        variant="popup" 
+        isOpen={isUploaderOpen} 
+        onClose={() => setIsUploaderOpen(false)} 
+        onUploadSuccess={handleUploadSuccess}
+      />
       <Card className="w-full max-w-3xl rounded-md py-0">
         <form onSubmit={handleSubmitAccountSettings(onSubmitAccountSettings)}>
           <Table>
             <TableBody>
-              <TableRow>
-                <TableCell colSpan={2}>
+              <TableRow className="hover:bg-popover">
+                <TableCell colSpan={2} className="px-4">
                   <div className="flex justify-between gap-2">
                     <div className="flex items-center gap-2">
                       <div className="flex flex-col justify-center items-center gap-2">
-
                         <BaseAvatar 
                           src={avatar ?? ""} 
                           alt="Avatar" 
@@ -156,165 +184,174 @@ export function AccountSettingsForm({ user, isLoading }: { user: IUserWithProvid
                         <p className="text-sm font-medium">Profile Picture</p>
                         <p className="text-xs text-muted-foreground">Recommended size 100x100</p>
                         <Activity mode={avatar ? "visible" : "hidden"}>
-                          <Button type="button" variant="destructive" size='xs' className="min-w-[70px] mt-2" onClick={handleAvatarRemove}>Remove</Button>
+                          <Button 
+                            type="button" 
+                            variant="destructive" 
+                            size="xs" 
+                            className="min-w-[70px] mt-2" 
+                            onClick={handleAvatarRemove}
+                          >
+                            Remove
+                          </Button>
                         </Activity>
                       </div>
                     </div>
+
                     <Activity mode={isAccountSettingsDirty ? "visible" : "hidden"}>
                       <div className="flex flex-col gap-2">
-                        <Button type="submit" loading={isPendingUpdateUser} disabled={isPendingUpdateUser} onClick={() => onSubmitAccountSettings(getValuesAccountSettings())}>
+                        <Button 
+                          type="submit" 
+                          loading={isPendingUpdateUser} 
+                          disabled={isPendingUpdateUser}
+                        >
                           Save Changes
                         </Button>
-                        <Button type="button" variant="outline" className="min-w-[70px]" onClick={() => resetAccountSettings({
-                          fullName: user?.fullName ?? "",
-                          avatar: user?.avatar ?? "",
-                          nickName: user?.nickName ?? "",
-                          birthDate: user?.birthDate ?? null,
-                          department: user?.department?.name ?? null,
-                          position: user?.position ?? "",
-                        })}>Cancel</Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="min-w-[70px]"
+                          onClick={() =>
+                            handleResetForm()
+                          }
+                        >
+                          Cancel
+                        </Button>
                       </div>
                     </Activity>
                   </div>
                 </TableCell>
               </TableRow>
 
-              <TableRow>
-                <TableCell>
-                  <Label className="whitespace-nowrap">
-                    Full Name
-                  </Label>
+              {/* Editable Field: Full Name */}
+              <TableRow className="group hover:bg-popover">
+                <TableCell className="px-4">
+                  <Label className="whitespace-nowrap">Full Name</Label>
                 </TableCell>
-
-                <TableCell>
-                    <InputGroup>
-                      <InputGroupInput type="text" {...registerAccountSettings("fullName")} />
-                    </InputGroup>
-                    <Activity mode={errorsAccountSettings.fullName ? "visible" : "hidden"}>
-                      <p className="text-xs text-red-500">
-                        {errorsAccountSettings.fullName?.message}
-                      </p>
-                    </Activity>
+                <TableCell className="px-4">
+                  <InputGroup>
+                    <InputGroupInput type="text" {...registerAccountSettings("fullName")} />
+                  </InputGroup>
+                  <Activity mode={errorsAccountSettings.fullName ? "visible" : "hidden"}>
+                    <p className="text-xs text-red-500">
+                      {errorsAccountSettings.fullName?.message}
+                    </p>
+                  </Activity>
                 </TableCell>
               </TableRow>
 
-              <TableRow>
-                <TableCell>
-                  <Label className="whitespace-nowrap">
-                    Nickname
-                  </Label>
+              {/* Editable Field: Nickname */}
+              <TableRow className="group hover:bg-popover">
+                <TableCell className="px-4">
+                  <Label className="whitespace-nowrap">Nickname</Label>
                 </TableCell>
-                <TableCell>
-                    <InputGroup>
-                      <InputGroupInput placeholder="What do you want to be called?" type="text" {...registerAccountSettings("nickName")} />
-                    </InputGroup>
-                    <Activity mode={errorsAccountSettings.nickName ? "visible" : "hidden"}>
-                      <p className="text-xs text-red-500">
-                        {errorsAccountSettings.nickName?.message}
-                      </p>
-                    </Activity>
-                </TableCell>
-              </TableRow>
-
-              <TableRow>
-                <TableCell>
-                  <Label className="whitespace-nowrap">
-                    Birth Date
-                  </Label>
-                </TableCell>
-                <TableCell>
-                    <Controller
-                      control={control}
-                      name="birthDate"
-                      render={({ field }) => (
-                        <BaseDatePicker
-                          id="birthDate"
-                          value={field.value}
-                          onChange={(date) => {
-                            field.onChange(date ? moment(date).format("YYYY-MM-DD") : null);
-                          }}
-                          placeholder="Select date"
-                        />
-                      )}
+                <TableCell className="px-4">
+                  <InputGroup>
+                    <InputGroupInput 
+                      placeholder="What do you want to be called?" 
+                      type="text" 
+                      {...registerAccountSettings("nickName")} 
                     />
-                    <Activity mode={errorsAccountSettings.birthDate ? "visible" : "hidden"}>
-                      <p className="text-xs text-red-500">
-                        {errorsAccountSettings.birthDate?.message}
-                      </p>
-                    </Activity>
+                  </InputGroup>
+                  <Activity mode={errorsAccountSettings.nickName ? "visible" : "hidden"}>
+                    <p className="text-xs text-red-500">
+                      {errorsAccountSettings.nickName?.message}
+                    </p>
+                  </Activity>
                 </TableCell>
               </TableRow>
 
-              <TableRow>
-                <TableCell>
-                  <Label className="whitespace-nowrap">
-                    Email
-                  </Label>
+              {/* Editable Field: Birth Date */}
+              <TableRow className="group hover:bg-popover">
+                <TableCell className="px-4">
+                  <Label className="whitespace-nowrap">Birth Date</Label>
                 </TableCell>
-                
-                <TableCell>
-                    <InputGroup>
-                      <InputGroupInput type="email" disabled value={user?.email ?? ""} />
-                    </InputGroup>
+                <TableCell className="px-4">
+                  <Controller
+                    control={control}
+                    name="birthDate"
+                    render={({ field }) => (
+                      <BaseDatePicker
+                        id="birthDate"
+                        value={field.value ?? null}
+                        onChange={(date) => {
+                          field.onChange(date ? moment(date).format("YYYY-MM-DD") : null);
+                        }}
+                        placeholder="Select date"
+                      />
+                    )}
+                  />
+                  <Activity mode={errorsAccountSettings.birthDate ? "visible" : "hidden"}>
+                    <p className="text-xs text-red-500">
+                      {errorsAccountSettings.birthDate?.message}
+                    </p>
+                  </Activity>
                 </TableCell>
               </TableRow>
 
-              <TableRow>
-                <TableCell>
-                  <Label className="whitespace-nowrap">
-                    Role
-                  </Label>
+              {/* Read-only Field: Email */}
+              <TableRow className="group hover:bg-popover">
+                <TableCell className="px-4">
+                  <Label className="whitespace-nowrap">Email</Label>
                 </TableCell>
-                
-                <TableCell>
-                    <InputGroup>
-                      <InputGroupInput type="text" disabled value={user?.role?.charAt(0).toUpperCase() + user?.role?.slice(1).toLowerCase() || ""} />
-                    </InputGroup>
+                <TableCell className="px-4">
+                  <InputGroup>
+                    <InputGroupInput type="email" disabled value={user?.email ?? ""} />
+                  </InputGroup>
                 </TableCell>
               </TableRow>
 
-              <Activity mode={user.department ? "visible" : "hidden"}>
-                <TableRow>
-                  <TableCell>
-                    <Label className="whitespace-nowrap">
-                      Department
-                    </Label>
+              {/* Read-only Field: Role */}
+              <TableRow className="group hover:bg-popover">
+                <TableCell className="px-4">
+                  <Label className="whitespace-nowrap">Role</Label>
+                </TableCell>
+                <TableCell className="px-4">
+                  <InputGroup>
+                    <InputGroupInput 
+                      type="text" 
+                      disabled 
+                      value={user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1).toLowerCase() : ""} 
+                    />
+                  </InputGroup>
+                </TableCell>
+              </TableRow>
+
+              {/* Read-only Field: Department */}
+              <Activity mode={user?.department ? "visible" : "hidden"}>
+                <TableRow className="group hover:bg-popover">
+                  <TableCell className="px-4">
+                    <Label className="whitespace-nowrap">Department</Label>
                   </TableCell>
-                  <TableCell>
-                      <InputGroup>
-                        <InputGroupInput type="text" disabled value={user?.department?.name ?? ""} />
-                      </InputGroup>
+                  <TableCell className="px-4">
+                    <InputGroup>
+                      <InputGroupInput type="text" disabled value={user?.department?.name ?? ""} />
+                    </InputGroup>
                   </TableCell>
                 </TableRow>
               </Activity> 
 
-              <Activity mode={user.position ? "visible" : "hidden"}>
-                <TableRow>
-                  <TableCell>
-                    <Label className="whitespace-nowrap">
-                      Position
-                    </Label>
+              {/* Read-only Field: Position */}
+              <Activity mode={user?.position ? "visible" : "hidden"}>
+                <TableRow className="group hover:bg-popover">
+                  <TableCell className="px-4">
+                    <Label className="whitespace-nowrap">Position</Label>
                   </TableCell>
-                  <TableCell>
-                      <InputGroup>
-                        <InputGroupInput type="text" {...registerAccountSettings("position")} disabled />
-                      </InputGroup>
-                      <Activity mode={errorsAccountSettings.position ? "visible" : "hidden"}>
-                        <p className="text-xs text-red-500">
-                          {errorsAccountSettings.position?.message}
-                        </p>
-                      </Activity>
+                  <TableCell className="px-4">
+                    <InputGroup>
+                      <InputGroupInput type="text" disabled value={user?.position ?? ""} />
+                    </InputGroup>
                   </TableCell>
                 </TableRow>
               </Activity>
 
-              <TableRow>
-                <TableCell>
-                  <Label className="whitespace-nowrap">
+              {/* Editable Field: Timezone */}
+              <TableRow className="group hover:bg-popover">
+                <TableCell className="px-4">
+                  <Label className="whitespace-nowrap font-medium flex items-center gap-1">
                     Timezone
                     <Tooltip>
-                      <TooltipTrigger>
-                        <InfoIcon className="w-4 h-4" />
+                      <TooltipTrigger type="button">
+                        <InfoIcon className="w-4 h-4 text-muted-foreground" />
                       </TooltipTrigger>
                       <TooltipContent>
                         <p>Overrides the default company timezone. This ensures your check-in logs match your local time perfectly.</p>
@@ -322,7 +359,7 @@ export function AccountSettingsForm({ user, isLoading }: { user: IUserWithProvid
                     </Tooltip>
                   </Label>
                 </TableCell>
-                <TableCell>
+                <TableCell className="px-4">
                   <Controller
                     control={control}
                     name="timezone"

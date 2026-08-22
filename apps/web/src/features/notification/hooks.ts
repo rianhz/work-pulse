@@ -5,7 +5,7 @@ import { IGetPaginatedResponse, IPaginationQueryOptions } from "@/global";
 
 export const useNotification = (options: IPaginationQueryOptions) => {
   const query = useQuery<IGetPaginatedResponse<INotification[]>>({
-    queryKey: ["notifications"],
+    queryKey: ["notifications", options],
     queryFn: () => getNotifications(options),
   });
   return query;
@@ -21,7 +21,7 @@ export const useUnreadNotificationsCount = () => {
 
 export const useMarkNotificationAsRead = () => {
   const mutation = useMutation({
-    mutationFn: (id: string) => markNotificationAsRead(id),
+    mutationFn: (ids: string[]) => markNotificationAsRead(ids),
   });
   return mutation;
 };

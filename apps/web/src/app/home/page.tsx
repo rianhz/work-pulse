@@ -12,7 +12,6 @@ export default function HomePage() {
     <div className="flex flex-col gap-4 flex-1">
       <div className="py-2">
           <h1 className="text-2xl font-bold">Good {getTimeOfDay()}, {user?.nickName || user?.fullName}</h1>
-          <p className="text-sm text-muted-foreground">A comprehensive view of your reporting tree, leadership structure, and team members.</p>
       </div>
       <div>
         <h3 className="text-lg font-bold">Announcements</h3>
