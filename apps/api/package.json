@@ -8,7 +8,7 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "create-module": "node src/scripts/create-module.js",
-    "migrate": "doppler run -- npm run build && node dist/src/scripts/scriptRunner.js"
+    "migrate": "doppler run -- ts-node src/scripts/scriptRunner.ts"
   },
   "keywords": [],
   "author": "",

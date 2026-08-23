@@ -16,6 +16,12 @@ import { DepartmentSettingsForm } from "@/components/custom/forms/DepartmentSett
 import { useAppSelector } from "@/store/hooks/hooks";
 import { NotAuthorised } from "@/components/custom/errors-and-empty/NotAuthorised";
 import { useQueryClient } from "@tanstack/react-query";
+import { GeneralSettingsForm } from "@/components/custom/forms/GeneralSettingsForm";
+import { BillingAndPlanSettingsForm } from "@/components/custom/forms/BillingAndPlanSettingsForm";
+import { LeavePolicyForm } from "@/components/custom/forms/LeavePolicyForm";
+import { useGetTenantSettings } from "@/features/tenants-settings/hooks";
+import { isModerator } from "@/helpers/users-helper";
+import { useMemo } from "react";
 
 export interface IUserWithProviders extends IUser {
   providers: ('password' | 'google')[];
@@ -50,11 +56,21 @@ export default function SettingsPage() {
   const tenantId = useSelector((state: RootState) => state.currentUser.user?.tenantId);
   const tenant = useSelector((state: RootState) => state.currentTenant.tenant);
 
+  const { data: tenantSettings, isLoading: isLoadingTenantSettings, error: errorTenantSettings, isError: isErrorTenantSettings } = useGetTenantSettings(tenantId, isModerator(currentUserRole as string));
+  console.log(tenantSettings);
+  const initialData = useMemo(() => {
+    return {
+      branding: tenantSettings?.branding,
+      timezone: tenantSettings?.timezone,
+      billing: tenantSettings?.billing,
+    };
+  }, [tenantSettings]);
+
+  console.log(initialData);
   const handleUpdatedTenant = () => {
     queryClient.invalidateQueries({ queryKey: ['me'] });
   };
 
-  // 2. NOW HANDLE CONDITIONAL EARLY RETURNS AFTER ALL HOOKS HAS RUN
   if (isErrorUser) {
     return (
       <ErrorMessage 
@@ -71,7 +87,6 @@ export default function SettingsPage() {
     );
   }
 
-  // 3. MAIN JSX RENDER
   return (
     <Tabs value={tab} className="w-full">
       <TabsList>
@@ -84,9 +99,9 @@ export default function SettingsPage() {
         <h1 className="text-2xl font-bold">Account Settings</h1>
         <p className="text-sm text-muted-foreground">Manage your account settings and preferences.</p>
         <Tabs defaultValue="general" orientation={isMobile ? "horizontal" : "vertical"} className="mt-4">
-          <TabsList className="bg-transparent px-0! pt-0!">
-            <TabsTrigger className="rounded-sm data-active:bg-transparent hover:bg-sidebar-accent p-2! min-w-[150px]" value="general">General</TabsTrigger>
-            <TabsTrigger className="rounded-sm data-active:bg-transparent hover:bg-sidebar-accent p-2! min-w-[150px]" value="security">Security</TabsTrigger>
+          <TabsList className="bg-transparent px-0! pt-0! gap-1">
+            <TabsTrigger className="rounded-sm data-active:bg-transparent hover:bg-sidebar-accent hover:text-muted-foreground p-2! min-w-[150px] data-active:bg-sidebar-accent" value="general">General</TabsTrigger>
+            <TabsTrigger className="rounded-sm data-active:bg-transparent hover:bg-sidebar-accent hover:text-muted-foreground p-2! min-w-[150px] data-active:bg-sidebar-accent" value="security">Security</TabsTrigger>
           </TabsList>
           <TabsContent value="general">
             <AccountSettingsForm user={{ ...user, providers }} isLoading={isLoadingUser || isLoadingProviders} />
@@ -105,20 +120,26 @@ export default function SettingsPage() {
             <h1 className="text-2xl font-bold">Organization Settings</h1>
             <p className="text-sm text-muted-foreground">Manage your organization's identity, team permissions, and cloud integrations.</p>
             <Tabs defaultValue="general" orientation={isMobile ? "horizontal" : "vertical"} className="mt-4">
-              <TabsList className="bg-transparent px-0! pt-0!">
-                <TabsTrigger className="rounded-sm data-active:bg-transparent hover:bg-sidebar-accent p-2! min-w-[150px]" value="general">General</TabsTrigger>
-                <TabsTrigger className="rounded-sm data-active:bg-transparent hover:bg-sidebar-accent p-2! min-w-[150px]" value="departments">Departments</TabsTrigger>
-                <TabsTrigger className="rounded-sm data-active:bg-transparent hover:bg-sidebar-accent p-2! min-w-[150px]" value="billing">Billing & Plans</TabsTrigger>
+              <TabsList className="bg-transparent px-0! pt-0! gap-1">
+                <TabsTrigger className="rounded-sm data-active:bg-sidebar-accent hover:bg-sidebar-accent hover:text-muted-foreground p-2! min-w-[150px]" value="general">General</TabsTrigger>
+                <TabsTrigger className="rounded-sm data-active:bg-sidebar-accent hover:bg-sidebar-accent hover:text-muted-foreground p-2! min-w-[150px]" value="departments">Departments</TabsTrigger>
+                <TabsTrigger className="rounded-sm data-active:bg-sidebar-accent hover:bg-sidebar-accent hover:text-muted-foreground p-2! min-w-[150px]" value="billing">Billing & Plans</TabsTrigger>
+                <TabsTrigger className="rounded-sm data-active:bg-sidebar-accent hover:bg-sidebar-accent hover:text-muted-foreground p-2! min-w-[150px]" value="policies">Policies</TabsTrigger>
               </TabsList>
+
               <TabsContent value="general">
-                <CompanySettingsForm tenantId={tenantId as string} tenant={tenant as ITenant} isLoading={isLoadingUser || isLoadingProviders} onSaved={handleUpdatedTenant} />
+                <GeneralSettingsForm initialData={initialData} />
               </TabsContent>
               <TabsContent value="departments">
-                <DepartmentSettingsForm tenantId={tenantId as string} tenant={tenant as ITenant} isLoading={isLoadingUser || isLoadingProviders} />
+                <DepartmentSettingsForm />
+              </TabsContent>
+              <TabsContent value="policies">
+                <LeavePolicyForm />
               </TabsContent>
               <TabsContent value="billing">
-                <BillingPlansSettingsForm tenantId={tenantId as string} tenant={tenant as ITenant} isLoading={isLoadingUser || isLoadingProviders} />
+                <BillingAndPlanSettingsForm initialData={initialData} />
               </TabsContent>
+         
             </Tabs>
           </>
         )}

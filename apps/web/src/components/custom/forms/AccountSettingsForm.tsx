@@ -1,6 +1,6 @@
 "use client";
 
-import { Activity, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -11,10 +11,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  EditUserFormValues,
-  editUserSchema,
-} from "@/features/users/validator";
+import { editUserSchema } from "@/features/users/validator";
 import { Card } from "@/components/ui/card";
 import { useUpdateUser } from "@/features/users/hooks";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -28,6 +25,7 @@ import { BaseDatePicker } from "../date-picker/BaseDatePicker";
 import { TimezoneDropdown } from "../dropdown/TimezoneDropdown";
 import { InfoIcon } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Activity } from "react";
 import z from "zod";
 
 export function AccountSettingsForm({ user, isLoading }: { user: IUserWithProviders, isLoading: boolean }) {
@@ -67,10 +65,9 @@ export function AccountSettingsForm({ user, isLoading }: { user: IUserWithProvid
     reset: resetAccountSettings,
   } = useForm<AccountSettingsFormValues>({
     resolver: zodResolver(accountSettingsSchema),
-    defaultValues: defaultFormValues, // Switched from `values` to `defaultValues`
+    defaultValues: defaultFormValues,
   });
 
-  
   const avatar = watchAccountSettings("avatar");
   const initials = useMemo(() => {
     return user?.fullName?.charAt(0).toUpperCase();
@@ -101,7 +98,6 @@ export function AccountSettingsForm({ user, isLoading }: { user: IUserWithProvid
     });
   };
 
-  // Reset form whenever user data prop updates or when Cancel is clicked
   const handleResetForm = () => {
     const cleanValues: AccountSettingsFormValues = {
       fullName: user?.fullName ?? "",
@@ -121,19 +117,18 @@ export function AccountSettingsForm({ user, isLoading }: { user: IUserWithProvid
     });
   };
 
-  // Keep defaults updated when initial API loading finishes
   useEffect(() => {
     if (user && !isAccountSettingsDirty) {
       handleResetForm();
     }
   }, [user]);
   
-  // Sync form state when user data finishes loading without setting isDirty to true
   useEffect(() => {
     if (user) {
       resetAccountSettings(defaultFormValues);
     }
   }, [user, resetAccountSettings, defaultFormValues]);
+
   if (isLoading) {
     return (
       <div className="flex flex-col w-full gap-2 px-2">
@@ -161,69 +156,12 @@ export function AccountSettingsForm({ user, isLoading }: { user: IUserWithProvid
         onClose={() => setIsUploaderOpen(false)} 
         onUploadSuccess={handleUploadSuccess}
       />
-      <Card className="w-full max-w-3xl rounded-md py-0">
+      <Card className="w-full max-w-3xl rounded-md py-4">
         <form onSubmit={handleSubmitAccountSettings(onSubmitAccountSettings)}>
           <Table>
             <TableBody>
-              <TableRow className="hover:bg-popover">
-                <TableCell colSpan={2} className="px-4">
-                  <div className="flex justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <div className="flex flex-col justify-center items-center gap-2">
-                        <BaseAvatar 
-                          src={avatar ?? ""} 
-                          alt="Avatar" 
-                          fallbackInitials={initials} 
-                          imageLoading="eager"
-                          isEditable={true}
-                          onUploadSuccess={handleUploadSuccess}
-                          className="w-[100px] h-[100px] rounded-full"
-                        />
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium">Profile Picture</p>
-                        <p className="text-xs text-muted-foreground">Recommended size 100x100</p>
-                        <Activity mode={avatar ? "visible" : "hidden"}>
-                          <Button 
-                            type="button" 
-                            variant="destructive" 
-                            size="xs" 
-                            className="min-w-[70px] mt-2" 
-                            onClick={handleAvatarRemove}
-                          >
-                            Remove
-                          </Button>
-                        </Activity>
-                      </div>
-                    </div>
-
-                    <Activity mode={isAccountSettingsDirty ? "visible" : "hidden"}>
-                      <div className="flex flex-col gap-2">
-                        <Button 
-                          type="submit" 
-                          loading={isPendingUpdateUser} 
-                          disabled={isPendingUpdateUser}
-                        >
-                          Save Changes
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className="min-w-[70px]"
-                          onClick={() =>
-                            handleResetForm()
-                          }
-                        >
-                          Cancel
-                        </Button>
-                      </div>
-                    </Activity>
-                  </div>
-                </TableCell>
-              </TableRow>
-
               {/* Editable Field: Full Name */}
-              <TableRow className="group hover:bg-popover">
+              <TableRow className="group hover:bg-popover border-0">
                 <TableCell className="px-4">
                   <Label className="whitespace-nowrap">Full Name</Label>
                 </TableCell>
@@ -240,7 +178,7 @@ export function AccountSettingsForm({ user, isLoading }: { user: IUserWithProvid
               </TableRow>
 
               {/* Editable Field: Nickname */}
-              <TableRow className="group hover:bg-popover">
+              <TableRow className="group hover:bg-popover border-0">
                 <TableCell className="px-4">
                   <Label className="whitespace-nowrap">Nickname</Label>
                 </TableCell>
@@ -261,7 +199,7 @@ export function AccountSettingsForm({ user, isLoading }: { user: IUserWithProvid
               </TableRow>
 
               {/* Editable Field: Birth Date */}
-              <TableRow className="group hover:bg-popover">
+              <TableRow className="group hover:bg-popover border-0">
                 <TableCell className="px-4">
                   <Label className="whitespace-nowrap">Birth Date</Label>
                 </TableCell>
@@ -289,7 +227,7 @@ export function AccountSettingsForm({ user, isLoading }: { user: IUserWithProvid
               </TableRow>
 
               {/* Read-only Field: Email */}
-              <TableRow className="group hover:bg-popover">
+              <TableRow className="group hover:bg-popover border-0">
                 <TableCell className="px-4">
                   <Label className="whitespace-nowrap">Email</Label>
                 </TableCell>
@@ -301,7 +239,7 @@ export function AccountSettingsForm({ user, isLoading }: { user: IUserWithProvid
               </TableRow>
 
               {/* Read-only Field: Role */}
-              <TableRow className="group hover:bg-popover">
+              <TableRow className="group hover:bg-popover border-0">
                 <TableCell className="px-4">
                   <Label className="whitespace-nowrap">Role</Label>
                 </TableCell>
@@ -318,7 +256,7 @@ export function AccountSettingsForm({ user, isLoading }: { user: IUserWithProvid
 
               {/* Read-only Field: Department */}
               <Activity mode={user?.department ? "visible" : "hidden"}>
-                <TableRow className="group hover:bg-popover">
+                <TableRow className="group hover:bg-popover border-0">
                   <TableCell className="px-4">
                     <Label className="whitespace-nowrap">Department</Label>
                   </TableCell>
@@ -332,7 +270,7 @@ export function AccountSettingsForm({ user, isLoading }: { user: IUserWithProvid
 
               {/* Read-only Field: Position */}
               <Activity mode={user?.position ? "visible" : "hidden"}>
-                <TableRow className="group hover:bg-popover">
+                <TableRow className="group hover:bg-popover border-0">
                   <TableCell className="px-4">
                     <Label className="whitespace-nowrap">Position</Label>
                   </TableCell>
@@ -345,13 +283,13 @@ export function AccountSettingsForm({ user, isLoading }: { user: IUserWithProvid
               </Activity>
 
               {/* Editable Field: Timezone */}
-              <TableRow className="group hover:bg-popover">
+              <TableRow className="group hover:bg-popover border-0">
                 <TableCell className="px-4">
                   <Label className="whitespace-nowrap font-medium flex items-center gap-1">
                     Timezone
                     <Tooltip>
                       <TooltipTrigger type="button">
-                        <InfoIcon className="w-4 h-4 text-muted-foreground" />
+                        <InfoIcon className="w-4 h-4" />
                       </TooltipTrigger>
                       <TooltipContent>
                         <p>Overrides the default company timezone. This ensures your check-in logs match your local time perfectly.</p>
@@ -367,6 +305,32 @@ export function AccountSettingsForm({ user, isLoading }: { user: IUserWithProvid
                       <TimezoneDropdown value={field.value ?? ""} onChange={field.onChange} />
                     )}
                   />
+                </TableCell>
+              </TableRow>
+
+              <TableRow className="hover:bg-popover border-0">
+                <TableCell colSpan={2} className="px-4">
+                    <div className="flex justify-end items-center gap-2 h-8">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={!isAccountSettingsDirty}
+                        onClick={handleResetForm}
+                        className="min-w-[75px]"
+                      >
+                        Cancel
+                      </Button>
+                      <Button 
+                        type="submit" 
+                        size="sm"
+                        loading={isPendingUpdateUser} 
+                        disabled={!isAccountSettingsDirty || isPendingUpdateUser}
+                        className="min-w-[75px]"
+                      >
+                        Save
+                      </Button>
+                    </div>
                 </TableCell>
               </TableRow>
             </TableBody>    

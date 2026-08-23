@@ -165,10 +165,10 @@ export function SecurityUserSettingsForm({ user, isLoading }: { user: IUserWithP
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      <Card className="w-full max-w-2xl py-0 rounded-md">
+      <Card className="w-full max-w-2xl py-2 rounded-md">
         <Table>
           <TableBody>
-            <TableRow className="group hover:bg-popover">
+            <TableRow className="group hover:bg-popover border-0">
               <TableCell colSpan={2} className="flex flex-col gap-2 px-4">
                 <Activity mode={user?.providers?.includes('google') ? "visible" : "hidden"}>
                   <div className="flex items-center justify-between gap-2">

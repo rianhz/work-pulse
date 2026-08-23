@@ -60,3 +60,6 @@ export const notificationTypeLabels = {
   [NOTIFICATION_TYPE_LEAVE_APPROVED]: "Leave Approved",
   [NOTIFICATION_TYPE_LEAVE_REJECTED]: "Leave Rejected",
 } as const;
+
+export const AUTH_PROVIDER_EMAIL = "email" as const;
+export const AUTH_PROVIDER_GOOGLE = "google" as const;

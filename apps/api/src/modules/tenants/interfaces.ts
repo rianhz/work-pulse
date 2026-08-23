@@ -1,4 +1,3 @@
-import { IProject } from "../projects/interfaces";
 export interface ITenant {
     _id: string;
     name: string;

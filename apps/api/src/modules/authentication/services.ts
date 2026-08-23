@@ -8,6 +8,7 @@ import { compareValue, hashValue } from '../../utils/bcrypt';
 import { BadRequestException, NotFoundException } from '../../utils/app-error';
 import { IIdentity } from '../idp/interfaces';
 import { LeaveBalanceModel } from '../leave/leave-balance/schema';
+import { createDefaultTenantSettings } from '../tenants/settings/services';
 
 export const registerService = async (payload: IRegisterPayload): Promise<IUser> => {
     const { email, password, companyName, slug, fullName } = payload;
@@ -20,7 +21,13 @@ export const registerService = async (payload: IRegisterPayload): Promise<IUser>
 
     const tenant = await TenantModel.create({ name: companyName, slug });
 
-
+    await createDefaultTenantSettings({
+      tenantId: tenant._id.toString(),
+      companyName,
+      slug,
+      billingEmail: email,
+    });
+  
     const existingUser = await UserModel.findOne({ email }).lean();
 
     if (existingUser) {
@@ -53,8 +60,6 @@ export const registerService = async (payload: IRegisterPayload): Promise<IUser>
 
     await IdentityModel.create(identityPayload);
 
-    
-
     return user
 };
 
@@ -77,6 +82,13 @@ export const registerWithGoogleService = async (payload: IRegisterWithGooglePayl
     if (existingTenant) throw new BadRequestException('Tenant already exists');
 
     const tenant = await TenantModel.create({ name: companyName, slug });
+
+    await createDefaultTenantSettings({
+      tenantId: tenant._id.toString(),
+      companyName,
+      slug,
+      billingEmail: email,
+    });
 
     const user = await UserModel.create({
         email: email.toLowerCase(),

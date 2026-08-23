@@ -14,17 +14,10 @@ export const getTenantService = async (authenticatedUser: AuthUser, tenantId: st
     throw new NotFoundException('Tenant not found');
   }
 
-  // Maps primary key _id to tenantId for CASL evaluation
-  // await isHaveAccess(authenticatedUser, "Tenant", "read", { 
-  //   ...tenant, 
-  //   tenantId: tenant._id.toString() 
-  // });
-
   return tenant as unknown as ITenant;
 };
 
 export const getPublicTenantService = async (tenantId: string): Promise<Partial<ITenant>> => {
-  // Public endpoint for tenant branding/signup (logo, name, slug)
   const tenant = await TenantModel.findOne({ 
     _id: tenantId, 
     status: { $ne: "deleted" } 
@@ -40,7 +33,6 @@ export const getPublicTenantService = async (tenantId: string): Promise<Partial<
 };
 
 export const createTenantService = async (authenticatedUser: AuthUser, tenant: ITenant): Promise<ITenant> => {
-  // System/Admin authorization for tenant creation
   await isHaveAccess(authenticatedUser, "Tenant", "create");
 
   const newTenant = await TenantModel.create(tenant);
@@ -61,7 +53,6 @@ export const updateTenantService = async (
     throw new NotFoundException('Tenant not found');
   }
 
-  // Eliminates manual 'if (role !== "owner")' checks by letting CASL verify tenantId ownership
   await isHaveAccess(authenticatedUser, "Tenant", "update", { 
     ...existingTenant, 
     tenantId: existingTenant._id.toString() 

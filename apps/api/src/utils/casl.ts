@@ -14,6 +14,7 @@ export type Subjects =
   | "Announcement" 
   | "LeaveRequest" 
   | "LeaveBalance" 
+  | "TenantSettings"
   | "all";
 
 export type AppAbility = AnyMongoAbility;
@@ -36,6 +37,7 @@ export function defineAbilitiesFor(user: AuthUser): AppAbility {
       
       // LeaveRequest migrated fields (user, tenant)
       can("manage", "LeaveRequest", { tenant: user.tenantId });
+      can("manage", "TenantSettings", { tenantId: user.tenantId });
       break;
 
     case "manager":

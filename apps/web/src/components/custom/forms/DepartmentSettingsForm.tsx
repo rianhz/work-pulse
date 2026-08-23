@@ -1,7 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ITenant } from "@/features/tenants/tenant";
 import { Activity, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -18,7 +17,7 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/h
 import { useQueryClient } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 
-export function DepartmentSettingsForm({ tenantId, tenant, isLoading }: { tenantId: string, tenant: ITenant, isLoading: boolean }) {
+export function DepartmentSettingsForm() {
   const queryClient = useQueryClient();
   const [isOpen, setIsOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -237,15 +236,15 @@ export function DepartmentSettingsForm({ tenantId, tenant, isLoading }: { tenant
         <Button className="mb-0 mr-0 md:mr-2 md:mb-2" onClick={() => setIsOpen(true)}>Add Department</Button>
         <Table>
           <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Status</TableHead>
+            <TableRow className="hover:bg-popover">
+              <TableHead className="px-4">Name</TableHead>
+              <TableHead className="px-4">Status</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {departments?.map((department) => (
               <TableRow key={department._id}>
-                <TableCell className="flex items-center gap-2">
+                <TableCell className="flex items-center gap-2 px-4">
                   <span className="text-sm font-medium">{department.name}</span>
                   <Activity mode={department.description ? "visible" : "hidden"}>
                     <HoverCard openDelay={10} closeDelay={100}>
@@ -259,12 +258,12 @@ export function DepartmentSettingsForm({ tenantId, tenant, isLoading }: { tenant
                   </Activity>
 
                 </TableCell>
-                <TableCell>
+                <TableCell className="px-4">
                   <Badge className={`${department.status === "active" ? "bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300" : department.status === "disabled" ? "bg-yellow-50 text-yellow-700 dark:bg-yellow-950 dark:text-yellow-300" : "bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300"}`}>
                     {department.status.charAt(0).toUpperCase() + department.status.slice(1)}
                   </Badge>
                 </TableCell>
-                <TableCell align="right"> 
+                <TableCell align="right" className="px-4"> 
                   <DropdownMenu> 
                     <DropdownMenuTrigger asChild> 
                         <MoreHorizontalIcon className="cursor-pointer" />

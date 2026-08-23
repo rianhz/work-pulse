@@ -1,9 +1,11 @@
 import mongoose from "mongoose";
 import { connectDatabase } from "../config/database";
 import { notificationMigration } from "./migrations/notificationMigration";
+import { populateTenantSettings } from "./migrations/tenantSettings";
 
 const migrations = [
-  { name: "notificationMigration", execute: notificationMigration },
+  // { name: "notificationMigration", execute: notificationMigration },
+  { name: "tenantSettingsMigration", execute: populateTenantSettings },
 ];
 
 async function runMigrations() {
